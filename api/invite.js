@@ -28,12 +28,13 @@ module.exports = async (req, res) => {
     await fetch(`${db.URL_}/auth/v1/admin/users`, { method: "POST", headers: authH(), body: JSON.stringify({ email, email_confirm: true }) });
 
     if (body.send) {
-      const r = await fetch(`${db.URL_}/auth/v1/otp?redirect_to=${encodeURIComponent(redirect)}`, { method: "POST", headers: authH(), body: JSON.stringify({ email, create_user: false }) });
-      if (r.status === 429) return res.status(429).json({ error: "O limite de e-mails por hora do Supabase foi atingido. Use “Copiar link de acesso” e mande pelo WhatsApp." });
-      if (!r.ok) return res.status(502).json({ error: "Não foi possível enviar o e-mail agora. Use “Copiar link de acesso”." });
+      // e-mail "redefinir senha" do Supabase: a pessoa abre, cria a senha e entra
+      const r = await fetch(`${db.URL_}/auth/v1/recover?redirect_to=${encodeURIComponent(redirect)}`, { method: "POST", headers: authH(), body: JSON.stringify({ email }) });
+      if (r.status === 429) return res.status(429).json({ error: "O limite de e-mails por hora do Supabase foi atingido. Use “Copiar link de convite” e mande pelo WhatsApp." });
+      if (!r.ok) return res.status(502).json({ error: "Não foi possível enviar o e-mail agora. Use “Copiar link de convite”." });
       return res.status(200).json({ ok: true, sent: true });
     }
-    const g = await fetch(`${db.URL_}/auth/v1/admin/generate_link`, { method: "POST", headers: authH(), body: JSON.stringify({ type: "magiclink", email, redirect_to: redirect }) });
+    const g = await fetch(`${db.URL_}/auth/v1/admin/generate_link`, { method: "POST", headers: authH(), body: JSON.stringify({ type: "recovery", email, redirect_to: redirect }) });
     const j = await g.json().catch(() => ({}));
     const link = j.action_link || (j.properties || {}).action_link;
     if (!g.ok || !link) { console.error(g.status, j); return res.status(502).json({ error: "Não foi possível gerar o link agora." }); }
