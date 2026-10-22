@@ -25,3 +25,10 @@ begin
   execute $D$create trigger guard_pessoas before insert or update on public.docs for each row when (new.col = 'pessoas') execute function public.guard_pessoas()$D$;
 end
 $SISTEMA$;
+
+-- Funções de segurança: só o necessário fica exposto
+revoke execute on function public.guard_pessoas() from public, anon, authenticated;
+revoke execute on function public.is_diretor() from public, anon, authenticated;
+revoke execute on function public.is_admin() from public, anon;
+revoke execute on function public.is_member() from public, anon;
+grant execute on function public.is_admin(), public.is_member() to authenticated;
