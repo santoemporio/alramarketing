@@ -1,6 +1,6 @@
 // Acesso ao Supabase pelo servidor (chave de serviço). Nunca é enviado ao navegador.
 // Acha as chaves do Supabase mesmo se a Vercel tiver criado com prefixo (ex.: STORAGE_SUPABASE_URL)
-const pick = (...ends) => { for (const e of ends) { if (process.env[e]) return process.env[e]; const k = Object.keys(process.env).find(n => n.endsWith("_" + e) && process.env[n]); if (k) return process.env[k]; } return undefined; };
+const pick = (...ends) => { for (const e of ends) { if (process.env[e]) return process.env[e]; const k = Object.keys(process.env).find(n => n.endsWith(e) && process.env[n]); if (k) return process.env[k]; } return undefined; };
 const URL_ = pick("SUPABASE_URL");
 const KEY = pick("SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_SECRET_KEY");
 const H = () => ({ apikey: KEY, Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" });
