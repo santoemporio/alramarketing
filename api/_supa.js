@@ -1,6 +1,8 @@
 // Acesso ao Supabase pelo servidor (chave de serviço). Nunca é enviado ao navegador.
-const URL_ = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// Acha as chaves do Supabase mesmo se a Vercel tiver criado com prefixo (ex.: STORAGE_SUPABASE_URL)
+const pick = (...ends) => { for (const e of ends) { if (process.env[e]) return process.env[e]; const k = Object.keys(process.env).find(n => n.endsWith("_" + e) && process.env[n]); if (k) return process.env[k]; } return undefined; };
+const URL_ = pick("SUPABASE_URL");
+const KEY = pick("SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_SECRET_KEY");
 const H = () => ({ apikey: KEY, Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" });
 async function q(path, opts = {}) {
   const r = await fetch(`${URL_}/rest/v1/${path}`, { ...opts, headers: { ...H(), ...(opts.headers || {}) } });
@@ -10,7 +12,7 @@ async function q(path, opts = {}) {
 }
 const enc = encodeURIComponent;
 module.exports = {
-  URL_, KEY,
+  URL_, KEY, pick,
   ready: () => !!(URL_ && KEY),
   getDoc: async (col, id) => { const r = await q(`docs?col=eq.${enc(col)}&id=eq.${enc(id)}&select=id,data`); return r && r[0] ? r[0].data : null; },
   listCol: async (col, extra = "") => (await q(`docs?col=eq.${enc(col)}&select=id,data${extra}`)) || [],
