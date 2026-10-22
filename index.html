@@ -601,6 +601,7 @@ const loaded = {};
 let saveT = null, queue = Promise.resolve(), writeErr = false;
 function strip(o){ const x = Object.assign({}, o); delete x.id; return x; }
 function save(){ clearTimeout(saveT); saveT = setTimeout(flush, 600); }
+function flushNow(){ clearTimeout(saveT); flush(); return queue; }
 function flush(){
   saveT = null;
   if (mode === "local") { try { localStorage.setItem(LSKEY, JSON.stringify(S)); } catch(e) {} return; }
@@ -669,10 +670,10 @@ function applyChange(pl){
 const msgPage = (t, p, extra) => `<div class="center"><div class="wiz"><div class="row" style="gap:12px">${LOGO_FULL(30)}<span class="muted" style="font-weight:700">Sistema de conteúdo</span></div><div class="card"><h1>${t}</h1><p class="muted">${p}</p>${extra || ""}</div></div></div>`;
 function loginHTML(msg, forgot){
   const g = `<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>`;
-  if (forgot) return msgPage("Esqueci minha senha", "Digite o seu e-mail @alramarketing.com.br. Você recebe um link para criar uma senha nova.", `<form class="loginbox" id="forgotForm" novalidate>
+  if (forgot) return msgPage("Esqueci minha senha", "Digite o seu e-mail @alramarketing.com.br. Você recebe um link para criar uma senha nova. Se o e-mail não chegar, peça para a Diretoria redefinir a sua senha em Equipe.", `<form class="loginbox" id="forgotForm" novalidate>
     <div class="field"><label for="lgmail">E-mail</label><input class="inp" id="lgmail" type="email" autocomplete="email" placeholder="voce@alramarketing.com.br"></div>
     <button type="submit" class="btn primary">Enviar link</button>${msg ? `<div class="okbox">${msg}</div>` : ""}<button type="button" class="linkbtn" style="align-self:center" data-act="loginBack">Voltar para o login</button></form>`);
-  return msgPage("Entrar no sistema", "Use o e-mail @alramarketing.com.br cadastrado pela Diretoria e a sua senha. No primeiro acesso, você cria a senha pelo link que a Diretoria envia.", `<form class="loginbox" id="loginForm" novalidate>
+  return msgPage("Entrar no sistema", "Use o e-mail @alramarketing.com.br cadastrado pela Diretoria e a sua senha. No primeiro acesso, entre com a senha padrão que a Diretoria informou: o sistema pede para você criar a sua.", `<form class="loginbox" id="loginForm" novalidate>
     <div class="field"><label for="lgmail">E-mail</label><input class="inp" id="lgmail" type="email" autocomplete="username" placeholder="voce@alramarketing.com.br"></div>
     <div class="field"><label for="lgpass">Senha</label><input class="inp" id="lgpass" type="password" autocomplete="current-password"></div>
     ${msg ? `<div class="err">${msg}</div>` : ""}
@@ -682,7 +683,7 @@ function loginHTML(msg, forgot){
     <button type="button" class="gbtn" data-act="loginGoogle">${g} Entrar com a conta Google da Alra</button></form>`);
 }
 function setPwdHTML(msg){
-  return msgPage("Crie a sua senha", `Você está entrando como <b>${esc(authUser.email)}</b>. Crie uma senha com pelo menos 8 caracteres. É com ela e com o seu e-mail que você vai entrar daqui em diante.`, `<form class="loginbox" id="setPwdForm" novalidate>
+  return msgPage("Crie a sua senha", `Você está entrando como <b>${esc(authUser.email)}</b>. Para começar, troque a senha padrão por uma senha só sua, com pelo menos 8 caracteres. É com ela e com o seu e-mail que você vai entrar daqui em diante.`, `<form class="loginbox" id="setPwdForm" novalidate>
     <div class="field"><label for="np1">Nova senha</label><input class="inp" id="np1" type="password" autocomplete="new-password"></div>
     <div class="field"><label for="np2">Repita a senha</label><input class="inp" id="np2" type="password" autocomplete="new-password"></div>
     ${msg ? `<div class="err">${msg}</div>` : ""}<button type="submit" class="btn primary">Salvar senha e entrar</button></form>`);
@@ -702,6 +703,8 @@ async function boot(){
   if (!session) { mode = "login"; $("#app").innerHTML = loginHTML(); const er = decodeURIComponent(((location.hash + location.search).match(/error_description=([^&]+)/) || [])[1] || "").replace(/\+/g, " "); if (er) { history.replaceState(null, "", "/"); toast("O login não foi concluído: " + er); } return; }
   if (/access_token|refresh_token|code=/.test(location.hash + location.search)) history.replaceState(null, "", "/");
   authUser = session.user;
+  if ((authUser.app_metadata || {}).trocar_senha) mustSetPwd = true;
+  if (mustSetPwd) { mode = "login"; $("#app").innerHTML = setPwdHTML(); return; }
   const [m, a] = await Promise.all([sb.rpc("is_member"), sb.rpc("is_admin")]);
   isMember = !!m.data; isAdmin = !!a.data;
   if (!isMember) { $("#app").innerHTML = msgPage("E-mail sem acesso", `O e-mail <b>${esc(authUser.email)}</b> ainda não foi liberado. Peça para a Diretoria cadastrar esse e-mail em Equipe.`, `<div class="actions"><button type="button" class="btn" data-act="logout">Sair e usar outro e-mail</button></div>`); return; }
@@ -712,35 +715,39 @@ const blobUrl = id => /^[0-9a-f]{32}$/.test(String(id)) ? "/_blob/" + id : `${SB
 const emailOf = p => String((p || {}).email || "").trim().toLowerCase();
 function resolveMe(){
   if (!authUser || ui.meAuto) return;
-  const em = String(authUser.email || "").toLowerCase(), me = S.pessoas.find(p => emailOf(p) === em);
+  const em = String(authUser.email || "").toLowerCase(), me = S.pessoas.find(p => !p.excluido && emailOf(p) === em);
   let me2 = me;
   if (!me2 && isAdmin) {
     const meta = authUser.user_metadata || {}, nome = meta.full_name || meta.name || String(authUser.email).split("@")[0].replace(/[._]/g, " ").replace(/\b\w/g, ch => ch.toUpperCase());
-    me2 = {id: uid(), nome, cargo: "Diretoria", papeis: ["diretoria", "head"], email: em, unidade: (S.unidades[0] || {}).id || "", senhaDefinida: false};
+    me2 = {id: uid(), nome, cargo: "Diretoria", papeis: ["diretoria", "head"], email: em, unidade: (S.unidades[0] || {}).id || ""};
     S.pessoas.push(me2); save();
   }
   if (me2) { ui.me = me2.id; ui.meAuto = me2.id; if ((me2.ultimoAcesso || "").slice(0, 10) !== ymd(TODAY)) { me2.ultimoAcesso = nowIso(); save(); } }
 }
-async function invite(pid, how){
+async function acessoApi(body){
+  const {data:{session}} = await sb.auth.getSession();
+  const r = await fetch("/api/usuarios", {method:"POST", headers:{"content-type":"application/json", authorization:"Bearer " + ((session || {}).access_token || "")}, body: JSON.stringify(body)});
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || "Não foi possível concluir agora.");
+  return j;
+}
+async function liberarAcesso(pid, redefinir){
   const p = person(pid); if (!p || !p.email) return;
   ui.tmp.inviting = pid; render();
   try {
-    const {data:{session}} = await sb.auth.getSession();
-    const r = await fetch("/api/invite", {method:"POST", headers:{"content-type":"application/json", authorization:"Bearer " + session.access_token}, body: JSON.stringify({email: p.email, send: how === "email"})});
-    const j = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(j.error || "Não foi possível liberar agora.");
-    p.convite = {em: nowIso(), por: ui.me, via: how}; save();
-    if (how === "email") toast(`Convite enviado para ${p.email}. Ela cria a senha pelo link do e-mail.`);
-    else { ui.tmp = {inviteLink: j.link, invitePid: pid}; ui.modal = "inviteLink"; fillOverlay(); }
+    const j = await acessoApi({acao: redefinir ? "redefinir" : "liberar", email: p.email});
+    p.acesso = Object.assign({}, p.acesso, {padrao: true, liberadoEm: nowIso(), liberadoPor: ui.me}); save();
+    ui.tmp = {acc: {pid, email: j.email, senha: j.senha, redefinir}}; ui.modal = "inviteLink"; fillOverlay();
   } catch(e) { toast(e.message); }
   if (ui.tmp.inviting === pid) ui.tmp.inviting = null; render();
 }
 function inviteLinkHTML(){
-  const p = person(ui.tmp.invitePid) || {};
-  return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="ivT"><div class="m-head"><h2 id="ivT">Link de acesso de ${esc(p.nome || "")}</h2><button type="button" class="x" data-act="close" aria-label="Fechar">×</button></div><div class="m-body">
-    <p class="muted" style="font-size:12.5px">Mande este link para <b>${esc(p.email || "")}</b> por WhatsApp ou e-mail. Ao abrir, a pessoa cria a própria senha e já entra com o cargo e os papéis que você definiu. O link vale por 1 hora e só funciona uma vez; se expirar, gere outro.</p>
-    <textarea id="ivlink" rows="4" readonly class="mono">${esc(ui.tmp.inviteLink || "")}</textarea>
-    <div class="actions"><button type="button" class="btn primary" data-act="copyInvite">Copiar link</button></div></div></div>`;
+  const a = ui.tmp.acc || {}, p = person(a.pid) || {};
+  const txt = `Olá, ${String(p.nome || "").split(" ")[0]}! ${a.redefinir ? "Sua senha do Sistema Alra foi redefinida." : "Seu acesso ao Sistema Alra está liberado."}\nEntre em ${location.origin}\nE-mail: ${a.email}\nSenha inicial: ${a.senha}\nNo primeiro acesso o sistema pede para você criar a sua própria senha.`;
+  return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="ivT"><div class="m-head"><h2 id="ivT">${a.redefinir ? "Senha redefinida" : "Acesso liberado"} · ${esc(p.nome || "")}</h2><button type="button" class="x" data-act="close" aria-label="Fechar">×</button></div><div class="m-body">
+    <p class="muted" style="font-size:12.5px">${esc(p.nome || "A pessoa")} entra com <b>${esc(a.email || "")}</b> e a senha padrão <b class="mono">${esc(a.senha || "")}</b>. No primeiro acesso, o sistema obriga a troca por uma senha própria. Mande a mensagem abaixo por WhatsApp ou e-mail.</p>
+    <textarea id="ivlink" rows="6" readonly>${esc(txt)}</textarea>
+    <div class="actions"><button type="button" class="btn primary" data-act="copyInvite">Copiar mensagem</button></div></div></div>`;
 }
 /* ---------- portal do cliente (sem login) ---------- */
 async function loadPortal(first){
@@ -827,7 +834,8 @@ const setMe = v => { ui.me = v; seenNotifs = null; };
 const person = id => S.pessoas.find(p => p.id === id);
 const cli = id => S.clientes.find(c => c.id === id) || {id, nome:"Cliente removido", cor:"#999", squad:{}, escopo:blankEscopo(), unidade:""};
 const unidade = id => S.unidades.find(u => u.id === id) || {nome:"—"};
-const mName = id => id === "cliente" ? "Cliente" : (person(id) || {}).nome || "—";
+const mName = id => { if (id === "cliente") return "Cliente"; const p = person(id); return !p ? "—" : p.excluido ? `${p.nome} (EXCLUÍDO)` : p.nome; };
+const ativos = () => S.pessoas.filter(p => !p.excluido);
 const fromName = n => n.de === "sistema" ? "Sistema Alra" : n.de === "cliente" ? cli(n.clienteId).nome : mName(n.de);
 function initials(n){ return String(n || "?").trim().split(/\s+/).map(x => x[0]).slice(0,2).join("").toUpperCase(); }
 const AVC = ["#FF0092","#6747B5","#0F7A55","#3150B8","#9A5300","#C2283A","#0E7C86","#8A3FA0","#2F6FED","#E3741B"];
@@ -1030,7 +1038,7 @@ function buildBriefing(m, day){
   const units = isD ? S.unidades : isH ? S.unidades.filter(u => u.id === m.unidade) : [];
   units.forEach(u => {
     const cids = S.clientes.filter(c => c.unidade === u.id), ps = S.pecas.filter(p => inW(p) && cids.some(c => c.id === p.clienteId));
-    secoes.push({titulo:`${isD && S.unidades.length > 1 ? u.nome + " · " : ""}Equipe na semana`, itens: S.pessoas.filter(x => x.unidade === u.id && !(x.papeis || []).includes("diretoria")).map(x => { const l = ps.filter(p => p.status !== "publicado" && ((p.resp || {}).plan === x.id || (p.resp || {}).prod === x.id)); return {t:x.nome, sub:`${l.length} pautas na semana · ${l.filter(isLate).length} atrasadas`}; })});
+    secoes.push({titulo:`${isD && S.unidades.length > 1 ? u.nome + " · " : ""}Equipe na semana`, itens: ativos().filter(x => x.unidade === u.id && !(x.papeis || []).includes("diretoria")).map(x => { const l = ps.filter(p => p.status !== "publicado" && ((p.resp || {}).plan === x.id || (p.resp || {}).prod === x.id)); return {t:x.nome, sub:`${l.length} pautas na semana · ${l.filter(isLate).length} atrasadas`}; })});
     secoes.push({titulo:`${isD && S.unidades.length > 1 ? u.nome + " · " : ""}Clientes na semana`, itens: cids.map(c => { const l = ps.filter(p => p.clienteId === c.id); return {t:c.nome, sub:`${l.filter(p => !isTask(p)).length} publicações previstas · ${l.filter(p => p.status === "cliente").length} com o cliente · ${l.filter(isTask).length} tarefas`}; })});
   });
   secoes.forEach(s => { if (!s.itens.length) s.itens = [{t:"Nada planejado."}]; });
@@ -1047,9 +1055,9 @@ function autoReports(){
   S.unidades.forEach(u => {
     const id = "diario-" + d + "-" + u.id; if (has_(id)) return;
     S.relatorios.push(buildDaily(u, TODAY)); n++;
-    S.pessoas.filter(m => (m.papeis || []).includes("diretoria") || ((m.papeis || []).includes("head") && m.unidade === u.id)).forEach(m => sysNotify(m.id, `Resumo do dia de ${fmtD(TODAY,{day:"2-digit", month:"short"})} pronto: pendências, avanços e o que está travado.`, id));
+    ativos().filter(m => (m.papeis || []).includes("diretoria") || ((m.papeis || []).includes("head") && m.unidade === u.id)).forEach(m => sysNotify(m.id, `Resumo do dia de ${fmtD(TODAY,{day:"2-digit", month:"short"})} pronto: pendências, avanços e o que está travado.`, id));
   });
-  if (TODAY.getDay() === 1) S.pessoas.forEach(m => { const id = "briefing-" + d + "-" + m.id; if (has_(id)) return; S.relatorios.push(buildBriefing(m, TODAY)); n++; sysNotify(m.id, "Seu briefing da semana chegou: o que está pautado para você" + ((m.papeis || []).includes("head") || (m.papeis || []).includes("diretoria") ? " e para o time." : "."), id); });
+  if (TODAY.getDay() === 1) ativos().forEach(m => { const id = "briefing-" + d + "-" + m.id; if (has_(id)) return; S.relatorios.push(buildBriefing(m, TODAY)); n++; sysNotify(m.id, "Seu briefing da semana chegou: o que está pautado para você" + ((m.papeis || []).includes("head") || (m.papeis || []).includes("diretoria") ? " e para o time." : "."), id); });
   const cut = ymd(addDays(TODAY, -45));
   S.relatorios = S.relatorios.filter(r => r.tipo === "semanal" || r.data >= cut);
   if (n) save();
@@ -1104,7 +1112,7 @@ const sortP = a => a.slice().sort((x,y) => (x.data||"").localeCompare(y.data||""
 
 function atendimentoDe(c){
   const sq = ((c.squad || {}).atendimento || []);
-  return sq.length ? sq : S.pessoas.filter(m => m.unidade === c.unidade && (m.papeis || []).includes("atendimento")).map(m => m.id);
+  return sq.length ? sq : ativos().filter(m => m.unidade === c.unidade && (m.papeis || []).includes("atendimento")).map(m => m.id);
 }
 function stageNotify(p, st){
   const c = cli(p.clienteId), r = p.resp || {}, t = `${titleOf(p)} (${c.nome})`;
@@ -1307,11 +1315,11 @@ function personRow(p, i){
     <button type="button" class="x" style="width:30px;height:30px;margin-top:22px" data-act="wRm" data-i="${i}" aria-label="Remover ${esc(p.nome || "pessoa")}">×</button></div>`;
 }
 function linkSelfHTML(){
-  const ppl = S.pessoas.filter(p => !emailOf(p)).sort((a, b) => a.nome.localeCompare(b.nome));
+  const ppl = ativos().filter(p => !emailOf(p)).sort((a, b) => a.nome.localeCompare(b.nome));
   return msgPage("Quem é você?", `Entrou como <b>${esc(authUser.email)}</b>. Escolha o seu nome na equipe para ligar este e-mail a ele. Isso é feito uma vez só.`, ppl.length ? `<div class="people">${ppl.map(p => `<button type="button" class="person" data-linkself="${esc(p.id)}">${av(p.id, 36)}<span><b>${esc(p.nome)}</b><span>${esc(p.cargo)}</span></span></button>`).join("")}</div>` : `<p>Todas as pessoas da equipe já têm e-mail. Peça para a Diretoria adicionar você em Equipe.</p>`);
 }
 function pickHTML(){
-  const ppl = S.pessoas.slice().sort((a, b) => a.nome.localeCompare(b.nome));
+  const ppl = ativos().slice().sort((a, b) => a.nome.localeCompare(b.nome));
   return `<div class="center"><div class="wiz"><div class="spread"><div class="row" style="gap:12px">${LOGO_FULL(30)}<span class="muted" style="font-weight:700">Sistema de conteúdo</span></div>${syncTag()}</div>
     <div><h1>Quem está usando?</h1><p class="muted" style="margin-top:6px">Escolha seu nome. Esta escolha fica salva neste navegador.</p></div>
     <div class="people">${ppl.map(p => `<button type="button" class="person" data-login="${esc(p.id)}">${av(p.id, 36)}<span><b>${esc(p.nome)}</b><span>${esc(p.cargo)}</span></span></button>`).join("")}</div>
@@ -1339,8 +1347,7 @@ function render(){
   if (!S.cfg.setupDone) { app.innerHTML = wizardHTML(); fillOverlay(); return; }
   resolveMe();
   if (!ui.me || (!isClient() && !ME()) || (isClient() && !S.clientes.some(c => "cli:" + c.id === ui.me))) { ui.me = null; ui.meAuto = null; app.innerHTML = msgPage("Perfil não encontrado", `O e-mail <b>${esc(authUser.email)}</b> não está ligado a nenhuma pessoa da equipe. Peça para a Diretoria conferir o cadastro em Equipe.`, `<div class="actions"><button type="button" class="btn" data-act="logout">Sair</button></div>`); fillOverlay(); return; }
-  const meP = person(ui.meAuto), viaGoogle = ((authUser.app_metadata || {}).providers || []).includes("google");
-  if (mustSetPwd || (meP && meP.senhaDefinida !== true && !viaGoogle)) { app.innerHTML = setPwdHTML(); return; }
+  if (mustSetPwd) { app.innerHTML = setPwdHTML(); return; }
   if (seenNotifs === null) notifyIncoming();
   if (isClient() || ui.preview) { app.innerHTML = portalHTML(); fillOverlay(); return; }
   const m = ME(), nav = navItems();
@@ -1638,16 +1645,18 @@ function acessosHTML(c){
 
 /* ================= equipe ================= */
 function accessCell(p){
-  const dir = isDirReal(), busy = ui.tmp.inviting === p.id;
+  const dir = isDirReal(), busy = ui.tmp.inviting === p.id, a = p.acesso || {}, self = p.id === ui.meAuto;
   if (!p.email) return `<span class="flag soon">Sem acesso</span>${dir ? ` <button type="button" class="linkbtn" data-editp="${esc(p.id)}">Liberar</button>` : ""}`;
-  const st = p.senhaDefinida && p.ultimoAcesso ? `<span class="pill t-ok">Ativo</span> <span class="muted" style="font-size:11.5px">último acesso ${esc(fmtStamp(p.ultimoAcesso))}</span>` : p.convite ? `<span class="pill t-warn">Convite enviado</span> <span class="muted" style="font-size:11.5px">${esc(fmtStamp(p.convite.em))}</span>` : `<span class="pill t-prod">Aguardando convite</span>`;
-  return `<div style="display:flex;flex-direction:column;gap:4px"><span class="mono" style="font-size:12px">${esc(p.email)}</span><span>${st}</span>${dir && p.senhaDefinida !== true && p.id !== ui.meAuto ? `<span class="row" style="gap:4px">${busy ? `<span class="hint">Gerando…</span>` : `<button type="button" class="btn sm" data-act="inviteLink" data-pid="${esc(p.id)}">Copiar link de convite</button><button type="button" class="btn sm ghost" data-act="inviteEmail" data-pid="${esc(p.id)}">Enviar por e-mail</button>`}</span>` : ""}</div>`;
+  const semLogin = !a.liberadoEm && !a.senhaTrocadaEm && !self;
+  const st = semLogin ? `<span class="pill t-prod">Login não criado</span>` : a.padrao ? `<span class="pill t-warn">Senha padrão · aguardando 1º acesso</span>` : `<span class="pill t-ok">Ativo</span>${p.ultimoAcesso ? ` <span class="muted" style="font-size:11.5px">último acesso ${esc(fmtStamp(p.ultimoAcesso))}</span>` : ""}`;
+  const btn = !dir || self ? "" : busy ? `<span class="hint">Aguarde…</span>` : semLogin ? `<button type="button" class="btn sm" data-act="liberarAcesso" data-pid="${esc(p.id)}">Criar login</button>` : `<button type="button" class="btn sm ghost" data-act="redefinirSenha" data-pid="${esc(p.id)}">Redefinir senha</button>`;
+  return `<div style="display:flex;flex-direction:column;gap:4px"><span class="mono" style="font-size:12px">${esc(p.email)}</span><span>${st}</span>${btn ? `<span class="row" style="gap:4px">${btn}</span>` : ""}</div>`;
 }
 function equipeHTML(){
-  const units = unitScope(), ppl = S.pessoas.filter(p => units.includes(p.unidade));
+  const units = unitScope(), ppl = ativos().filter(p => units.includes(p.unidade));
   const tabs = `<div class="tabs" role="group"><button type="button" data-eqtab="pessoas" aria-pressed="${ui.eqTab === "pessoas"}">Pessoas</button><button type="button" data-eqtab="carga" aria-pressed="${ui.eqTab === "carga"}">Carga</button></div>`;
   let body;
-  if (ui.eqTab === "pessoas") body = `<div class="spread"><p class="muted" style="font-size:12.5px;max-width:80ch">Cada pessoa entra com o próprio e-mail @alramarketing.com.br e vê só o que o papel dela permite. ${isDirReal() ? "Para dar acesso: clique em Adicionar pessoa, preencha e-mail, cargo e papéis, e envie o convite. No primeiro acesso a pessoa cria a própria senha." : "Só a Diretoria cadastra pessoas e define cargos e papéis."}</p>${isDirReal() ? `<button type="button" class="btn primary" data-act="newPerson">+ Adicionar pessoa</button>` : ""}</div>
+  if (ui.eqTab === "pessoas") body = `<div class="spread"><p class="muted" style="font-size:12.5px;max-width:80ch">Cada pessoa entra com o próprio e-mail @alramarketing.com.br e vê só o que o papel dela permite. ${isDirReal() ? "Para dar acesso: clique em Adicionar pessoa e preencha e-mail, cargo e papéis. O login é criado com a senha padrão e, no primeiro acesso, a pessoa troca por uma senha própria. Em Editar você muda atribuições ou exclui o cadastro; as demandas da pessoa ficam no sistema marcadas como EXCLUÍDO." : "Só a Diretoria cadastra pessoas e define cargos e papéis."}</p>${isDirReal() ? `<button type="button" class="btn primary" data-act="newPerson">+ Adicionar pessoa</button>` : ""}</div>
     <div class="tbw"><table class="tb"><thead><tr><th>Pessoa</th><th>Cargo</th><th>Acesso</th><th>Papéis</th>${isDir() && S.unidades.length > 1 ? "<th>Unidade</th>" : ""}<th class="num">Clientes</th><th></th></tr></thead><tbody>${ppl.map(p => `<tr><td><span class="row" style="gap:8px;flex-wrap:nowrap">${av(p.id, 28)}<b>${esc(p.nome)}</b></span></td><td>${esc(p.cargo)}</td><td>${accessCell(p)}</td><td class="muted">${esc((p.papeis || []).map(x => PAPEIS[x]).join(", "))}</td>${isDir() && S.unidades.length > 1 ? `<td>${esc(unidade(p.unidade).nome)}</td>` : ""}<td class="num">${S.clientes.filter(c => Object.values(c.squad || {}).flat().includes(p.id)).length}</td><td>${isDirReal() ? `<button type="button" class="btn sm" data-editp="${esc(p.id)}">Editar</button>` : ""}</td></tr>`).join("")}</tbody></table></div>`;
   else {
     const vis = S.pecas.filter(canSee);
@@ -1665,7 +1674,7 @@ function unitStats(u){
   const mS = firstOfMonth(TODAY), mE = endOfMonth(TODAY), pk = S.pacotes.filter(x => ids.has(x.clienteId));
   const onTime = pk.filter(x => new Date(x.enviadoEm) <= addDays(deadlineOf(cli(x.clienteId), x.id.split("~")[1]), 1)).length;
   const apr = ps.filter(p => ["aprovado","publicado"].includes(p.status)), semAj = apr.filter(p => !(p.hist || []).some(h => h.acao === "ajuste")).length;
-  return {u, clientes:ids.size, pessoas:S.pessoas.filter(p => p.unidade === u.id).length, month:ps.filter(p => pd(p.data) >= mS && pd(p.data) <= mE).length, onTime:pk.length ? Math.round(onTime / pk.length * 100) : null, semAj:apr.length ? Math.round(semAj / apr.length * 100) : null, late:ps.filter(isLate).length};
+  return {u, clientes:ids.size, pessoas:ativos().filter(p => p.unidade === u.id).length, month:ps.filter(p => pd(p.data) >= mS && pd(p.data) <= mE).length, onTime:pk.length ? Math.round(onTime / pk.length * 100) : null, semAj:apr.length ? Math.round(semAj / apr.length * 100) : null, late:ps.filter(isLate).length};
 }
 function redeHTML(){
   const pct = v => v === null ? "—" : v + "%";
@@ -1683,7 +1692,7 @@ function drawerHTML(p){
   if (ui.idx >= ms.length) ui.idx = 0;
   const edT = canPlan(p) && ["pauta","producao","revisao"].includes(p.status), edB = canPlan(p) && ["pauta","producao","revisao","ajuste"].includes(p.status), dis = edB ? "" : "disabled";
   const edFiles = canProduce(p) && ["producao","ajuste","pauta","revisao"].includes(p.status) && !(p.status === "ajuste" && p.ajusteCom === "planejamento");
-  const unitPpl = S.pessoas.filter(m => m.unidade === c.unidade);
+  const unitPpl = ativos().filter(m => m.unidade === c.unidade);
   const opt = (list, sel) => `<option value="">Definir…</option>` + list.map(m => `<option value="${esc(m.id)}" ${sel === m.id ? "selected" : ""}>${esc(m.nome)}</option>`).join("");
   const top = `<div class="d-top"><button type="button" class="x" data-act="close" aria-label="Fechar">×</button><div class="ttl"><b>${esc(titleOf(p))}</b><span>${cliTag(c)} · ${esc(fmtD(p.data))} · ${esc(isTask(p) ? "Tarefa interna" : t.label)}</span></div>${pillP(p)}</div>`;
   const chat = `<div class="sec"><h3>Conversa interna</h3><div class="list">${(p.coments || []).map(m => `<div class="cm">${av(m.por, 26)}<div><div class="s">${esc(mName(m.por))} · ${esc(fmtStamp(m.em))}</div><div class="b">${esc(m.texto)}</div></div></div>`).join("") || `<span class="muted" style="font-size:12.5px">Nenhum comentário. O cliente não vê esta conversa.</span>`}</div>
@@ -1868,7 +1877,7 @@ function newPecaHTML(){
   const cid = u.cid || (ui.cf !== "todos" ? ui.cf : (vc[0] || {}).id), c = cli(cid), cat = u.cat || "conteudo";
   const opts = canaisDoCliente(c).filter(k => !["anuncio","tarefa"].includes(k));
   const lbl = k => CANAIS[k].grupo === "meta" ? "Instagram e Facebook · Feed" : CANAIS[k].grupo === "stories" ? "Instagram e Facebook · Stories" : CANAIS[k].label;
-  const people = S.pessoas.filter(m => m.unidade === c.unidade);
+  const people = ativos().filter(m => m.unidade === c.unidade);
   return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="npT"><div class="m-head"><h2 id="npT">Nova pauta</h2><button type="button" class="x" data-act="close" aria-label="Fechar">×</button></div>
     <form class="m-body" id="npForm" novalidate>
     <div class="field"><span class="lb">Tipo de pauta</span><div class="seg">${Object.entries(CATS).map(([k, l]) => `<label><input type="radio" name="npcat" value="${k}" ${cat === k ? "checked" : ""}> ${l}</label>`).join("")}</div></div>
@@ -1899,7 +1908,7 @@ function freqRow(path, label, f, canToggle){
 }
 function clientFormHTML(){
   const d = ui.tmp.cd, isNew = !d._exists, un = d.unidade, e = d.escopo;
-  const ppl = fn => S.pessoas.filter(m => m.unidade === un && fn(m.papeis || []));
+  const ppl = fn => ativos().filter(m => m.unidade === un && fn(m.papeis || []));
   const box = (key, list) => `<div class="seg">${list.map(m => `<label><input type="checkbox" data-sq="${key}" value="${esc(m.id)}" ${(d.squad[key] || []).includes(m.id) ? "checked" : ""}> ${esc(m.nome)}</label>`).join("") || `<span class="muted" style="font-size:12.5px">Ninguém com esse papel na unidade.</span>`}</div>`;
   const net = (path, label, on) => `<label><input type="checkbox" data-sc="${path}" ${on ? "checked" : ""}> ${label}</label>`;
   const meta = e.meta.instagram || e.meta.facebook;
@@ -1941,11 +1950,11 @@ function personFormHTML(){
   const d = ui.tmp.pd;
   return `<div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="pfT"><div class="m-head"><h2 id="pfT">${d._exists ? "Editar " + esc(d.nome) : "Adicionar pessoa"}</h2><button type="button" class="x" data-act="close" aria-label="Fechar">×</button></div>
     <form class="m-body" id="pfForm" novalidate><div class="form"><div class="field"><label for="pf-n">Nome</label><input class="inp" id="pf-n" data-pf="nome" value="${esc(d.nome)}"></div><div class="field"><label for="pf-c">Cargo</label><input class="inp" id="pf-c" data-pf="cargo" value="${esc(d.cargo)}"></div>
-    <div class="field full"><label for="pf-e">E-mail de acesso <span class="hint">· ${isDirReal() ? "só e-mails @alramarketing.com.br; depois de salvar, envie o link de acesso em Equipe" : "só a Diretoria altera"}</span></label><input class="inp" id="pf-e" type="email" data-pf="email" value="${esc(d.email || "")}" placeholder="nome@alramarketing.com.br" ${isDirReal() ? "" : "disabled"}></div>
+    <div class="field full"><label for="pf-e">E-mail de acesso <span class="hint">· ${isDirReal() ? "só e-mails @alramarketing.com.br; ao salvar, o login é criado com a senha padrão" : "só a Diretoria altera"}</span></label><input class="inp" id="pf-e" type="email" data-pf="email" value="${esc(d.email || "")}" placeholder="nome@alramarketing.com.br" ${isDirReal() ? "" : "disabled"}></div>
     ${isDir() && S.unidades.length > 1 ? `<div class="field"><label for="pf-u">Unidade</label><select class="inp" id="pf-u" data-pf="unidade">${S.unidades.map(u => `<option value="${u.id}" ${d.unidade === u.id ? "selected" : ""}>${esc(u.nome)}</option>`).join("")}</select></div>` : ""}
     <div class="field full"><span class="lb">Papéis</span><div class="seg">${Object.entries(PAPEIS).filter(([k]) => k !== "diretoria" || isDir()).map(([k, l]) => `<label><input type="checkbox" data-pfp value="${k}" ${(d.papeis || []).includes(k) ? "checked" : ""}> ${l}</label>`).join("")}</div></div></div>
     ${ui.tmp.err ? `<div class="err">${esc(ui.tmp.err)}</div>` : ""}<div class="actions"><button type="submit" class="btn primary">Salvar</button><button type="button" class="btn ghost" data-act="close">Cancelar</button></div>
-    ${d._exists && d.id !== ui.me ? `<div><button type="button" class="linkbtn" style="color:var(--danger)" data-act="delPerson">Remover da equipe</button></div>` : ""}</form></div>`;
+    ${d._exists && d.id !== ui.meAuto ? (ui.tmp.delp ? `<div class="box" style="border-color:var(--danger)"><b style="font-size:13px">Excluir o cadastro de ${esc(d.nome)}?</b><p class="muted" style="font-size:12.5px">O login é apagado e a pessoa perde o acesso na hora. As pautas, tarefas e captações dela continuam no sistema, marcadas como <b>${esc(d.nome)} (EXCLUÍDO)</b>, para você redistribuir.</p><div class="actions"><button type="button" class="btn" style="background:var(--danger);color:#fff;border-color:var(--danger)" data-act="delPersonGo">Excluir cadastro</button><button type="button" class="btn ghost" data-act="delPerson">Cancelar</button></div></div>` : `<div><button type="button" class="linkbtn" style="color:var(--danger)" data-act="delPerson">Excluir cadastro</button></div>`) : ""}</form></div>`;
 }
 function profileHTML(){
   const m = ME(), u = ui.tmp;
@@ -1959,7 +1968,7 @@ function unitFormHTML(){ return `<div class="modal" role="dialog" aria-modal="tr
 function capFormHTML(){
   const d = ui.tmp.cap, vc = visibleClients();
   const cand = S.pecas.filter(p => p.clienteId === d.clienteId && p.status !== "publicado" && pd(p.data) >= addDays(TODAY, -7)).sort((a, b) => (isVideoP(b) - isVideoP(a)) || a.data.localeCompare(b.data)).slice(0, 40);
-  const ppl = S.pessoas.filter(m => (m.papeis || []).some(r => ["audiovisual","design","head"].includes(r)));
+  const ppl = ativos().filter(m => (m.papeis || []).some(r => ["audiovisual","design","head"].includes(r)));
   return `<div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="capT"><div class="m-head"><h2 id="capT">${d._exists ? "Captação" : "Agendar captação"}</h2><button type="button" class="x" data-act="close" aria-label="Fechar">×</button></div>
     <form class="m-body" id="capForm" novalidate><div class="form">
       <div class="field"><label for="cp-c">Cliente</label><select class="inp" id="cp-c" data-cp="clienteId">${vc.map(c => `<option value="${c.id}" ${d.clienteId === c.id ? "selected" : ""}>${esc(c.nome)}</option>`).join("")}</select></div>
@@ -2041,7 +2050,7 @@ function nextPending(p, msg){
 }
 async function copyText(txt, ok){ try { await navigator.clipboard.writeText(txt); toast(ok); } catch(e) { toast("Não foi possível copiar automaticamente. Selecione o texto e use Ctrl+C."); } }
 function firstWith(role){
-  const ps = S.pessoas;
+  const ps = ativos();
   if (role === "head") return isHead() && !isClient() ? ui.me : (ps.find(p => (p.papeis || []).includes("head") && !(p.papeis || []).includes("diretoria")) || ps.find(p => (p.papeis || []).includes("head")) || ps[0] || {}).id;
   if (role === "prod") { const p = S.pecas.find(x => ["producao","ajuste"].includes(x.status) && x.resp && x.resp.prod); return p ? p.resp.prod : (ps.find(x => (x.papeis || []).some(r => ["design","audiovisual"].includes(r))) || {}).id; }
   if (role === "planejamento") { const c = S.clientes.find(x => ((x.squad || {}).planejamento || []).length); return c ? c.squad.planejamento[0] : (ps.find(x => (x.papeis || []).includes("planejamento")) || {}).id; }
@@ -2089,7 +2098,7 @@ async function wipeAll(){
 }
 function openCap(pre){
   const vc = visibleClients();
-  ui.tmp = {cap:Object.assign({clienteId:(ui.cf !== "todos" ? ui.cf : (vc[0] || {}).id), titulo:"", data:ymd(addDays(TODAY, 5)), inicio:"09:00", fim:"11:00", local:"", resp:(S.pessoas.find(m => (m.papeis || []).includes("audiovisual")) || {}).id || "", status:"A confirmar", roteiro:"", pecas:[]}, Object.fromEntries(Object.entries(pre || {}).filter(([, v]) => v)))};
+  ui.tmp = {cap:Object.assign({clienteId:(ui.cf !== "todos" ? ui.cf : (vc[0] || {}).id), titulo:"", data:ymd(addDays(TODAY, 5)), inicio:"09:00", fim:"11:00", local:"", resp:(ativos().find(m => (m.papeis || []).includes("audiovisual")) || {}).id || "", status:"A confirmar", roteiro:"", pecas:[]}, Object.fromEntries(Object.entries(pre || {}).filter(([, v]) => v)))};
   ui.modal = "cap"; fillOverlay();
 }
 
@@ -2165,7 +2174,16 @@ document.addEventListener("click", async ev => {
     case "delClient": u.delc = !u.delc; fillOverlay(); break;
     case "delClientGo": { const id = u.cd.id; ["pecas","captacoes","materiais","acessos","feedbacks","pacotes"].forEach(col => S[col] = S[col].filter(x => x.clienteId !== id)); S.clientes = S.clientes.filter(c => c.id !== id); save(); ui.modal = null; ui.tmp = {}; ui.view = "clientes"; toast("Cliente excluído"); render(); break; }
     case "newPerson": ui.tmp = {pd:{nome:"", cargo:"", papeis:[], unidade: isDir() && ui.unidade !== "todas" ? ui.unidade : ME().unidade}}; ui.modal = "person"; fillOverlay(); break;
-    case "delPerson": { const id = u.pd.id; S.pessoas = S.pessoas.filter(x => x.id !== id); S.clientes.forEach(c => Object.keys(c.squad || {}).forEach(k => c.squad[k] = c.squad[k].filter(x => x !== id))); save(); ui.modal = null; ui.tmp = {}; toast("Pessoa removida"); render(); break; }
+    case "delPerson": u.delp = !u.delp; fillOverlay(); break;
+    case "delPersonGo": { const p = person(u.pd.id); if (!p || !isDirReal() || p.id === ui.meAuto) break; (async () => {
+      let aviso = "";
+      if (p.email) { try { await acessoApi({acao:"excluir", email:p.email}); } catch(e) { aviso = " O login não foi apagado agora (" + e.message + "), mas o acesso já está bloqueado."; } }
+      Object.assign(p, {excluido:true, excluidoEm:nowIso(), excluidoPor:ui.me, emailAntigo:p.email || "", email:""});
+      S.clientes.forEach(c => Object.keys(c.squad || {}).forEach(k => c.squad[k] = (c.squad[k] || []).filter(x => x !== p.id)));
+      save(); ui.modal = null; ui.tmp = {}; toast(`Cadastro de ${p.nome} excluído. As demandas seguem no sistema marcadas como EXCLUÍDO.` + aviso); render();
+    })(); break; }
+    case "liberarAcesso": liberarAcesso(d.pid, false); break;
+    case "redefinirSenha": liberarAcesso(d.pid, true); break;
     case "newUnit": ui.modal = "unit"; fillOverlay(); break;
     case "wipe": ui.tmp = {wipe: !u.wipe}; render(); break;
     case "wipeGo": wipeAll(); break;
@@ -2195,9 +2213,7 @@ document.addEventListener("click", async ev => {
     case "bulkDeleteArch": ui.tmp.bulkDel = true; render(); break;
     case "bulkDeleteArchGo": { const n = deletePecas([...ui.sel], true); ui.sel = new Set(); ui.tmp = {}; toast(`${n} ${n === 1 ? "pauta excluída" : "pautas excluídas"} de vez`); render(); break; }
     case "archiveOne": { archivePecas([p.id]); ui.openId = null; ui.tmp = {}; toast("Pauta arquivada"); render(); break; }
-    case "inviteLink": invite(d.pid, "link"); break;
-    case "inviteEmail": invite(d.pid, "email"); break;
-    case "copyInvite": copyText(ui.tmp.inviteLink || "", "Link copiado"); break;
+    case "copyInvite": copyText(($("#ivlink") || {}).value || "", "Mensagem copiada"); break;
     case "logout": sb.auth.signOut().then(() => location.replace("/")); break;
     case "backFromClient": ui.me = ui.meAuto; ui.view = "inicio"; ui.openId = null; render(); break;
     case "portalGen": { const c = S.clientes.find(x => x.id === d.cid); if (!c) break; if (c.portalToken && !u.regen) { ui.tmp = {regen: true}; render(); break; } const b = crypto.getRandomValues(new Uint8Array(24)); c.portalToken = btoa(String.fromCharCode(...b)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); c.portalCriadoEm = nowIso(); save(); ui.tmp = {}; toast("Link de aprovação gerado. O link anterior parou de funcionar."); render(); break; }
@@ -2336,7 +2352,7 @@ document.addEventListener("submit", async ev => {
     const em = ($("#lgmail").value || "").trim().toLowerCase(), pw = $("#lgpass").value || "";
     if (!em || !pw) { $("#app").innerHTML = loginHTML("Preencha e-mail e senha."); return; }
     const {error} = await sb.auth.signInWithPassword({email: em, password: pw});
-    if (error) { $("#app").innerHTML = loginHTML(/confirm/i.test(error.message) ? "Este e-mail ainda não confirmou o convite. Abra o link que a Diretoria enviou." : "E-mail ou senha incorretos. Se é o seu primeiro acesso, use o link de convite."); const el = $("#lgmail"); if (el) el.value = em; return; }
+    if (error) { $("#app").innerHTML = loginHTML(/confirm/i.test(error.message) ? "Este login ainda não foi liberado. Fale com a Diretoria." : "E-mail ou senha incorretos. No primeiro acesso, use a senha padrão informada pela Diretoria."); const el = $("#lgmail"); if (el) el.value = em; return; }
     location.replace("/"); return;
   }
   if (id === "forgotForm") {
@@ -2350,11 +2366,9 @@ document.addEventListener("submit", async ev => {
     const fail = m => { if (id === "setPwdForm") $("#app").innerHTML = setPwdHTML(m); else { ui.tmp.pwdErr = m; fillOverlay(); } };
     if (a.length < 8) return fail("Use pelo menos 8 caracteres.");
     if (a !== b) return fail("As senhas não conferem.");
-    const {error} = await sb.auth.updateUser({password: a});
-    if (error) return fail(/same|different/i.test(error.message) ? "A nova senha precisa ser diferente da atual." : /weak|short/i.test(error.message) ? "Senha fraca. Misture letras e números." : "Não foi possível salvar a senha. Tente de novo.");
-    const me = person(ui.meAuto); if (me && me.senhaDefinida !== true) { me.senhaDefinida = true; save(); }
-    mustSetPwd = false; ui.modal = null; ui.tmp = {}; if (location.hash) history.replaceState(null, "", "/");
-    toast("Senha salva"); render(); return;
+    try { await acessoApi({acao:"trocar-senha", senha:a}); } catch(e) { return fail(e.message); }
+    if (id === "setPwdForm") { await sb.auth.refreshSession().catch(() => {}); location.replace("/"); return; }
+    ui.modal = null; ui.tmp = {}; toast("Senha salva"); render(); return;
   }
   if (id === "npForm") { const u = ui.tmp, cat = u.cat || "conteudo", c = cli($("#np-cli").value), data = $("#np-data").value; if (!data) { toast("Escolha a data."); return; }
     let tp, redes, briefing = {formatos:[]}, resp = {plan:((c.squad || {}).planejamento || []).includes(ui.me) || isHead() ? ui.me : (((c.squad || {}).planejamento || [])[0] || ui.me), prod:null};
@@ -2391,8 +2405,15 @@ document.addEventListener("submit", async ev => {
     save(); ui.modal = null; ui.tmp = {}; render(); return; }
   if (id === "pfForm") { if (!isDirReal()) { ui.tmp.err = "Só a Diretoria cadastra e altera pessoas."; fillOverlay(); return; } const x = ui.tmp.pd; x.nome = String(x.nome).trim(); x.email = String(x.email || "").trim().toLowerCase(); if (!x.nome) { ui.tmp.err = "Dê um nome."; fillOverlay(); return; } if (x.email && !/^[^@\s]+@alramarketing\.com\.br$/.test(x.email) && x.email !== (person(x.id) || {}).email) { ui.tmp.err = "Use um e-mail @alramarketing.com.br."; fillOverlay(); return; } if (!isDirReal() && x.email !== String((person(x.id) || {}).email || "").toLowerCase()) { ui.tmp.err = "Só a Diretoria altera e-mails de acesso."; fillOverlay(); return; } if (x.email && S.pessoas.some(y => y.id !== x.id && emailOf(y) === x.email)) { ui.tmp.err = "Este e-mail já está em outra pessoa."; fillOverlay(); return; } if (!(x.papeis || []).length) { ui.tmp.err = "Marque ao menos um papel."; fillOverlay(); return; } if (!x.email) { ui.tmp.err = "Preencha o e-mail @alramarketing.com.br: é ele que dá o acesso."; fillOverlay(); return; }
     const body = JSON.parse(JSON.stringify(x)); delete body._exists; delete body.err;
-    if (x._exists) { const i = S.pessoas.findIndex(y => y.id === x.id); S.pessoas[i] = Object.assign(S.pessoas[i], body); } else { body.id = uid(); S.pessoas.push(body); }
-    save(); ui.modal = null; ui.tmp = {}; toast("Equipe atualizada"); render(); return; }
+    let pid, antigo = "";
+    if (x._exists) { const i = S.pessoas.findIndex(y => y.id === x.id); antigo = emailOf(S.pessoas[i]); S.pessoas[i] = Object.assign(S.pessoas[i], body); pid = x.id; } else { body.id = uid(); S.pessoas.push(body); pid = body.id; }
+    save(); ui.modal = null; ui.tmp = {}; render();
+    const pp = person(pid), temLogin = !!(pp.acesso && (pp.acesso.liberadoEm || pp.acesso.senhaTrocadaEm));
+    if (pid === ui.meAuto) toast("Equipe atualizada");
+    else if (!temLogin) { await flushNow(); liberarAcesso(pid, false); }
+    else if (antigo && antigo !== pp.email) { try { await acessoApi({acao:"trocar-email", de:antigo, email:pp.email}); toast("E-mail de login atualizado para " + pp.email); } catch(e) { toast(e.message); } }
+    else toast("Equipe atualizada");
+    return; }
   if (id === "ufForm") { const n = $("#uf-n").value.trim(); if (!n) { toast("Dê um nome à unidade."); return; } S.unidades.push({id:uid(), nome:n, cidade:$("#uf-c").value.trim()}); save(); ui.modal = null; toast("Unidade criada"); render(); return; }
   if (id === "capForm") { const cp = ui.tmp.cap; cp.roteiro = $("#cp-o").value; if (!cp.clienteId || !cp.data) { toast("Escolha o cliente e a data."); return; } if (cp.fim && cp.inicio && cp.fim <= cp.inicio) { toast("O fim precisa ser depois do início."); return; }
     const body = JSON.parse(JSON.stringify(cp)); delete body._exists; if (!body.titulo) body.titulo = "Captação " + cli(cp.clienteId).nome;
