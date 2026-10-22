@@ -12,7 +12,7 @@ async function q(path, opts = {}) {
 }
 const enc = encodeURIComponent;
 module.exports = {
-  URL_, KEY, pick,
+  URL_, KEY, pick, q,
   ready: () => !!(URL_ && KEY),
   getDoc: async (col, id) => { const r = await q(`docs?col=eq.${enc(col)}&id=eq.${enc(id)}&select=id,data`); return r && r[0] ? r[0].data : null; },
   listCol: async (col, extra = "") => (await q(`docs?col=eq.${enc(col)}&select=id,data${extra}`)) || [],

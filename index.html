@@ -658,7 +658,7 @@ function applyChange(pl){
 }
 const msgPage = (t, p, extra) => `<div class="center"><div class="wiz"><div class="row" style="gap:12px">${LOGO_FULL(30)}<span class="muted" style="font-weight:700">Sistema de conteúdo</span></div><div class="card"><h1>${t}</h1><p class="muted">${p}</p>${extra || ""}</div></div></div>`;
 function loginHTML(sent){
-  return msgPage("Entrar no sistema", "Use o e-mail liberado pela Diretoria da Alra. Clientes não precisam entrar: eles aprovam pelo link que a Alra envia.", `
+  return msgPage("Entrar no sistema", "Use o seu e-mail @alramarketing.com.br. O primeiro acesso é liberado pela Diretoria. Clientes não precisam entrar: eles aprovam pelo link que a Alra envia.", `
     <div class="actions"><button type="button" class="btn primary" data-act="loginGoogle">Entrar com Google</button></div>
     <div class="field"><label for="lgmail">Ou receba um link de acesso por e-mail</label><div class="row" style="flex-wrap:nowrap"><input class="inp" id="lgmail" type="email" placeholder="voce@alramarketing.com.br" autocomplete="email"><button type="button" class="btn" data-act="loginEmail">Enviar link</button></div></div>
     ${sent ? `<div class="okbox">Link enviado para ${esc(sent)}. Abra o e-mail neste mesmo navegador.</div>` : ""}`);
@@ -687,7 +687,28 @@ const emailOf = p => String((p || {}).email || "").trim().toLowerCase();
 function resolveMe(){
   if (!authUser || ui.meAuto) return;
   const em = String(authUser.email || "").toLowerCase(), me = S.pessoas.find(p => emailOf(p) === em);
-  if (me) { ui.me = me.id; ui.meAuto = me.id; }
+  if (me) { ui.me = me.id; ui.meAuto = me.id; if ((me.ultimoAcesso || "").slice(0, 10) !== ymd(TODAY)) { me.ultimoAcesso = nowIso(); save(); } }
+}
+async function invite(pid, how){
+  const p = person(pid); if (!p || !p.email) return;
+  ui.tmp.inviting = pid; render();
+  try {
+    const {data:{session}} = await sb.auth.getSession();
+    const r = await fetch("/api/invite", {method:"POST", headers:{"content-type":"application/json", authorization:"Bearer " + session.access_token}, body: JSON.stringify({email: p.email, send: how === "email"})});
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || "Não foi possível liberar agora.");
+    p.convite = {em: nowIso(), por: ui.me, via: how}; save();
+    if (how === "email") toast(`Link de acesso enviado para ${p.email}`);
+    else { ui.tmp = {inviteLink: j.link, invitePid: pid}; ui.modal = "inviteLink"; fillOverlay(); }
+  } catch(e) { toast(e.message); }
+  if (ui.tmp.inviting === pid) ui.tmp.inviting = null; render();
+}
+function inviteLinkHTML(){
+  const p = person(ui.tmp.invitePid) || {};
+  return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="ivT"><div class="m-head"><h2 id="ivT">Link de acesso de ${esc(p.nome || "")}</h2><button type="button" class="x" data-act="close" aria-label="Fechar">×</button></div><div class="m-body">
+    <p class="muted" style="font-size:12.5px">Mande este link para <b>${esc(p.email || "")}</b> por WhatsApp ou e-mail. Ele vale por 1 hora e só funciona uma vez. Depois do primeiro acesso, a pessoa entra sozinha pela tela de login com o próprio e-mail.</p>
+    <textarea id="ivlink" rows="4" readonly class="mono">${esc(ui.tmp.inviteLink || "")}</textarea>
+    <div class="actions"><button type="button" class="btn primary" data-act="copyInvite">Copiar link</button></div></div></div>`;
 }
 /* ---------- portal do cliente (sem login) ---------- */
 async function loadPortal(first){
@@ -785,7 +806,7 @@ function av(id, size){
   return `<span class="av" style="background:${avColor(id)};${st}" title="${esc(n)}">${esc(initials(n))}</span>`;
 }
 const ME = () => person(ui.me);
-const isDirReal = () => { const m = person(ui.meAuto); return !!m && (m.papeis || []).includes("diretoria"); };
+const isDirReal = () => { const m = person(ui.meAuto); return isAdmin || (!!m && (m.papeis || []).includes("diretoria")); };
 const isClient = () => String(ui.me || "").startsWith("cli:");
 const has = r => { const m = ME(); return !!m && (m.papeis || []).includes(r); };
 const isDir = () => has("diretoria");
@@ -1271,7 +1292,7 @@ function render(){
     ${isDir() && S.unidades.length > 1 ? `<select class="unit" id="unitSel" aria-label="Unidade"><option value="todas" ${ui.unidade === "todas" ? "selected" : ""}>Todas as unidades</option>${S.unidades.map(u => `<option value="${u.id}" ${ui.unidade === u.id ? "selected" : ""}>${esc(u.nome)}</option>`).join("")}</select>` : ""}
     <nav class="navl" aria-label="Módulos"><span class="navsec">Trabalho</span>${nav.map(([k,l]) => (k === "clientes" ? `<span class="navsec">Gestão</span>` : "") + `<button type="button" data-view="${k}" ${ui.view === k || (k === "clientes" && ui.view === "hub") ? 'aria-current="page"' : ""}>${ico(k)}${l}${k === "inicio" && mine ? `<span class="ncnt">${mine}</span>` : ""}${k === "relatorios" && unreadRel ? `<span class="ncnt">${unreadRel}</span>` : ""}</button>`).join("")}</nav>
     <div class="mebox"><button type="button" class="mebtn" data-act="profile" title="Meu perfil">${av(m.id, 32)}<span style="min-width:0"><b>${esc(m.nome)}</b><span>Meu perfil e foto</span></span></button>
-      ${isDirReal() ? `<label for="asWho">Ver como (teste)</label><select id="asWho">`: `<select id="asWho" hidden>`}${S.unidades.map(u => `<optgroup label="${esc(u.nome)}">${S.pessoas.filter(p => p.unidade === u.id).map(p => opt(p.id, p.nome)).join("")}</optgroup>`).join("")}${S.clientes.length ? `<optgroup label="Ver como cliente">${S.clientes.map(c => opt("cli:" + c.id, c.nome)).join("")}</optgroup>` : ""}</select><button type="button" class="linkbtn" style="align-self:flex-start;color:var(--muted)" data-act="logout">Sair (${esc(authUser ? authUser.email : "")})</button></div>
+      <button type="button" class="linkbtn" style="align-self:flex-start;color:var(--muted)" data-act="logout">Sair (${esc(authUser ? authUser.email : "")})</button></div>
   </aside><main class="main">${(V[ui.view] || inicioHTML)()}</main></div>`;
   window.scrollTo(0, sc);
   fillOverlay();
@@ -1547,12 +1568,18 @@ function acessosHTML(c){
 }
 
 /* ================= equipe ================= */
+function accessCell(p){
+  const dir = isDirReal(), busy = ui.tmp.inviting === p.id;
+  if (!p.email) return `<span class="flag soon">Sem acesso</span>${dir ? ` <button type="button" class="linkbtn" data-editp="${esc(p.id)}">Liberar</button>` : ""}`;
+  const st = p.ultimoAcesso ? `<span class="pill t-ok">Ativo</span> <span class="muted" style="font-size:11.5px">último acesso ${esc(fmtStamp(p.ultimoAcesso))}</span>` : p.convite ? `<span class="pill t-warn">Convite enviado</span> <span class="muted" style="font-size:11.5px">${esc(fmtStamp(p.convite.em))}</span>` : `<span class="pill t-prod">Aguardando convite</span>`;
+  return `<div style="display:flex;flex-direction:column;gap:4px"><span class="mono" style="font-size:12px">${esc(p.email)}</span><span>${st}</span>${dir && !p.ultimoAcesso && p.id !== ui.meAuto ? `<span class="row" style="gap:4px">${busy ? `<span class="hint">Gerando…</span>` : `<button type="button" class="btn sm" data-act="inviteLink" data-pid="${esc(p.id)}">Copiar link de acesso</button><button type="button" class="btn sm ghost" data-act="inviteEmail" data-pid="${esc(p.id)}">Enviar por e-mail</button>`}</span>` : ""}</div>`;
+}
 function equipeHTML(){
   const units = unitScope(), ppl = S.pessoas.filter(p => units.includes(p.unidade));
   const tabs = `<div class="tabs" role="group"><button type="button" data-eqtab="pessoas" aria-pressed="${ui.eqTab === "pessoas"}">Pessoas</button><button type="button" data-eqtab="carga" aria-pressed="${ui.eqTab === "carga"}">Carga</button></div>`;
   let body;
-  if (ui.eqTab === "pessoas") body = `<div class="spread"><p class="muted" style="font-size:12.5px">Os papéis definem o que cada pessoa vê e faz. Heads veem tudo da unidade.</p><button type="button" class="btn primary" data-act="newPerson">+ Adicionar pessoa</button></div>
-    <div class="tbw"><table class="tb"><thead><tr><th>Pessoa</th><th>Cargo</th><th>E-mail de acesso</th><th>Papéis</th>${isDir() && S.unidades.length > 1 ? "<th>Unidade</th>" : ""}<th class="num">Clientes</th><th></th></tr></thead><tbody>${ppl.map(p => `<tr><td><span class="row" style="gap:8px;flex-wrap:nowrap">${av(p.id, 28)}<b>${esc(p.nome)}</b></span></td><td>${esc(p.cargo)}</td><td>${p.email ? esc(p.email) : `<span class="flag soon">Sem e-mail</span>`}</td><td class="muted">${esc((p.papeis || []).map(x => PAPEIS[x]).join(", "))}</td>${isDir() && S.unidades.length > 1 ? `<td>${esc(unidade(p.unidade).nome)}</td>` : ""}<td class="num">${S.clientes.filter(c => Object.values(c.squad || {}).flat().includes(p.id)).length}</td><td><button type="button" class="btn sm" data-editp="${esc(p.id)}">Editar</button></td></tr>`).join("")}</tbody></table></div>`;
+  if (ui.eqTab === "pessoas") body = `<div class="spread"><p class="muted" style="font-size:12.5px;max-width:80ch">Cada pessoa entra com o próprio e-mail @alramarketing.com.br e vê só o que o papel dela permite. ${isDirReal() ? "Para liberar alguém: cadastre o e-mail em Editar e depois envie o link de acesso." : "Só a Diretoria libera acessos."}</p><button type="button" class="btn primary" data-act="newPerson">+ Adicionar pessoa</button></div>
+    <div class="tbw"><table class="tb"><thead><tr><th>Pessoa</th><th>Cargo</th><th>Acesso</th><th>Papéis</th>${isDir() && S.unidades.length > 1 ? "<th>Unidade</th>" : ""}<th class="num">Clientes</th><th></th></tr></thead><tbody>${ppl.map(p => `<tr><td><span class="row" style="gap:8px;flex-wrap:nowrap">${av(p.id, 28)}<b>${esc(p.nome)}</b></span></td><td>${esc(p.cargo)}</td><td>${accessCell(p)}</td><td class="muted">${esc((p.papeis || []).map(x => PAPEIS[x]).join(", "))}</td>${isDir() && S.unidades.length > 1 ? `<td>${esc(unidade(p.unidade).nome)}</td>` : ""}<td class="num">${S.clientes.filter(c => Object.values(c.squad || {}).flat().includes(p.id)).length}</td><td><button type="button" class="btn sm" data-editp="${esc(p.id)}">Editar</button></td></tr>`).join("")}</tbody></table></div>`;
   else {
     const vis = S.pecas.filter(canSee);
     const data = ppl.filter(m => !(m.papeis || []).includes("diretoria")).map(m => { const now = vis.filter(p => owner(p) === m.id); return {m, now:now.length, late:now.filter(isLate).length, prod:vis.filter(p => (p.resp || {}).prod === m.id && ["producao","ajuste"].includes(p.status)).length, plan:vis.filter(p => (p.resp || {}).plan === m.id && ["pauta","revisao"].includes(p.status)).length}; });
@@ -1845,7 +1872,7 @@ function personFormHTML(){
   const d = ui.tmp.pd;
   return `<div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="pfT"><div class="m-head"><h2 id="pfT">${d._exists ? "Editar " + esc(d.nome) : "Adicionar pessoa"}</h2><button type="button" class="x" data-act="close" aria-label="Fechar">×</button></div>
     <form class="m-body" id="pfForm" novalidate><div class="form"><div class="field"><label for="pf-n">Nome</label><input class="inp" id="pf-n" data-pf="nome" value="${esc(d.nome)}"></div><div class="field"><label for="pf-c">Cargo</label><input class="inp" id="pf-c" data-pf="cargo" value="${esc(d.cargo)}"></div>
-    <div class="field full"><label for="pf-e">E-mail de acesso <span class="hint">· Gmail ou e-mail da Alra; só quem tem e-mail aqui consegue entrar</span></label><input class="inp" id="pf-e" type="email" data-pf="email" value="${esc(d.email || "")}"></div>
+    <div class="field full"><label for="pf-e">E-mail de acesso <span class="hint">· ${isDirReal() ? "só e-mails @alramarketing.com.br; depois de salvar, envie o link de acesso em Equipe" : "só a Diretoria altera"}</span></label><input class="inp" id="pf-e" type="email" data-pf="email" value="${esc(d.email || "")}" placeholder="nome@alramarketing.com.br" ${isDirReal() ? "" : "disabled"}></div>
     ${isDir() && S.unidades.length > 1 ? `<div class="field"><label for="pf-u">Unidade</label><select class="inp" id="pf-u" data-pf="unidade">${S.unidades.map(u => `<option value="${u.id}" ${d.unidade === u.id ? "selected" : ""}>${esc(u.nome)}</option>`).join("")}</select></div>` : ""}
     <div class="field full"><span class="lb">Papéis</span><div class="seg">${Object.entries(PAPEIS).filter(([k]) => k !== "diretoria" || isDir()).map(([k, l]) => `<label><input type="checkbox" data-pfp value="${k}" ${(d.papeis || []).includes(k) ? "checked" : ""}> ${l}</label>`).join("")}</div></div></div>
     ${ui.tmp.err ? `<div class="err">${esc(ui.tmp.err)}</div>` : ""}<div class="actions"><button type="submit" class="btn primary">Salvar</button><button type="button" class="btn ghost" data-act="close">Cancelar</button></div>
@@ -1918,7 +1945,7 @@ function msgHTML(){
 /* ================= overlay ================= */
 function fillOverlay(){
   const ov = $("#overlay"), m = ui.modal;
-  const M = {newPeca:newPecaHTML, gen:genHTML, client:clientFormHTML, person:personFormHTML, profile:profileHTML, unit:unitFormHTML, cap:capFormHTML, mat:matFormHTML, acc:accFormHTML, vaultSetup:() => vaultFormHTML("setup"), vaultUnlock:() => vaultFormHTML("unlock"), accHist:accHistHTML, notifs:notifsHTML, approveAll:approveAllHTML, day:() => dayAllHTML(ui.tmp.day, ui.tmp.kind), msg:msgHTML};
+  const M = {newPeca:newPecaHTML, gen:genHTML, client:clientFormHTML, person:personFormHTML, profile:profileHTML, unit:unitFormHTML, cap:capFormHTML, mat:matFormHTML, acc:accFormHTML, vaultSetup:() => vaultFormHTML("setup"), vaultUnlock:() => vaultFormHTML("unlock"), accHist:accHistHTML, notifs:notifsHTML, approveAll:approveAllHTML, inviteLink:inviteLinkHTML, day:() => dayAllHTML(ui.tmp.day, ui.tmp.kind), msg:msgHTML};
   let html = "";
   if (m && M[m]) html = M[m]();
   else if (ui.openId) {
@@ -1953,9 +1980,9 @@ function firstWith(role){
 function goStep(i){
   const g = STEPS[i].go;
   ui.openId = null; ui.modal = null; ui.tmp = {}; ui.preview = false;
-  if (g.role === "cliente") { const p = S.pecas.find(x => x.status === "cliente"); const cid = p ? p.clienteId : (S.clientes[0] || {}).id; if (!cid) return; if (!isDirReal()) { ui.preview = true; ui.portal = cid; ui.month = p ? firstOfMonth(pd(p.data)) : firstOfMonth(TODAY); render(); return; } setMe("cli:" + cid); ui.month = p ? firstOfMonth(pd(p.data)) : firstOfMonth(TODAY); ui.pweek = null; ui.ntab = null; render(); return; }
+  if (g.role === "cliente") { const p = S.pecas.find(x => x.status === "cliente"); const cid = p ? p.clienteId : (S.clientes[0] || {}).id; if (!cid) return; { ui.preview = true; ui.portal = cid; ui.month = p ? firstOfMonth(pd(p.data)) : firstOfMonth(TODAY); render(); return; } setMe("cli:" + cid); ui.month = p ? firstOfMonth(pd(p.data)) : firstOfMonth(TODAY); ui.pweek = null; ui.ntab = null; render(); return; }
   const who = firstWith(g.role);
-  if (who && who !== ui.me && isDirReal()) { setMe(who); toast(`Você agora está como ${mName(who)}`); }
+  if (who && who !== ui.me) toast(`Esta etapa é feita por ${mName(who)}, com o login dela.`);
   ui.view = g.view || "inicio"; ui.sf = g.sf || "minha"; ui.cf = "todos";
   render(); window.scrollTo(0, 0);
   if (g.act === "newClient") openClientForm();
@@ -2083,7 +2110,10 @@ document.addEventListener("click", async ev => {
     case "sendNotif": { const ids = u.ntf || []; if (!ids.length) { toast("Marque quem deve ser notificado."); break; } const msg = (u.ntfText || "").trim(); notify(ids, msg ? `${titleOf(p)}: ${msg}` : `Pediu sua atenção em "${titleOf(p)}"`, p); p.hist.push(entry("notificou", {texto: ids.map(mName).join(", ") + (msg ? ` · ${msg}` : "")})); u.ntf = []; u.ntfText = ""; save(); fillOverlay(); toast("Notificação enviada"); break; }
     case "toggleDel": u.del = !u.del; fillOverlay(); break;
     case "loginGoogle": sb.auth.signInWithOAuth({provider:"google", options:{redirectTo: location.origin}}).then(r => { if (r.error) toast("Login com Google ainda não está ativo. Use o link por e-mail."); }); break;
-    case "loginEmail": { const em = (($("#lgmail") || {}).value || "").trim(); if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { toast("Digite um e-mail válido."); break; } sb.auth.signInWithOtp({email: em, options:{emailRedirectTo: location.origin, shouldCreateUser: true}}).then(r => { if (r.error) toast(/rate/i.test(r.error.message) ? "Muitos pedidos seguidos. Espere alguns minutos." : "Não foi possível enviar o link."); else $("#app").innerHTML = loginHTML(em); }); break; }
+    case "loginEmail": { const em = (($("#lgmail") || {}).value || "").trim(); if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { toast("Digite um e-mail válido."); break; } sb.auth.signInWithOtp({email: em, options:{emailRedirectTo: location.origin, shouldCreateUser: false}}).then(r => { if (r.error) toast(/rate/i.test(r.error.message) ? "Muitos pedidos seguidos. Espere alguns minutos." : /signup|not allowed|not found/i.test(r.error.message) ? "Este e-mail ainda não foi liberado. Peça o acesso à Diretoria." : "Não foi possível enviar o link."); else $("#app").innerHTML = loginHTML(em); }); break; }
+    case "inviteLink": invite(d.pid, "link"); break;
+    case "inviteEmail": invite(d.pid, "email"); break;
+    case "copyInvite": copyText(ui.tmp.inviteLink || "", "Link copiado"); break;
     case "logout": sb.auth.signOut().then(() => location.replace("/")); break;
     case "backFromClient": ui.me = ui.meAuto; ui.view = "inicio"; ui.openId = null; render(); break;
     case "portalGen": { const c = S.clientes.find(x => x.id === d.cid); if (!c) break; if (c.portalToken && !u.regen) { ui.tmp = {regen: true}; render(); break; } const b = crypto.getRandomValues(new Uint8Array(24)); c.portalToken = btoa(String.fromCharCode(...b)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); c.portalCriadoEm = nowIso(); save(); ui.tmp = {}; toast("Link de aprovação gerado. O link anterior parou de funcionar."); render(); break; }
@@ -2250,7 +2280,7 @@ document.addEventListener("submit", async ev => {
     if (cd._exists) { const i = S.clientes.findIndex(c => c.id === cd.id); S.clientes[i] = Object.assign(S.clientes[i], body); toast("Cliente salvo"); }
     else { body.id = uid(); body.inicio = ymd(TODAY); S.clientes.push(body); ui.hubId = body.id; ui.view = "hub"; ui.hubTab = "cadastro"; toast("Cliente cadastrado. Próximo passo: gerar as pautas no calendário."); }
     save(); ui.modal = null; ui.tmp = {}; render(); return; }
-  if (id === "pfForm") { const x = ui.tmp.pd; x.nome = String(x.nome).trim(); x.email = String(x.email || "").trim().toLowerCase(); if (!x.nome) { ui.tmp.err = "Dê um nome."; fillOverlay(); return; } if (x.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(x.email)) { ui.tmp.err = "E-mail inválido."; fillOverlay(); return; } if (x.email && S.pessoas.some(y => y.id !== x.id && emailOf(y) === x.email)) { ui.tmp.err = "Este e-mail já está em outra pessoa."; fillOverlay(); return; } if (!(x.papeis || []).length) { ui.tmp.err = "Marque ao menos um papel."; fillOverlay(); return; }
+  if (id === "pfForm") { const x = ui.tmp.pd; x.nome = String(x.nome).trim(); x.email = String(x.email || "").trim().toLowerCase(); if (!x.nome) { ui.tmp.err = "Dê um nome."; fillOverlay(); return; } if (x.email && !/^[^@\s]+@alramarketing\.com\.br$/.test(x.email) && x.email !== (person(x.id) || {}).email) { ui.tmp.err = "Use um e-mail @alramarketing.com.br."; fillOverlay(); return; } if (!isDirReal() && x.email !== String((person(x.id) || {}).email || "").toLowerCase()) { ui.tmp.err = "Só a Diretoria altera e-mails de acesso."; fillOverlay(); return; } if (x.email && S.pessoas.some(y => y.id !== x.id && emailOf(y) === x.email)) { ui.tmp.err = "Este e-mail já está em outra pessoa."; fillOverlay(); return; } if (!(x.papeis || []).length) { ui.tmp.err = "Marque ao menos um papel."; fillOverlay(); return; }
     const body = JSON.parse(JSON.stringify(x)); delete body._exists; delete body.err;
     if (x._exists) { const i = S.pessoas.findIndex(y => y.id === x.id); S.pessoas[i] = Object.assign(S.pessoas[i], body); } else { body.id = uid(); S.pessoas.push(body); }
     save(); ui.modal = null; ui.tmp = {}; toast("Equipe atualizada"); render(); return; }
