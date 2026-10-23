@@ -1,15 +1,37 @@
 {
   "rewrites": [
-    { "source": "/c/:token", "destination": "/index.html" }
+    {
+      "source": "/c/:token",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/o/:token",
+      "destination": "/index.html"
+    }
   ],
   "headers": [
-    { "source": "/(.*)", "headers": [
-      { "key": "X-Frame-Options", "value": "DENY" },
-      { "key": "Referrer-Policy", "value": "no-referrer" },
-      { "key": "X-Content-Type-Options", "value": "nosniff" }
-    ] }
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        }
+      ]
+    }
   ],
   "crons": [
-    { "path": "/api/cron-backup", "schedule": "47 0 * * 1" }
+    {
+      "path": "/api/cron-backup",
+      "schedule": "47 0 * * 1"
+    }
   ]
 }

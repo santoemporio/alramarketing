@@ -451,6 +451,22 @@ textarea:disabled,.inp:disabled{background:var(--surface);opacity:1;border-color
 .scopebar{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--raised)}
 .scopebar .eyebrow{margin-right:4px}
 .sc{font-size:12px;background:var(--surface);border-radius:99px;padding:3px 10px;color:var(--muted)}.sc b{color:var(--fg)}
+.obhead{gap:12px}.obprog{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.obprog .bar{flex:1;min-width:160px;height:8px}.obprog .bar i{background:var(--accent)}
+.oblink{display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:12px}.oblink .lb{width:100%}
+.obwrap{display:grid;grid-template-columns:240px minmax(0,1fr);gap:16px;align-items:start}
+.obnav{display:flex;flex-direction:column;gap:4px;position:sticky;top:16px}
+.obnav button{display:grid;grid-template-columns:24px minmax(0,1fr) auto;align-items:center;gap:8px;text-align:left;padding:9px 10px;border-radius:10px;border:1px solid transparent;background:none;cursor:pointer;font-size:13px;font-weight:600;color:var(--ink)}
+.obnav button:hover{background:var(--surface)}.obnav button[aria-current="true"]{background:var(--raised);border-color:var(--line);box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.obn{width:24px;height:24px;border-radius:99px;display:grid;place-items:center;font-size:11.5px;font-weight:800;background:var(--surface);color:var(--muted)}
+.obnav button[aria-current="true"] .obn{background:var(--accent);color:#fff}.obnav button.done .obn{background:var(--ok);color:#fff}.obc{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.obsec{gap:14px}.obqs{display:flex;flex-direction:column;gap:18px}
+.obq{display:flex;flex-direction:column;gap:6px;padding-left:12px;border-left:3px solid var(--line)}.obq.ok{border-left-color:var(--ok)}
+.obq label{font-weight:700;font-size:14px;line-height:1.4}.obh{font-size:12.5px;color:var(--muted);line-height:1.4}
+.obq textarea{width:100%;min-height:84px;field-sizing:content;max-height:420px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--raised);font-size:14px;line-height:1.6}
+.obq textarea:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+.obans{display:flex;flex-direction:column;gap:3px;padding-top:8px;border-top:1px solid var(--line)}.obql{font-size:12px;font-weight:700;color:var(--muted)}
+.obpub{max-width:1040px;margin:0 auto;padding:24px 16px 64px;display:flex;flex-direction:column;gap:16px}
+@media (max-width:820px){.obwrap{grid-template-columns:1fr}.obnav{position:static;flex-direction:row;overflow-x:auto;gap:6px;padding-bottom:4px}.obnav button{grid-template-columns:24px auto;white-space:nowrap}.obnav .obc{display:none}}
 .ori{gap:6px}.oritxt{white-space:pre-wrap;font-size:13.5px;line-height:1.6}
 .dfiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
 .dfile{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:8px 10px;text-decoration:none;color:inherit;min-width:0}
@@ -627,7 +643,7 @@ function enqueue(fn){
   });
 }
 let rT = null;
-function renderSoon(){ clearTimeout(rT); rT = setTimeout(() => { const a = document.activeElement; const typing = a && /TEXTAREA|INPUT/.test(a.tagName) && $("#overlay").contains(a); if (typing) return; render(); }, 150); }
+function renderSoon(){ clearTimeout(rT); rT = setTimeout(() => { const a = document.activeElement; const typing = a && /TEXTAREA|INPUT/.test(a.tagName) && $("#overlay").contains(a); if (typing) return; if (a && a.dataset && a.dataset.ob) { rT = setTimeout(renderSoon, 2000); return; } render(); }, 150); }
 /* ---------- Supabase ---------- */
 let mustSetPwd = false, sb = null, authUser = null, SB_URL = "", isMember = false, isAdmin = false, portalToken = "";
 async function dbSet(col, id, data){ const {error} = await sb.from("docs").upsert({col, id, data, updated_at: new Date().toISOString()}); if (error) throw error; }
@@ -691,6 +707,8 @@ function setPwdHTML(msg){
 async function boot(){
   const tk = location.pathname.match(/^\/c\/([A-Za-z0-9_-]{16,})/);
   if (tk) { portalToken = tk[1]; mode = "portal"; return loadPortal(true); }
+  const tb = location.pathname.match(/^\/o\/([A-Za-z0-9_-]{16,})/);
+  if (tb) { briefingToken = tb[1]; mode = "briefing"; return loadBriefing(); }
   let cfg;
   try { cfg = await fetch("/api/config").then(r => r.json()); } catch(e) {}
   if (!cfg || !cfg.url || !window.supabase) { $("#app").innerHTML = msgPage("Sistema fora do ar", "A conexão com o banco não está configurada. Avise a Diretoria."); return; }
@@ -1200,13 +1218,91 @@ function infoHTML(c, edit){
       <p class="muted" style="font-size:12.5px">Logos, manual e elementos gráficos ficam em Materiais, logo abaixo (categorias Logo, Manual da marca e Elemento gráfico). Aqui ficam as especificações.</p>${editing ? criEdit : criView}</section>
     <section class="card"><div class="spread"><div><h2>Materiais</h2><p class="muted" style="font-size:12.5px">Arquivos pesados ficam no Drive; aqui vai o link.</p></div>${edit ? `<button type="button" class="btn sm" data-act="newMat">+ Adicionar material</button>` : ""}</div>${mats.length ? `<div class="grid3">${mats.map(x => `<a class="mat" href="${esc(x.link || "#")}" target="_blank" rel="noopener"><div class="mt" style="background:color-mix(in srgb,${esc(c.cor)} 16%,#fff);color:color-mix(in srgb,${esc(c.cor)} 75%,#241C29)">${esc(x.categoria)}</div><div class="mi"><b>${esc(x.nome)}</b><span class="muted">${esc(x.origem)}</span></div></a>`).join("")}</div>` : `<p class="muted" style="font-size:12.5px">Nenhum material ainda.</p>`}</section>`;
 }
-const ORIENT = [["sobre","Sobre o cliente"],["publico","Público"],["tom","Tom de voz"],["diferenciais","Diferenciais"],["concorrentes","Concorrentes e referências"],["naofazer","O que não fazer"],["datas","Datas importantes"]];
+/* ================= onboarding do cliente (aba Orientações) ================= */
+// [chave, pergunta, dica, essencial]
+const BRIEF = [
+  {k:"objetivo", t:"Objetivo e metas", d:"Por que o cliente chegou até a Alra e onde quer chegar.", q:[
+    ["objetivo", "Por que vocês buscam um planejamento de marketing? Qual é o objetivo principal?", "Ex.: lotar a agenda, lançar um serviço, abrir unidade, profissionalizar o Instagram.", 1],
+    ["metas", "Onde vocês querem chegar nos próximos 6 a 12 meses? Quais são as metas, sem falar de faturamento?", "Ex.: ser referência em X na região, dobrar o público qualificado, abrir nova unidade.", 1]]},
+  {k:"marca", t:"Marca e posicionamento", d:"Quem a marca é hoje e quem ela quer ser.", q:[
+    ["sobre", "Conte a história da empresa: como começou, há quanto tempo existe e onde atende.", "", 0],
+    ["mvv", "Vocês têm missão, visão e valores definidos? Comente sobre eles.", "Se não estiver formalizado, anote o que guia as decisões do dono.", 1],
+    ["vistoHoje", "Como vocês são vistos hoje na região?", "O que os clientes comentam, avaliações no Google, a fama no bairro ou na cidade.", 1],
+    ["vistoDesejo", "Como vocês desejam ser vistos?", "Três palavras que a marca quer que as pessoas associem a ela.", 1],
+    ["tom", "Como a marca fala? Qual é o tom de voz?", "Mais formal ou próximo? Usa humor, gírias, emojis? Trata por você ou por tu?", 0],
+    ["naofazer", "O que vocês NÃO querem no marketing? O que acham feio e não querem associar à imagem?", "Cores, tipos de foto, assuntos, expressões, comparações, trends.", 1]]},
+  {k:"oferta", t:"Oferta e vendas", d:"O que se vende, o que precisa vender mais e o que trava a venda.", q:[
+    ["servicos", "Quais são os produtos e serviços? Descreva tudo o que vocês vendem.", "Nome, para quem é, como funciona e o ticket médio de cada um.", 1],
+    ["foco", "O que vocês querem vender mais? O que dá mais retorno financeiro?", "", 1],
+    ["diferenciais", "Por que o cliente deveria escolher vocês e não o concorrente?", "Diferenciais reais: estrutura, método, atendimento, localização, garantia.", 0],
+    ["objecoes", "Quando as pessoas perguntam e não compram, quais objeções elas dão?", "Preço, distância, horário, falta de tempo, \"vou pensar\", desconfiança.", 1],
+    ["aquisicao", "Hoje, o que mais traz clientes novos para vocês?", "Indicação, Instagram, Google, passagem na frente, parcerias, eventos.", 1]]},
+  {k:"publico", t:"Público", d:"Para quem a comunicação fala.", q:[
+    ["publico", "Quem é o cliente ideal de vocês?", "Idade, gênero, cidade ou bairro, renda, profissão, rotina, dores, desejos e onde se informa.", 1]]},
+  {k:"mercado", t:"Mercado e referências", d:"Com quem a marca compete e em quem se inspira.", q:[
+    ["concorrentes", "Quem são os concorrentes hoje?", "Nome e @ de cada um, e o que eles fazem bem ou mal.", 1],
+    ["inspiracoes", "Quais empresas ou organizações inspiram vocês?", "Podem ser de outros segmentos. Coloque o @ ou o site.", 1],
+    ["parceiros", "Quem são os parceiros do negócio? Influenciadores ou parceiros-chave?", "", 1],
+    ["fontes", "Quais fontes confiáveis podemos usar como base para o conteúdo?", "Entidades, profissionais, estudos, sites, livros.", 1]]},
+  {k:"historico", t:"Histórico de marketing", d:"O que já foi tentado, para não repetir erro.", q:[
+    ["testado", "Quais estratégias de marketing vocês já testaram? O que fizeram e qual foi o resultado?", "Anúncios, influenciadores, sorteios, panfletos, outra agência.", 1]]},
+  {k:"fecho", t:"Datas e observações", d:"Calendário da marca e o que faltou perguntar.", q:[
+    ["datas", "Quais datas são importantes para a marca?", "Aniversário da empresa, sazonalidade, eventos, campanhas fixas do ano.", 0],
+    ["extra", "Algum outro ponto que precisamos saber?", "", 0]]}
+];
+const BRIEF_Q = BRIEF.flatMap(s => s.q), BRIEF_ESS = BRIEF_Q.filter(q => q[3]);
+const filledOb = (o, k) => !!String((o || {})[k] || "").trim();
+const obCount = (o, qs) => qs.filter(q => filledOb(o, q[0])).length;
+function obFieldsHTML(sec, o, attr){
+  return sec.q.map(([k, l, h, e]) => `<div class="obq${filledOb(o, k) ? " ok" : ""}"><label for="ob-${k}">${esc(l)}${e ? "" : ` <span class="hint">· opcional</span>`}</label>${h ? `<span class="obh">${esc(h)}</span>` : ""}<textarea id="ob-${k}" ${attr}="${k}" rows="3" placeholder="Escreva aqui…">${esc((o || {})[k] || "")}</textarea></div>`).join("");
+}
+function obNavHTML(o, cur, attr){
+  return `<nav class="obnav" aria-label="Seções">${BRIEF.map((s, i) => { const n = obCount(o, s.q), done = n === s.q.length; return `<button type="button" ${attr}="${i}" aria-current="${i === cur}" class="${done ? "done" : ""}"><span class="obn">${done ? "✓" : i + 1}</span><span>${esc(s.t)}</span><span class="obc">${n}/${s.q.length}</span></button>`; }).join("")}</nav>`;
+}
+function obProgress(o){ const e = obCount(o, BRIEF_ESS); return {e, pct: Math.round(e / BRIEF_ESS.length * 100), all: obCount(o, BRIEF_Q)}; }
 function orientHTML(c, edit){
-  const o = c.orientacoes || {}, editing = ui.tmp.ori && ui.tmp.oriCid === c.id;
-  if (editing) return `<section class="card"><h2>Orientações</h2><div class="form">${ORIENT.map(([k, l]) => `<div class="field full"><label for="or-${k}">${l}</label><textarea id="or-${k}" data-ori="${k}" rows="${k === "sobre" ? 4 : 3}">${esc(ui.tmp.ori[k] || "")}</textarea></div>`).join("")}</div><div class="actions"><button type="button" class="btn primary" data-act="saveOri">Salvar orientações</button><button type="button" class="btn ghost" data-act="cancelEdit">Cancelar</button></div></section>`;
-  const filled = ORIENT.filter(([k]) => String(o[k] || "").trim()).length;
-  return `<div class="spread"><p class="muted" style="font-size:12.5px">O que toda a equipe precisa saber antes de pautar, criar ou falar com o cliente.${filled < ORIENT.length ? ` ${ORIENT.length - filled} de ${ORIENT.length} campos ainda vazios.` : ""}</p>${edit ? `<button type="button" class="btn sm primary" data-act="editOri" data-cid="${esc(c.id)}">Editar orientações</button>` : ""}</div>
-    <div class="grid2">${ORIENT.map(([k, l]) => `<div class="card ori"><div class="eyebrow">${l}</div>${String(o[k] || "").trim() ? `<div class="oritxt">${esc(o[k])}</div>` : `<span class="muted" style="font-size:12.5px">Não preenchido.</span>`}</div>`).join("")}</div>`;
+  const o = c.orientacoes || {}, ob = c.onboarding || {}, pr = obProgress(o);
+  const url = c.briefingToken ? location.origin + "/o/" + c.briefingToken : "";
+  const who = ob.cliente && ob.cliente.atualizadoEm ? `${ob.enviadoEm ? "Enviado" : "Respondendo"} pelo cliente (${esc(ob.cliente.nome)}) · ${esc(fmtStamp(ob.cliente.atualizadoEm))}` : ob.atualizadoEm ? `Atualizado por ${esc(mName(ob.por))} · ${esc(fmtStamp(ob.atualizadoEm))}` : "Ainda não preenchido";
+  const head = `<section class="card obhead"><div class="spread"><div><div class="eyebrow">Onboarding do cliente</div><h2>Checklist de iniciação do planejamento</h2><p class="muted" style="font-size:12.5px">Tudo o que a equipe precisa saber antes de pautar, criar ou falar com ${esc(c.nome)}. Preencha junto com o cliente na imersão ou envie o link para ele responder.</p></div>
+    ${edit && ui.oriMode !== "fill" ? `<button type="button" class="btn primary" data-act="obFill" data-sec="${Math.max(0, BRIEF.findIndex(s => obCount(o, s.q) < s.q.length))}">${pr.all ? "Continuar preenchendo" : "Preencher na imersão"}</button>` : ""}</div>
+    <div class="obprog"><div class="bar"><i style="width:${pr.pct}%;background:${pr.pct === 100 ? "var(--ok)" : "var(--accent)"}"></i></div><span class="tnum"><b>${pr.e}/${BRIEF_ESS.length}</b> essenciais · ${pr.all}/${BRIEF_Q.length} respostas</span><span class="muted" style="font-size:12px">${who}</span></div>
+    ${edit ? `<div class="oblink"><span class="lb">Link para o cliente responder</span>${url ? `<span class="note mono" style="font-size:12px;flex:1;min-width:200px">${esc(url)}</span><button type="button" class="btn sm primary" data-act="obCopy" data-cid="${esc(c.id)}">Copiar link</button><a class="btn sm" href="${esc(url)}" target="_blank" rel="noopener">Abrir</a><button type="button" class="btn sm ghost" data-act="obGen" data-cid="${esc(c.id)}">${ui.tmp.obRegen ? "Confirmar: novo link" : "Gerar novo link"}</button>` : `<span class="muted" style="font-size:12.5px;flex:1">O cliente responde sem login. As respostas aparecem aqui na hora.</span><button type="button" class="btn sm" data-act="obGen" data-cid="${esc(c.id)}">Criar link</button>`}</div>` : ""}</section>`;
+  if (ui.oriMode === "fill" && edit) {
+    const i = Math.min(Math.max(+ui.oriSec || 0, 0), BRIEF.length - 1), s = BRIEF[i];
+    return `${head}<div class="obwrap">${obNavHTML(o, i, "data-obsec")}<section class="card obsec"><div class="spread"><div><div class="eyebrow">Etapa ${i + 1} de ${BRIEF.length}</div><h2>${esc(s.t)}</h2><p class="muted" style="font-size:12.5px">${esc(s.d)}</p></div><span class="hint" id="obsaved">Salvo automaticamente</span></div>
+      <div class="obqs">${obFieldsHTML(s, o, "data-ob")}</div>
+      <div class="actions">${i > 0 ? `<button type="button" class="btn" data-obsec="${i - 1}">Voltar</button>` : ""}${i < BRIEF.length - 1 ? `<button type="button" class="btn primary" data-obsec="${i + 1}">Próxima: ${esc(BRIEF[i + 1].t)}</button>` : ""}<button type="button" class="btn ghost" data-act="obDone">Concluir e ver resumo</button></div></section></div>`;
+  }
+  return `${head}<div class="grid2">${BRIEF.map((s, i) => { const n = obCount(o, s.q); return `<section class="card ori"><div class="spread"><h2 style="font-size:15px">${esc(s.t)}</h2><span class="row" style="gap:6px"><span class="pill ${n === s.q.length ? "t-ok" : n ? "t-warn" : "t-prod"}">${n}/${s.q.length}</span>${edit ? `<button type="button" class="btn sm ghost" data-act="obFill" data-sec="${i}">Editar</button>` : ""}</span></div>
+    ${s.q.map(([k, l]) => `<div class="obans"><div class="obql">${esc(l)}</div>${filledOb(o, k) ? `<div class="oritxt">${esc(o[k])}</div>` : `<span class="muted" style="font-size:12.5px">Sem resposta.</span>`}</div>`).join("")}</section>`; }).join("")}</div>`;
+}
+/* página pública do onboarding (/o/<token>) */
+let briefingToken = "", obPub = null, obT = null, obPend = {};
+async function loadBriefing(){
+  try { const r = await fetch("/api/briefing?t=" + encodeURIComponent(briefingToken)); const j = await r.json(); if (!r.ok) throw new Error(j.error); obPub = j; }
+  catch(e) { $("#app").innerHTML = msgPage("Link indisponível", "Este link de onboarding não existe mais ou foi trocado. Peça o link atualizado para a equipe da Alra."); return; }
+  ui.obSec = 0; render();
+}
+const obNome = () => { try { return (localStorage.getItem("alra-portal-nome") || "").trim(); } catch(e) { return (ui.pnome || "").trim(); } };
+function obSave(final){
+  clearTimeout(obT); const nome = obNome() || (ui.pnome || "").trim(); if (!nome) return Promise.resolve(false);
+  const respostas = obPend; obPend = {}; const el = $("#obsaved"); if (el) el.textContent = "Salvando…";
+  return fetch("/api/briefing", {method:"POST", headers:{"content-type":"application/json"}, body: JSON.stringify({t: briefingToken, nome, respostas, concluir: !!final})})
+    .then(async r => { const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "Não foi possível salvar."); const e2 = $("#obsaved"); if (e2) e2.textContent = "Salvo"; return true; })
+    .catch(e => { Object.assign(obPend, respostas, obPend); toast(e.message + " Verifique a conexão; suas respostas continuam na tela."); const e2 = $("#obsaved"); if (e2) e2.textContent = "Não salvo"; return false; });
+}
+function briefingPubHTML(){
+  const c = obPub.cliente, o = obPub.respostas || {}, pr = obProgress(o), nome = obNome() || (ui.pnome || "");
+  if (ui.obThanks) return msgPage("Respostas enviadas. Obrigado!", `A equipe da ${esc(obPub.rede || "Alra")} já recebeu o onboarding de <b>${esc(c.nome)}</b>. Se lembrar de algo, é só abrir este link de novo e completar.`, `<div class="actions"><button type="button" class="btn" data-act="obBack">Revisar respostas</button></div>`);
+  const i = Math.min(Math.max(+ui.obSec || 0, 0), BRIEF.length - 1), s = BRIEF[i], last = i === BRIEF.length - 1;
+  return `<div class="obpub"><header class="spread">${LOGO_FULL(28)}<span class="muted" style="font-size:12.5px;font-weight:700">Onboarding · ${esc(c.nome)}</span></header>
+    <section class="card"><h1 style="font-size:22px">Vamos conhecer a sua marca</h1><p class="muted">Estas respostas são a base do planejamento de marketing. Responda com calma e com as suas palavras: quanto mais detalhe, melhor. Tudo é salvo automaticamente e você pode voltar a este link quando quiser.</p>
+      <div class="field"><label for="pnome">Seu nome</label><input class="inp" id="pnome" value="${esc(nome)}" placeholder="Quem está respondendo" autocomplete="name"></div>
+      <div class="obprog"><div class="bar"><i style="width:${pr.pct}%"></i></div><span class="tnum"><b>${pr.e}/${BRIEF_ESS.length}</b> respostas essenciais</span></div></section>
+    <div class="obwrap">${obNavHTML(o, i, "data-obpsec")}<section class="card obsec"><div class="spread"><div><div class="eyebrow">Etapa ${i + 1} de ${BRIEF.length}</div><h2>${esc(s.t)}</h2></div><span class="hint" id="obsaved"></span></div>
+      <div class="obqs">${obFieldsHTML(s, o, "data-obp")}</div>
+      <div class="actions">${i > 0 ? `<button type="button" class="btn" data-obpsec="${i - 1}">Voltar</button>` : ""}${!last ? `<button type="button" class="btn primary" data-obpsec="${i + 1}">Próxima etapa</button>` : `<button type="button" class="btn primary" data-act="obSend">Enviar respostas</button>`}</div></section></div></div>`;
 }
 function portalLinkHTML(c){
   const can = canEditClient(c), url = c.portalToken ? location.origin + "/c/" + c.portalToken : "";
@@ -1344,6 +1440,7 @@ function render(){
   const app = $("#app");
   if (mode === "loading" || mode === "login") return;
   if (mode === "portal") { app.innerHTML = portalHTML(); fillOverlay(); return; }
+  if (mode === "briefing") { if (obPub) app.innerHTML = briefingPubHTML(); return; }
   if (!S.cfg.setupDone) { app.innerHTML = wizardHTML(); fillOverlay(); return; }
   resolveMe();
   if (!ui.me || (!isClient() && !ME()) || (isClient() && !S.clientes.some(c => "cli:" + c.id === ui.me))) { ui.me = null; ui.meAuto = null; app.innerHTML = msgPage("Perfil não encontrado", `O e-mail <b>${esc(authUser.email)}</b> não está ligado a nenhuma pessoa da equipe. Peça para a Diretoria conferir o cadastro em Equipe.`, `<div class="actions"><button type="button" class="btn" data-act="logout">Sair</button></div>`); fillOverlay(); return; }
@@ -2103,9 +2200,11 @@ function openCap(pre){
 }
 
 document.addEventListener("click", async ev => {
-  const t = ev.target.closest("[data-view],[data-go],[data-cf],[data-sf],[data-tf],[data-open],[data-act],[data-idx],[data-newday],[data-newcap],[data-dayall],[data-hub],[data-htab],[data-eqtab],[data-ntab],[data-week],[data-copy],[data-pub],[data-cap],[data-unit],[data-step],[data-login],[data-editp],[data-dashst],[data-acc],[data-accopy],[data-notif],[data-mv],[data-rmf],[data-pubday],[data-rel],[data-relf],[data-catf],[data-linkself],[data-selp],[data-selcol]");
+  const t = ev.target.closest("[data-obsec],[data-obpsec],[data-view],[data-go],[data-cf],[data-sf],[data-tf],[data-open],[data-act],[data-idx],[data-newday],[data-newcap],[data-dayall],[data-hub],[data-htab],[data-eqtab],[data-ntab],[data-week],[data-copy],[data-pub],[data-cap],[data-unit],[data-step],[data-login],[data-editp],[data-dashst],[data-acc],[data-accopy],[data-notif],[data-mv],[data-rmf],[data-pubday],[data-rel],[data-relf],[data-catf],[data-linkself],[data-selp],[data-selcol]");
   if (!t) return;
   const d = t.dataset;
+  if (d.obsec !== undefined) { flushNow(); ui.oriMode = "fill"; ui.oriSec = +d.obsec; render(); const sec = document.querySelector(".obsec"); if (sec) { sec.scrollIntoView({block:"start", behavior:"smooth"}); const el = sec.querySelector("textarea"); if (el) el.focus({preventScroll:true}); } return; }
+  if (d.obpsec !== undefined) { if (Object.keys(obPend).length) obSave(false); ui.obSec = +d.obpsec; render(); const sec = document.querySelector(".obsec"); if (sec) sec.scrollIntoView({block:"start", behavior:"smooth"}); return; }
   if (d.linkself) { const p = person(d.linkself); if (p && authUser) { p.email = String(authUser.email).toLowerCase(); save(); ui.me = p.id; ui.meAuto = p.id; render(); } return; }
   if (d.login) { setMe(d.login); ui.view = "inicio"; ui.unidade = "todas"; ui.cf = "todos"; ui.sf = "minha"; ui.month = firstOfMonth(TODAY); ui.ntab = null; if (isClient()) { const p = S.pecas.find(x => x.clienteId === d.login.slice(4) && x.status === "cliente"); if (p) ui.month = firstOfMonth(pd(p.data)); } render(); return; }
   if (d.view) { ui.view = d.view; ui.openId = null; render(); window.scrollTo(0,0); return; }
@@ -2127,7 +2226,7 @@ document.addEventListener("click", async ev => {
   if (d.newday) { ui.tmp = {data:d.newday}; ui.modal = "newPeca"; fillOverlay(); return; }
   if (d.newcap) { openCap({data:d.newcap}); return; }
   if (d.dayall) { ui.tmp = {day:d.dayall, kind:d.kind}; ui.modal = "day"; fillOverlay(); return; }
-  if (d.hub) { ui.hubId = d.hub; ui.hubTab = "geral"; ui.tmp = {}; ui.dashSt = null; ui.view = "hub"; render(); window.scrollTo(0,0); return; }
+  if (d.hub) { ui.hubId = d.hub; ui.hubTab = "geral"; ui.oriMode = null; ui.tmp = {}; ui.dashSt = null; ui.view = "hub"; render(); window.scrollTo(0,0); return; }
   if (d.htab) { ui.hubTab = d.htab; ui.tmp = {}; if (d.htab === "info") watchDrive(cli(ui.hubId)); render(); return; }
   if (d.eqtab) { ui.eqTab = d.eqtab; render(); return; }
   if (d.ntab) { ui.ntab = d.ntab; render(); return; }
@@ -2232,8 +2331,12 @@ document.addEventListener("click", async ev => {
     case "driveSearch": { const c = cli(d.cid), q = (($("#drvq") || {}).value || "").trim(); if (!q || !mcpApi) break; ui.tmp.dsearch = {cid:c.id, q, busy:true}; render();
       mcpApi.callTool(DRIVE, "search_files", {query:`mimeType = 'application/vnd.google-apps.folder' and title contains '${q.replace(/\\/g, "").replace(/'/g, "\\'")}'`, pageSize:10, excludeContentSnippets:true}).then(r => { ui.tmp.dsearch = {cid:c.id, q, res:((r.payload || {}).files || [])}; render(); }).catch(e => { ui.tmp.dsearch = {cid:c.id, q, err:driveErr(e)}; render(); }); break; }
     case "saveDriveRoot": { const url = ($("#driveRoot") || {}).value || "", id = folderIdOf(url); if (url && !id) { toast("Cole o link de uma pasta do Google Drive."); break; } S.cfg.drive = id ? {id, url: url.trim()} : {}; save(); toast(id ? "Pasta raiz do Drive salva" : "Pasta raiz removida"); render(); break; }
-    case "editOri": { const c = cli(d.cid); ui.tmp = {ori: Object.assign({}, c.orientacoes || {}), oriCid:c.id}; render(); break; }
-    case "saveOri": { const c = S.clientes.find(x => x.id === ui.tmp.oriCid); if (c) { c.orientacoes = ui.tmp.ori; save(); toast("Orientações salvas"); } ui.tmp = {}; render(); break; }
+    case "obFill": ui.oriMode = "fill"; ui.oriSec = +d.sec || 0; render(); { const el = document.querySelector(".obsec textarea"); if (el) el.focus(); } break;
+    case "obDone": ui.oriMode = null; flushNow(); render(); window.scrollTo(0, 0); break;
+    case "obGen": { const c = S.clientes.find(x => x.id === d.cid); if (!c) break; if (c.briefingToken && !u.obRegen) { ui.tmp = {obRegen: true}; render(); break; } const b = crypto.getRandomValues(new Uint8Array(24)); c.briefingToken = btoa(String.fromCharCode(...b)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); save(); ui.tmp = {}; toast(u.obRegen ? "Novo link criado. O anterior parou de funcionar." : "Link de onboarding criado. Copie e envie ao cliente."); render(); break; }
+    case "obCopy": { const c = cli(d.cid); copyText(location.origin + "/o/" + c.briefingToken, "Link do onboarding copiado"); break; }
+    case "obSend": { if (!(obNome() || (ui.pnome || "").trim())) { toast("Escreva seu nome no topo antes de enviar."); const el = $("#pnome"); if (el) el.focus(); break; } obSave(true).then(ok => { if (ok) { ui.obThanks = true; render(); window.scrollTo(0, 0); } }); break; }
+    case "obBack": ui.obThanks = false; render(); break;
     case "editCri": { const c = cli(d.cid), cr = JSON.parse(JSON.stringify(c.criacao || {})); cr.cores = cr.cores && cr.cores.length ? cr.cores : [{nome:"Principal", hex:""}, {nome:"Secundária", hex:""}]; cr.tipografia = Object.assign({titulo:{}, texto:{}}, cr.tipografia || {}); ui.tmp = {cri:cr, criCid:c.id}; render(); break; }
     case "addCor": ui.tmp.cri.cores.push({nome:"Cor de apoio", hex:""}); render(); break;
     case "rmCor": ui.tmp.cri.cores.splice(+d.i, 1); render(); break;
@@ -2271,12 +2374,13 @@ document.addEventListener("input", ev => {
     if (t.id === "f-leg") { const n = [...t.value].length, el = $("#capcount"); if (el) { el.textContent = `${n.toLocaleString("pt-BR")} / 2.200 caracteres`; el.className = "tnum" + (n > 2200 ? " over" : ""); } }
     return; }
   if (t.id === "f-drive" && p) { p.drive = t.value.trim(); save(); return; }
-  if (t.dataset.ori && ui.tmp.ori) { ui.tmp.ori[t.dataset.ori] = t.value; return; }
+  if (t.dataset.ob) { const c = S.clientes.find(x => x.id === ui.hubId); if (!c) return; c.orientacoes = c.orientacoes || {}; c.orientacoes[t.dataset.ob] = t.value; c.onboarding = Object.assign({}, c.onboarding, {atualizadoEm: nowIso(), por: ui.me}); t.closest(".obq").classList.toggle("ok", !!t.value.trim()); save(); const el = $("#obsaved"); if (el) el.textContent = "Salvando…"; clearTimeout(ui.obSavedT); ui.obSavedT = setTimeout(() => { const e2 = $("#obsaved"); if (e2) e2.textContent = "Salvo automaticamente"; }, 1200); return; }
+  if (t.dataset.obp && obPub) { obPub.respostas = obPub.respostas || {}; obPub.respostas[t.dataset.obp] = t.value; obPend[t.dataset.obp] = t.value; t.closest(".obq").classList.toggle("ok", !!t.value.trim()); if (!(obNome() || (ui.pnome || "").trim())) { const el = $("#obsaved"); if (el) el.textContent = "Escreva seu nome no topo para salvar"; return; } clearTimeout(obT); obT = setTimeout(() => obSave(false), 1200); return; }
   if (t.dataset.cri && ui.tmp.cri) { setPath(ui.tmp.cri, t.dataset.cri, t.value); const m = t.dataset.cri.match(/^cores\.(\d+)\.hex$/); if (m) { const el = document.getElementById("rgb" + m[1]); if (el) el.textContent = validHex(t.value) ? hexRgb(t.value) : "RGB automático"; } return; }
   if (t.id === "f-corpo") { const el = $("#wcount"); if (el) { const n = t.value.trim().split(/\s+/).filter(Boolean).length; el.textContent = `${n} ${n === 1 ? "palavra" : "palavras"}`; } }
   if (t.id === "np-tit") { ui.tmp.tit = t.value; return; }
   if (t.id === "drvlink") { ui.tmp.drvLink = t.value; return; }
-  if (t.id === "pnome") { ui.pnome = t.value; try { localStorage.setItem("alra-portal-nome", t.value.trim()); } catch(e) {} return; }
+  if (t.id === "pnome") { ui.pnome = t.value; try { localStorage.setItem("alra-portal-nome", t.value.trim()); } catch(e) {} if (mode === "briefing" && Object.keys(obPend).length) { clearTimeout(obT); obT = setTimeout(() => obSave(false), 1200); } return; }
   const map = {backtxt:"backText", regtxt:"regText", adjtxt:"adjText", aatxt:"aaText", dnote:"dnote", cmtxt:"cm", ntftxt:"ntfText"};
   if (map[t.id]) { ui.tmp[map[t.id]] = t.value; return; }
   if (ui.tmp.cd) { if (t.dataset.cf && t.tagName !== "SELECT") ui.tmp.cd[t.dataset.cf] = t.value; if (t.dataset.cfc) ui.tmp.cd.contato[t.dataset.cfc] = t.value; if (t.dataset.sc && t.type === "text") setPath(ui.tmp.cd.escopo, t.dataset.sc, t.value); }
