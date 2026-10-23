@@ -467,6 +467,11 @@ textarea:disabled,.inp:disabled{background:var(--surface);opacity:1;border-color
 .obans{display:flex;flex-direction:column;gap:3px;padding-top:8px;border-top:1px solid var(--line)}.obql{font-size:12px;font-weight:700;color:var(--muted)}
 .obpub{max-width:1040px;margin:0 auto;padding:24px 16px 64px;display:flex;flex-direction:column;gap:16px}
 @media (max-width:820px){.obwrap{grid-template-columns:1fr}.obnav{position:static;flex-direction:row;overflow-x:auto;gap:6px;padding-bottom:4px}.obnav button{grid-template-columns:24px auto;white-space:nowrap}.obnav .obc{display:none}}
+.cropui{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+.cropbox{position:relative;overflow:hidden;border-radius:14px;background:#1d1720;touch-action:none;cursor:grab;user-select:none;max-width:100%}.cropbox.drag{cursor:grabbing}.cropbox:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.cropbox img{position:absolute;max-width:none;pointer-events:none;user-select:none}
+.cropbox::after{content:"";position:absolute;inset:0;border-radius:50%;box-shadow:0 0 0 999px rgba(20,14,24,.55);outline:2px solid rgba(255,255,255,.85);outline-offset:-2px;pointer-events:none}
+.cropz{display:flex;align-items:center;gap:10px;width:280px}.cropz input{flex:1;accent-color:var(--accent)}.cropz span{font-weight:800;color:var(--muted);width:12px}
 .ori{gap:6px}.oritxt{white-space:pre-wrap;font-size:13.5px;line-height:1.6}
 .dfiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
 .dfile{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:8px 10px;text-decoration:none;color:inherit;min-width:0}
@@ -2053,10 +2058,40 @@ function personFormHTML(){
     ${ui.tmp.err ? `<div class="err">${esc(ui.tmp.err)}</div>` : ""}<div class="actions"><button type="submit" class="btn primary">Salvar</button><button type="button" class="btn ghost" data-act="close">Cancelar</button></div>
     ${d._exists && d.id !== ui.meAuto ? (ui.tmp.delp ? `<div class="box" style="border-color:var(--danger)"><b style="font-size:13px">Excluir o cadastro de ${esc(d.nome)}?</b><p class="muted" style="font-size:12.5px">O login é apagado e a pessoa perde o acesso na hora. As pautas, tarefas e captações dela continuam no sistema, marcadas como <b>${esc(d.nome)} (EXCLUÍDO)</b>, para você redistribuir.</p><div class="actions"><button type="button" class="btn" style="background:var(--danger);color:#fff;border-color:var(--danger)" data-act="delPersonGo">Excluir cadastro</button><button type="button" class="btn ghost" data-act="delPerson">Cancelar</button></div></div>` : `<div><button type="button" class="linkbtn" style="color:var(--danger)" data-act="delPerson">Excluir cadastro</button></div>`) : ""}</form></div>`;
 }
+/* ---------- recorte da foto de perfil ---------- */
+const CROP_B = 280;
+function cropHTML(c){
+  const s = c.s0 * c.zoom;
+  return `<div class="cropui"><b style="font-size:14px">Ajuste a sua foto</b><span class="hint">Arraste para posicionar e use o controle para aproximar. O que ficar dentro do círculo é a sua foto.</span>
+    <div class="cropbox" id="cropbox" tabindex="0" style="width:${CROP_B}px;height:${CROP_B}px"><img id="cropimg" src="${esc(c.url)}" alt="" draggable="false" style="left:${c.x}px;top:${c.y}px;width:${c.w * s}px;height:${c.h * s}px"></div>
+    <label class="cropz"><span aria-hidden="true">−</span><input type="range" id="cropzoom" min="1" max="4" step="0.01" value="${c.zoom}" aria-label="Aproximar"><span aria-hidden="true">+</span></label>
+    ${ui.tmp.progress ? `<span class="hint" style="color:var(--accent-fg);font-weight:700">${esc(ui.tmp.progress)}</span>` : `<div class="actions" style="justify-content:center"><button type="button" class="btn primary" data-act="cropSave">Salvar foto</button><button type="button" class="btn ghost" data-act="cropCancel">Cancelar</button></div>`}</div>`;
+}
+function cropClamp(c){ const s = c.s0 * c.zoom; c.x = Math.min(0, Math.max(CROP_B - c.w * s, c.x)); c.y = Math.min(0, Math.max(CROP_B - c.h * s, c.y)); }
+function cropPaint(){ const c = ui.tmp.crop, el = $("#cropimg"); if (!c || !el) return; cropClamp(c); const s = c.s0 * c.zoom; Object.assign(el.style, {left: c.x + "px", top: c.y + "px", width: c.w * s + "px", height: c.h * s + "px"}); }
+function cropZoom(z){ const c = ui.tmp.crop; if (!c) return; z = Math.min(4, Math.max(1, z)); const s1 = c.s0 * c.zoom, s2 = c.s0 * z, m = CROP_B / 2; c.x = m - (m - c.x) / s1 * s2; c.y = m - (m - c.y) / s1 * s2; c.zoom = z; const r = $("#cropzoom"); if (r) r.value = z; cropPaint(); }
+let cropDrag = null;
+document.addEventListener("pointerdown", ev => { const b = ev.target.closest && ev.target.closest("#cropbox"); if (!b || !ui.tmp.crop) return; ev.preventDefault(); b.setPointerCapture(ev.pointerId); cropDrag = {px: ev.clientX, py: ev.clientY, x: ui.tmp.crop.x, y: ui.tmp.crop.y}; b.classList.add("drag"); });
+document.addEventListener("pointermove", ev => { if (!cropDrag || !ui.tmp.crop) return; const c = ui.tmp.crop; c.x = cropDrag.x + ev.clientX - cropDrag.px; c.y = cropDrag.y + ev.clientY - cropDrag.py; cropPaint(); });
+document.addEventListener("pointerup", () => { if (!cropDrag) return; cropDrag = null; const b = $("#cropbox"); if (b) b.classList.remove("drag"); });
+document.addEventListener("input", ev => { if (ev.target.id === "cropzoom") cropZoom(+ev.target.value); });
+document.addEventListener("wheel", ev => { if (!ev.target.closest || !ev.target.closest("#cropbox") || !ui.tmp.crop) return; ev.preventDefault(); cropZoom(ui.tmp.crop.zoom * (ev.deltaY < 0 ? 1.08 : 1 / 1.08)); }, {passive: false});
+document.addEventListener("keydown", ev => { if (ev.target.id !== "cropbox" || !ui.tmp.crop) return; const c = ui.tmp.crop, k = {ArrowLeft:[10,0], ArrowRight:[-10,0], ArrowUp:[0,10], ArrowDown:[0,-10]}[ev.key]; if (k) { ev.preventDefault(); c.x += k[0]; c.y += k[1]; cropPaint(); } });
+async function cropSave(){
+  const c = ui.tmp.crop; if (!c) return; cropClamp(c);
+  const s = c.s0 * c.zoom, img = $("#cropimg"), out = 512, cv = document.createElement("canvas"); cv.width = cv.height = out;
+  const g = cv.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, out, out); g.imageSmoothingQuality = "high";
+  g.drawImage(img, -c.x / s, -c.y / s, CROP_B / s, CROP_B / s, 0, 0, out, out);
+  const blob = await new Promise(r => cv.toBlob(r, "image/jpeg", 0.9));
+  if (!blob) { toast("Não foi possível recortar a foto."); return; }
+  ui.tmp.progress = "Enviando foto…"; fillOverlay();
+  try { const r = await assets.upload(new File([blob], "perfil.jpg", {type: "image/jpeg"})); const m = ME(); m.foto = r.id; save(); URL.revokeObjectURL(c.url); ui.tmp = {}; render(); fillOverlay(); toast("Foto atualizada"); }
+  catch(e) { ui.tmp.progress = ""; fillOverlay(); toast("Não foi possível enviar a foto. Tente de novo."); }
+}
 function profileHTML(){
   const m = ME(), u = ui.tmp;
   return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="prT"><div class="m-head"><h2 id="prT">Meu perfil</h2><button type="button" class="x" data-act="close" aria-label="Fechar">×</button></div>
-    <div class="m-body"><div class="row" style="gap:16px;flex-wrap:nowrap">${av(m.id, 84)}<div style="display:flex;flex-direction:column;gap:6px;min-width:0"><b style="font-size:16px">${esc(m.nome)}</b><span class="muted">${esc(m.cargo)} · ${esc((m.papeis || []).map(x => PAPEIS[x]).join(", "))}</span>
+    <div class="m-body">${u.crop ? cropHTML(u.crop) : ""}<div class="row" style="gap:16px;flex-wrap:nowrap${u.crop ? ";display:none" : ""}">${av(m.id, 84)}<div style="display:flex;flex-direction:column;gap:6px;min-width:0"><b style="font-size:16px">${esc(m.nome)}</b><span class="muted">${esc(m.cargo)} · ${esc((m.papeis || []).map(x => PAPEIS[x]).join(", "))}</span>
       <div class="row">${assets ? `<label class="btn sm" for="fotoup" style="cursor:pointer"><input type="file" id="fotoup" accept="image/png,image/jpeg,image/webp" hidden>${m.foto ? "Trocar foto" : "Adicionar foto"}</label>` : `<span class="hint">A foto fica disponível quando a página está aberta pelo link compartilhado.</span>`}${m.foto ? `<button type="button" class="btn sm ghost" data-act="rmFoto">Remover foto</button>` : ""}</div>${u.progress ? `<span class="hint" style="color:var(--accent-fg);font-weight:700">${esc(u.progress)}</span>` : ""}</div></div>
       <div class="muted" style="font-size:12.5px">E-mail de acesso: <b>${esc(m.email || "")}</b>. Nome, cargo e papéis são definidos pela Diretoria.</div>
       <form class="box" id="pwdForm" novalidate><b style="font-size:13px">Alterar senha</b><div class="form"><div class="field"><label for="cp1">Nova senha</label><input class="inp" id="cp1" type="password" autocomplete="new-password"></div><div class="field"><label for="cp2">Repita a nova senha</label><input class="inp" id="cp2" type="password" autocomplete="new-password"></div></div>${u.pwdErr ? `<div class="err">${esc(u.pwdErr)}</div>` : ""}<div><button type="submit" class="btn sm primary">Salvar nova senha</button></div></form></div></div>`;
@@ -2264,6 +2299,8 @@ document.addEventListener("click", async ev => {
     case "notifs": ui.modal = "notifs"; ui.tmp = {}; fillOverlay(); break;
     case "readAll": S.notifs.filter(n => n.para === ui.me).forEach(n => n.lida = true); save(); render(); break;
     case "profile": ui.modal = "profile"; ui.tmp = {}; fillOverlay(); break;
+    case "cropSave": cropSave(); break;
+    case "cropCancel": { const c = ui.tmp.crop; if (c) URL.revokeObjectURL(c.url); ui.tmp.crop = null; fillOverlay(); break; }
     case "rmFoto": { const m = ME(); delete m.foto; save(); render(); break; }
     case "prevM": case "nextM": { const k = d.mk || "month"; ui[k] = new Date(ui[k].getFullYear(), ui[k].getMonth() + (act === "prevM" ? -1 : 1), 1); ui.pweek = null; render(); break; }
     case "newPeca": ui.tmp = {cid:d.cid}; ui.modal = "newPeca"; fillOverlay(); break;
@@ -2418,10 +2455,11 @@ document.addEventListener("change", async ev => {
   if (t.id === "ac-r" && ui.tmp.acc) { ui.tmp.acc.login = ($("#ac-l") || {}).value || ui.tmp.acc.login; ui.tmp.acc.senha = ($("#ac-s") || {}).value || ui.tmp.acc.senha; ui.tmp.acc.rede = t.value; fillOverlay(); return; }
   if (t.id === "fotoup") {
     const f = t.files[0]; t.value = ""; if (!f || !assets) return;
-    ui.tmp.progress = "Enviando foto…"; fillOverlay();
-    try { const r = await assets.upload(f); const m = ME(); m.foto = r.id; save(); ui.tmp.progress = ""; render(); toast("Foto atualizada"); }
-    catch(e) { ui.tmp.progress = ""; fillOverlay(); toast(e && e.code === "too_large" ? "A foto é grande demais." : "Não foi possível enviar a foto."); }
-    return;
+    if (!/^image\/(png|jpeg|webp)$/.test(f.type)) { toast("Use uma foto JPG, PNG ou WebP."); return; }
+    const url = URL.createObjectURL(f), img = new Image();
+    img.onload = () => { const B = 280, s0 = B / Math.min(img.naturalWidth, img.naturalHeight); ui.tmp.crop = {url, w: img.naturalWidth, h: img.naturalHeight, zoom: 1, s0, x: (B - img.naturalWidth * s0) / 2, y: (B - img.naturalHeight * s0) / 2}; fillOverlay(); };
+    img.onerror = () => { URL.revokeObjectURL(url); toast("Não foi possível abrir esta imagem."); };
+    img.src = url; return;
   }
   if (t.dataset.ntf !== undefined) { const u = ui.tmp; u.ntf = t.checked ? [...new Set([...(u.ntf || []), t.value])] : (u.ntf || []).filter(x => x !== t.value); return; }
   if (p && t.dataset.top) {
