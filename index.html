@@ -547,9 +547,18 @@ const CANAIS = {
   newsletter:{label:"Newsletter LinkedIn", k:"NEWS", grupo:"linkedin", ratio:"1.91 / 1", net:"LinkedIn", texto:true},
   blog:{label:"Post do blog", k:"BLOG", grupo:"blog", ratio:"1.91 / 1", net:"Blog", texto:true},
   anuncio:{label:"Anúncio", k:"ADS", grupo:"ads", ratio:"4 / 5", net:"Tráfego pago"},
-  tarefa:{label:"Tarefa interna", k:"TAREFA", grupo:"interna", ratio:"4 / 5", net:"Interna"}
+  tarefa:{label:"Tarefa interna", k:"TAREFA", grupo:"interna", ratio:"4 / 5", net:"Interna"},
+  arte:{label:"Peça gráfica / arte", k:"ARTE", grupo:"avulsa", ratio:"4 / 5", net:"Outras demandas"},
+  video:{label:"Vídeo", k:"VÍDEO", grupo:"avulsa", ratio:"9 / 16", net:"Outras demandas", video:true},
+  fotos:{label:"Fotos", k:"FOTOS", grupo:"avulsa", ratio:"4 / 5", net:"Outras demandas"},
+  impresso:{label:"Material impresso", k:"IMPRESSO", grupo:"avulsa", ratio:"1 / 1.414", net:"Outras demandas"},
+  apresentacao:{label:"Apresentação", k:"APRES.", grupo:"avulsa", ratio:"16 / 9", net:"Outras demandas"},
+  texto:{label:"Texto / roteiro", k:"TEXTO", grupo:"avulsa", ratio:"1.91 / 1", net:"Outras demandas", texto:true},
+  outro:{label:"Outra demanda", k:"DEMANDA", grupo:"avulsa", ratio:"4 / 5", net:"Outras demandas"}
 };
-const GRUPOS = {meta:"Instagram e Facebook", stories:"Stories", ads:"Anúncios", interna:"Interna", linkedin:"LinkedIn", youtube:"YouTube", tiktok:"TikTok", blog:"Blog"};
+const GENERICOS = ["arte","video","fotos","impresso","apresentacao","texto","outro"];
+const GRUPOS = {meta:"Instagram e Facebook", stories:"Stories", ads:"Anúncios", interna:"Interna", avulsa:"Outras demandas", linkedin:"LinkedIn", youtube:"YouTube", tiktok:"TikTok", blog:"Blog"};
+const FORMATOS_GEN = ["Arte digital","Impresso","Vídeo","Fotos","Apresentação","Documento","Outro"];
 const FORMATOS = ["Post estático","Carrossel","Reels","Stories","Vídeo","Capa","Banner site","Banner newsletter"];
 const STATUS = {
   pauta:{label:"Pauta", tone:"plan"}, producao:{label:"Em produção", tone:"prod"}, revisao:{label:"Em revisão", tone:"info"},
@@ -566,7 +575,7 @@ const FREQ = {semanal:"Toda semana", quinzenal:"A cada 15 dias", mensal:"1× por
 const CAPFREQ = {semanal:"Semanal", quinzenal:"Quinzenal", mensal:"Mensal", demanda:"Sob demanda"};
 const ACOES = {
   pauta:"Pauta criada", producao:"Enviada para produção", arquivos:"Arquivos anexados", entrega:"Enviada para revisão", nova_versao:"Nova versão enviada para revisão",
-  devolveu:"Devolvida para a produção", enviou_cliente:"Enviada ao cliente", aprovou:"Aprovada pelo cliente", aprovou_tudo:"Aprovada em \"aprovar todo o planejamento\"",
+  devolveu:"Devolvida para a produção", enviou_cliente:"Enviada ao cliente", aprovou:"Aprovada pelo cliente", aprovou_interno:"Aprovada internamente (pauta sem cliente)", aprovou_tudo:"Aprovada em \"aprovar todo o planejamento\"",
   ajuste:"Cliente pediu ajuste", registrou:"Aprovação registrada pela equipe", publicou:"Publicada", concluiu:"Tarefa concluída", iniciou:"Tarefa iniciada", reabriu:"Tarefa reaberta", ajuste_ok:"Ajuste concluído, de volta à revisão", data:"Data alterada", moveu:"Etapa alterada no quadro", notificou:"Notificação enviada"
 };
 const ICONS = {
@@ -855,7 +864,10 @@ const setMe = v => { ui.me = v; seenNotifs = null; };
 
 /* ================= pessoas e permissões ================= */
 const person = id => S.pessoas.find(p => p.id === id);
-const cli = id => S.clientes.find(c => c.id === id) || {id, nome:"Cliente removido", cor:"#999", squad:{}, escopo:blankEscopo(), unidade:""};
+const cli = id => !id ? {id:"", nome:"Sem cliente", cor:"#8A8494", squad:{}, escopo:blankEscopo(), unidade:(ME() || {}).unidade || "", semCliente:true} : S.clientes.find(c => c.id === id) || {id, nome:"Cliente removido", cor:"#999", squad:{}, escopo:blankEscopo(), unidade:""};
+const semCli = p => !p.clienteId;
+const unitOf = p => p.clienteId ? cli(p.clienteId).unidade : (p.unidade || (ME() || {}).unidade || "");
+const cfMatch = p => ui.cf === "todos" || (ui.cf === "_sem" ? !p.clienteId : p.clienteId === ui.cf);
 const unidade = id => S.unidades.find(u => u.id === id) || {nome:"—"};
 const mName = id => { if (id === "cliente") return "Cliente"; const p = person(id); return !p ? "—" : p.excluido ? `${p.nome} (EXCLUÍDO)` : p.nome; };
 const ativos = () => S.pessoas.filter(p => !p.excluido);
@@ -890,17 +902,17 @@ function owner(p){
   }
 }
 function canSee(p){
-  const c = cli(p.clienteId);
-  if (!inScope(c)) return false;
-  if (headOfUnit(c.unidade)) return true;
+  const u = unitOf(p);
+  if (!unitScope().includes(u)) return false;
+  if (headOfUnit(u)) return true;
   const r = p.resp || {};
-  if (r.plan === ui.me || r.prod === ui.me) return true;
-  return ((c.squad || {}).social || []).includes(ui.me) && ["aprovado","publicado"].includes(p.status);
+  if (r.plan === ui.me || r.prod === ui.me || p.criadoPor === ui.me) return true;
+  return !!p.clienteId && ((cli(p.clienteId).squad || {}).social || []).includes(ui.me) && ["aprovado","publicado"].includes(p.status);
 }
 const myTurn = p => owner(p) === ui.me && (p.status !== "aprovado" || diffDays(pd(p.data), TODAY) <= 1);
-const canPlan = p => headOfUnit(cli(p.clienteId).unidade) || (p.resp || {}).plan === ui.me;
-const canProduce = p => headOfUnit(cli(p.clienteId).unidade) || (p.resp || {}).prod === ui.me;
-const canPublish = p => headOfUnit(cli(p.clienteId).unidade) || ((cli(p.clienteId).squad || {}).social || []).includes(ui.me);
+const canPlan = p => headOfUnit(unitOf(p)) || (p.resp || {}).plan === ui.me;
+const canProduce = p => headOfUnit(unitOf(p)) || (p.resp || {}).prod === ui.me;
+const canPublish = p => headOfUnit(unitOf(p)) || (semCli(p) ? [(p.resp || {}).plan, (p.resp || {}).prod].includes(ui.me) : ((cli(p.clienteId).squad || {}).social || []).includes(ui.me));
 function visibleClients(){ return S.clientes.filter(c => inScope(c) && (headOfUnit(c.unidade) || Object.values(c.squad || {}).flat().includes(ui.me) || S.pecas.some(p => p.clienteId === c.id && canSee(p)))); }
 const canEditClient = c => !!c && (headOfUnit(c.unidade) || ((c.squad || {}).planejamento || []).includes(ui.me));
 const canPlanAny = () => isHead() || has("planejamento");
@@ -964,7 +976,7 @@ const isText = p => !!(CANAIS[p.tipo] || {}).texto;
 const needsArt = p => !isTask(p) && (!isText(p) || !!(p.briefing || {}).card);
 const catOf = p => isTask(p) ? "interna" : p.tipo === "anuncio" ? "trafego" : "conteudo";
 const TASK_ST = {pauta:"A fazer", producao:"Fazendo", publicado:"Concluída"};
-const stLabel = p => (isTask(p) && TASK_ST[p.status]) || (STATUS[p.status] || STATUS.pauta).label;
+const stLabel = p => (isTask(p) && TASK_ST[p.status]) || (!p.clienteId && p.status === "publicado" && "Entregue") || (STATUS[p.status] || STATUS.pauta).label;
 const pillP = p => isTask(p) ? `<span class="pill ${p.status === "publicado" ? "t-ok" : p.status === "producao" ? "t-info" : "t-prod"}">${esc(stLabel(p))}</span>` : pill(p.status);
 
 /* ================= cores da marca ================= */
@@ -1027,7 +1039,7 @@ function sysNotify(pid, texto, relId){ const id = "n-" + relId + "-" + pid; if (
 const lastMove = p => (p.hist || []).reduce((a, h) => h.em > a ? h.em : a, p.criadoEm || "");
 const linePeca = p => ({t:`${cli(p.clienteId).nome} · ${titleOf(p)}`, sub:`${stLabel(p)} · ${fmtD(p.data)}${owner(p) && owner(p) !== "cliente" ? " · com " + mName(owner(p)) : ""}`, pecaId:p.id});
 function buildDaily(u, day){
-  const ids = new Set(S.clientes.filter(c => c.unidade === u.id).map(c => c.id)), ps = S.pecas.filter(p => ids.has(p.clienteId));
+  const ids = new Set(S.clientes.filter(c => c.unidade === u.id).map(c => c.id)), ps = S.pecas.filter(p => ids.has(p.clienteId) || (!p.clienteId && p.unidade === u.id));
   const a = addDays(day, -1).toISOString(), b = day.toISOString();
   const ev = []; ps.forEach(p => (p.hist || []).forEach(h => { if (h.em >= a && h.em < b) ev.push({p, h}); }));
   const cnt = acoes => ev.filter(x => acoes.includes(x.h.acao)).length;
@@ -1060,7 +1072,7 @@ function buildBriefing(m, day){
   const isD = (m.papeis || []).includes("diretoria"), isH = (m.papeis || []).includes("head");
   const units = isD ? S.unidades : isH ? S.unidades.filter(u => u.id === m.unidade) : [];
   units.forEach(u => {
-    const cids = S.clientes.filter(c => c.unidade === u.id), ps = S.pecas.filter(p => inW(p) && cids.some(c => c.id === p.clienteId));
+    const cids = S.clientes.filter(c => c.unidade === u.id), ps = S.pecas.filter(p => inW(p) && (cids.some(c => c.id === p.clienteId) || (!p.clienteId && p.unidade === u.id)));
     secoes.push({titulo:`${isD && S.unidades.length > 1 ? u.nome + " · " : ""}Equipe na semana`, itens: ativos().filter(x => x.unidade === u.id && !(x.papeis || []).includes("diretoria")).map(x => { const l = ps.filter(p => p.status !== "publicado" && ((p.resp || {}).plan === x.id || (p.resp || {}).prod === x.id)); return {t:x.nome, sub:`${l.length} pautas na semana · ${l.filter(isLate).length} atrasadas`}; })});
     secoes.push({titulo:`${isD && S.unidades.length > 1 ? u.nome + " · " : ""}Clientes na semana`, itens: cids.map(c => { const l = ps.filter(p => p.clienteId === c.id); return {t:c.nome, sub:`${l.filter(p => !isTask(p)).length} publicações previstas · ${l.filter(p => p.status === "cliente").length} com o cliente · ${l.filter(isTask).length} tarefas`}; })});
   });
@@ -1165,7 +1177,7 @@ function bulkBar(){
     <button type="button" class="btn sm ghost" data-act="selStop">Cancelar</button></div>`;
 }
 function archiveHTML(){
-  const l = sortP((S.arquivo || []).filter(p => { const c = cli(p.clienteId); return inScope(c) && (headOfUnit(c.unidade) || (p.resp || {}).plan === ui.me || (p.resp || {}).prod === ui.me); }).filter(p => ui.cf === "todos" || p.clienteId === ui.cf)).reverse();
+  const l = sortP((S.arquivo || []).filter(p => { const u = unitOf(p); return unitScope().includes(u) && (headOfUnit(u) || (p.resp || {}).plan === ui.me || (p.resp || {}).prod === ui.me || p.criadoPor === ui.me); }).filter(cfMatch)).reverse();
   const n = l.filter(p => ui.sel.has(p.id)).length;
   return `<div class="bulkbar"><b>${l.length} ${l.length === 1 ? "pauta arquivada" : "pautas arquivadas"}</b><span class="muted" style="font-size:12px">Arquivadas não aparecem no quadro, no calendário, nos relatórios nem para o cliente.</span><span style="flex:1"></span>
     <button type="button" class="btn sm" data-act="selArchAll" data-ids="${esc(l.map(p => p.id).join(","))}">${l.length && l.every(p => ui.sel.has(p.id)) ? "Desmarcar todas" : "Marcar todas"}</button>
@@ -1527,7 +1539,8 @@ function radarHTML(vc){
 /* ================= calendário ================= */
 function chipsClients(vc){
   return [`<button type="button" class="chip" data-cf="todos" aria-pressed="${ui.cf === "todos"}">${isHead() ? "Todos os clientes" : "Meus clientes"}</button>`]
-    .concat(vc.map(c => `<button type="button" class="chip" data-cf="${esc(c.id)}" aria-pressed="${ui.cf === c.id}"><span class="dot" style="background:${esc(c.cor)}"></span>${esc(c.nome)}</button>`)).join("");
+    .concat(vc.map(c => `<button type="button" class="chip" data-cf="${esc(c.id)}" aria-pressed="${ui.cf === c.id}"><span class="dot" style="background:${esc(c.cor)}"></span>${esc(c.nome)}</button>`))
+    .concat(S.pecas.some(p => semCli(p) && canSee(p)) || ui.cf === "_sem" ? [`<button type="button" class="chip" data-cf="_sem" aria-pressed="${ui.cf === "_sem"}"><span class="dot" style="background:#8A8494"></span>Sem cliente</button>`] : []).join("");
 }
 const monthCtl = key => `<div class="monthctl"><button type="button" class="sq" data-act="prevM" data-mk="${key || "month"}" aria-label="Mês anterior">‹</button><b>${esc(monthLabel(ui[key || "month"]))}</b><button type="button" class="sq" data-act="nextM" data-mk="${key || "month"}" aria-label="Próximo mês">›</button></div>`;
 function noClients(){ return `<div class="empty"><h2>Nenhum cliente cadastrado</h2><p>O calendário e a esteira se enchem a partir do cadastro do cliente e do escopo dele.</p>${isHead() ? `<button type="button" class="btn primary" data-act="newClient">+ Cadastrar o primeiro cliente</button>` : `<p>Peça a um Head para cadastrar o cliente e incluir você na equipe dele.</p>`}</div>`; }
@@ -1543,11 +1556,11 @@ function calGrid(month, byDay, item, addAttr, kind){
 }
 function calendarioHTML(){
   const vc = visibleClients();
-  if (ui.cf !== "todos" && !vc.some(c => c.id === ui.cf)) ui.cf = "todos";
+  if (ui.cf !== "todos" && ui.cf !== "_sem" && !vc.some(c => c.id === ui.cf)) ui.cf = "todos";
   const planner = canPlanAny();
   const head = `<div class="spread"><div><div class="eyebrow">Planejamento de conteúdo</div><h1>Calendário</h1></div><div class="row">${monthCtl()}${planner && vc.length ? `<button type="button" class="btn" data-act="genOpen">Gerar pautas</button><button type="button" class="btn primary" data-act="newPeca">+ Nova pauta</button>` : ""}</div></div>`;
   if (!vc.length) return head + noClients();
-  const ps = S.pecas.filter(canSee).filter(p => ui.cf === "todos" || p.clienteId === ui.cf).filter(p => ui.tf === "todos" || canal(p).grupo === ui.tf);
+  const ps = S.pecas.filter(canSee).filter(cfMatch).filter(p => ui.tf === "todos" || canal(p).grupo === ui.tf);
   const byDay = {}; sortP(ps).forEach(p => (byDay[p.data] = byDay[p.data] || []).push(p));
   const mS = ui.month;
   const pend = mS >= firstOfMonth(TODAY) ? vc.filter(c => canEditClient(c) && (ui.cf === "todos" || c.id === ui.cf) && scopeItems(c).length && !isGenerated(c, mS)) : [];
@@ -1566,16 +1579,16 @@ function evHTML(p){
 /* ================= peças (kanban arrastável) ================= */
 function pecasHTML(){
   const vc = visibleClients();
-  if (ui.cf !== "todos" && !vc.some(c => c.id === ui.cf)) ui.cf = "todos";
-  let ps = S.pecas.filter(canSee).filter(p => ui.cf === "todos" || p.clienteId === ui.cf);
+  if (ui.cf !== "todos" && ui.cf !== "_sem" && !vc.some(c => c.id === ui.cf)) ui.cf = "todos";
+  let ps = S.pecas.filter(canSee).filter(cfMatch);
   if (ui.catf !== "todas") ps = ps.filter(p => catOf(p) === ui.catf);
   const mine = ps.filter(myTurn);
 
   if (ui.sf === "minha") ps = mine; else if (STATUS[ui.sf]) ps = ps.filter(p => p.status === ui.sf);
-  const nArq = (S.arquivo || []).filter(p => { const c = cli(p.clienteId); return inScope(c) && (headOfUnit(c.unidade) || (p.resp || {}).plan === ui.me || (p.resp || {}).prod === ui.me); }).length;
-  const head = `<div class="spread"><div><div class="eyebrow">${isHead() ? "Visão de Head · todas as pautas da unidade" : "Pautas atribuídas a você"}</div><h1>${mine.length ? `<em>${mine.length}</em> ${mine.length === 1 ? "pauta pede" : "pautas pedem"} sua ação` : "Nada pendente com você"}</h1></div>${vc.length && (canPlanAny() || isHead()) ? `<button type="button" class="btn primary" data-act="newPeca">+ Nova pauta</button>` : ""}</div>`;
-  if (!vc.length) return head + noClients();
-  if (!S.pecas.some(canSee) && ui.sf !== "arquivo") return head + (nArq ? `<div><button type="button" class="chip" data-sf="arquivo">Arquivadas (${nArq})</button></div>` : "") + `<div class="empty"><h2>Nenhuma pauta ativa</h2><p>${canPlanAny() ? "Gere as pautas do mês no calendário ou crie uma pauta avulsa aqui: conteúdo, tráfego ou tarefa interna." : "Quando o planejamento enviar uma pauta para você, ela aparece aqui."}</p>${canPlanAny() ? `<button type="button" class="btn primary" data-go="calendario">Ir para o calendário</button>` : ""}</div>`;
+  const nArq = (S.arquivo || []).filter(p => { const u = unitOf(p); return unitScope().includes(u) && (headOfUnit(u) || (p.resp || {}).plan === ui.me || (p.resp || {}).prod === ui.me || p.criadoPor === ui.me); }).length;
+  const head = `<div class="spread"><div><div class="eyebrow">${isHead() ? "Visão de Head · todas as pautas da unidade" : "Pautas atribuídas a você"}</div><h1>${mine.length ? `<em>${mine.length}</em> ${mine.length === 1 ? "pauta pede" : "pautas pedem"} sua ação` : "Nada pendente com você"}</h1></div>${(canPlanAny() || isHead()) ? `<button type="button" class="btn primary" data-act="newPeca">+ Nova pauta</button>` : ""}</div>`;
+  if (!vc.length && !S.pecas.some(canSee)) return head + noClients();
+  if (!S.pecas.some(canSee) && ui.sf !== "arquivo") return head + (nArq ? `<div><button type="button" class="chip" data-sf="arquivo">Arquivadas (${nArq})</button></div>` : "") + `<div class="empty"><h2>Nenhuma pauta ativa</h2><p>${canPlanAny() ? "Gere as pautas do mês no calendário ou crie uma pauta avulsa aqui, com ou sem cliente: conteúdo, tráfego ou tarefa interna." : "Quando o planejamento enviar uma pauta para você, ela aparece aqui."}</p>${canPlanAny() ? `<button type="button" class="btn primary" data-go="calendario">Ir para o calendário</button>` : ""}</div>`;
   return head + `<div class="row"><button type="button" class="chip" data-sf="minha" aria-pressed="${ui.sf === "minha"}">Minha vez (${mine.length})</button><button type="button" class="chip" data-sf="todas" aria-pressed="${ui.sf === "todas"}">Todas</button>${STATUS[ui.sf] ? `<button type="button" class="chip" aria-pressed="true" data-sf="todas">${esc(STATUS[ui.sf].label)} ×</button>` : ""}${nArq ? `<button type="button" class="chip" data-sf="arquivo" aria-pressed="${ui.sf === "arquivo"}">Arquivadas (${nArq})</button>` : ""}<span class="muted">·</span>${Object.entries({todas:"Todos os tipos", ...CATS}).map(([k, l]) => `<button type="button" class="chip" data-catf="${k}" aria-pressed="${ui.catf === k}">${l}</button>`).join("")}</div>
     <div class="spread"><div class="row">${chipsClients(vc)}</div>${ui.sf === "arquivo" ? "" : bulkBar()}</div>${ui.sf === "arquivo" ? archiveHTML() : boardHTML(ps)}<p class="muted" style="font-size:12px">Arraste os cartões entre as colunas para mudar a etapa sem abrir. A barra magenta marca as pautas que estão com você. Tarefas internas usam A fazer, Fazendo e Concluída.</p>`;
 }
@@ -1587,7 +1600,7 @@ function kcHTML(p){
 function readyToSend(p){
   const b = p.briefing || {}, c = cli(p.clienteId);
   if (isText(p)) { if (!String(b.corpo || "").trim()) return "Escreva o texto completo antes de enviar ao cliente."; }
-  else if (!String(b.legenda || "").trim()) return "Escreva " + (p.tipo === "anuncio" ? "o texto do anúncio" : "a legenda") + " antes de enviar ao cliente.";
+  else if (canal(p).grupo !== "avulsa" && !String(b.legenda || "").trim()) return "Escreva " + (p.tipo === "anuncio" ? "o texto do anúncio" : "a legenda") + " antes de enviar ao cliente.";
   if (c.regras && c.regras.linkPodcast && b.pautaPodcast && !/youtu\.?be/i.test((b.legenda || "") + " " + (b.corpo || ""))) return "Esta pauta vem do podcast: inclua o link do YouTube.";
   return "";
 }
@@ -1610,6 +1623,8 @@ function moveTo(p, st){
     if (needsArt(p) && from !== "ajuste" || (from === "ajuste" && p.ajusteCom !== "planejamento")) { if (!canProduce(p)) return toast("Só quem produz esta pauta pode enviar para revisão."); if (!(p.midias || []).length && !p.drive) return toast("Anexe os arquivos ou o link do Drive antes."); sendToReview(p); }
     else { if (!canPlan(p)) return toast("Só o planejamento pode enviar para revisão."); if (isText(p) && !String(b.corpo || "").trim()) return toast("Escreva o texto completo antes."); setStatus(p, "revisao", entry(from === "ajuste" ? "ajuste_ok" : "entrega"), {retorno:false}); }
   }
+  else if (st === "cliente" && semCli(p)) return toast("Pauta sem cliente não vai para aprovação: arraste de Em revisão direto para Aprovado.");
+  else if (st === "aprovado" && semCli(p)) { if (!canPlan(p)) return toast("Só o planejamento pode aprovar."); if (from !== "revisao") return toast("A pauta passa pela revisão antes de ser aprovada."); setStatus(p, "aprovado", entry("aprovou_interno")); }
   else if (st === "cliente") { if (!canPlan(p)) return toast("Só o planejamento desta pauta pode enviar ao cliente."); if (from !== "revisao") return toast("A pauta passa pela revisão antes de ir ao cliente."); const e = readyToSend(p); if (e) return toast(e); setStatus(p, "cliente", entry("enviou_cliente"), {ajusteCom:null}); }
   else if (st === "aprovado") { if (!canPlan(p)) return toast("Só o planejamento pode registrar a aprovação."); if (from !== "cliente") return toast("A pauta precisa estar com o cliente para ser aprovada."); setStatus(p, "aprovado", entry("registrou", {texto:"Aprovação registrada pelo quadro."})); }
   else if (st === "ajuste") { if (!canPlan(p)) return toast("Só o planejamento pode registrar ajuste."); if (!["cliente","aprovado"].includes(from)) return toast("Ajuste é o pedido do cliente: a pauta precisa estar com o cliente."); ui.openId = p.id; ui.idx = 0; ui.tmp = {reg:"aj"}; fillOverlay(); return toast("Registre o que o cliente pediu."); }
@@ -1648,9 +1663,9 @@ function aprovacoesHTML(){
 /* ================= publicação ================= */
 function publicacaoHTML(){
   const vc = visibleClients();
-  if (ui.cf !== "todos" && !vc.some(c => c.id === ui.cf)) ui.cf = "todos";
+  if (ui.cf !== "todos" && ui.cf !== "_sem" && !vc.some(c => c.id === ui.cf)) ui.cf = "todos";
   const mS = ui.pubMonth, mE = endOfMonth(mS), tk = ymd(TODAY);
-  const ps = sortP(S.pecas.filter(p => canSee(p) && !isTask(p) && (ui.cf === "todos" || p.clienteId === ui.cf) && pd(p.data) >= mS && pd(p.data) <= mE));
+  const ps = sortP(S.pecas.filter(p => canSee(p) && !isTask(p) && cfMatch(p) && pd(p.data) >= mS && pd(p.data) <= mE));
   const days = [...new Set(ps.map(p => p.data))].sort();
   const pendAll = ps.filter(p => p.status !== "publicado"), apr = ps.filter(p => p.status === "aprovado");
   const head = `<div class="spread"><div><div class="eyebrow">Social media</div><h1>Publicações</h1></div>${monthCtl("pubMonth")}</div>`;
@@ -1796,7 +1811,7 @@ function drawerHTML(p){
   const edFiles = canProduce(p) && ["producao","ajuste","pauta","revisao"].includes(p.status) && !(p.status === "ajuste" && p.ajusteCom === "planejamento");
   const unitPpl = ativos().filter(m => m.unidade === c.unidade);
   const opt = (list, sel) => `<option value="">Definir…</option>` + list.map(m => `<option value="${esc(m.id)}" ${sel === m.id ? "selected" : ""}>${esc(m.nome)}</option>`).join("");
-  const top = `<div class="d-top"><button type="button" class="x" data-act="close" aria-label="Fechar">×</button><div class="ttl"><b>${esc(titleOf(p))}</b><span>${cliTag(c)} · ${esc(fmtD(p.data))} · ${esc(isTask(p) ? "Tarefa interna" : t.label)}</span></div>${pillP(p)}</div>`;
+  const top = `<div class="d-top"><button type="button" class="x" data-act="close" aria-label="Fechar">×</button><div class="ttl"><b>${esc(titleOf(p))}</b><span>${cliTag(c)}${p.solicitante ? ` · para ${esc(p.solicitante)}` : ""} · ${esc(fmtD(p.data))} · ${esc(isTask(p) ? "Tarefa interna" : t.label)}</span></div>${pillP(p)}</div>`;
   const chat = `<div class="sec"><h3>Conversa interna</h3><div class="list">${(p.coments || []).map(m => `<div class="cm">${av(m.por, 26)}<div><div class="s">${esc(mName(m.por))} · ${esc(fmtStamp(m.em))}</div><div class="b">${esc(m.texto)}</div></div></div>`).join("") || `<span class="muted" style="font-size:12.5px">Nenhum comentário. O cliente não vê esta conversa.</span>`}</div>
         <div class="row" style="margin-top:8px;flex-wrap:nowrap"><input class="inp" id="cmtxt" placeholder="Escreva para a equipe… (os responsáveis são avisados)" value="${esc(u.cm || "")}" aria-label="Comentário interno"><button type="button" class="btn sm" data-act="comment">Enviar</button></div></div>
       <div class="sec"><h3>Histórico</h3><ul class="hist">${[...(p.hist || [])].reverse().map((h, i) => `<li class="${i === 0 ? "hl" : ""}"><div><div class="a">${esc(ACOES[h.acao] || h.acao)}${h.versao ? ` (v${h.versao})` : ""}</div><div class="s">${esc(h.por === "cliente" && h.nome ? "Cliente · " + h.nome : mName(h.por))} · ${esc(fmtStamp(h.em))}</div>${h.texto ? `<div class="q">${esc(h.texto)}</div>` : ""}</div></li>`).join("")}</ul></div>
@@ -1847,13 +1862,13 @@ function drawerHTML(p){
       </div></div>`;
   return `<aside class="drawer" role="dialog" aria-modal="true" aria-label="${esc(titleOf(p))}">${top}
     <div class="d-body">${left}<div class="detail">
-      <div><div class="stepbar">${ORDER.map((k, i) => `<div class="${i === si ? "on" : i < si && k !== "ajuste" ? "past" : ""}"></div>`).join("")}</div><div class="stepl">${ORDER.map((k, i) => `<span class="${i === si ? "on" : ""}">${STATUS[k].label}</span>`).join("")}</div></div>
+      <div>${(() => { const ord = semCli(p) ? ORDER.filter(k => !["cliente","ajuste"].includes(k)) : ORDER, sj = ord.indexOf(p.status); return `<div class="stepbar" style="grid-template-columns:repeat(${ord.length},1fr)">${ord.map((k, i) => `<div class="${i === sj ? "on" : i < sj && k !== "ajuste" ? "past" : ""}"></div>`).join("")}</div><div class="stepl" style="grid-template-columns:repeat(${ord.length},1fr)">${ord.map((k, i) => `<span class="${i === sj ? "on" : ""}">${semCli(p) && k === "publicado" ? "Entregue" : STATUS[k].label}</span>`).join("")}</div>`; })()}</div>
       ${showAdj ? `<div class="sec"><h3>${lastAdj.acao === "ajuste" ? `Ajuste pedido pelo cliente${lastAdj.tipo ? " · " + ({arte:"na arte", legenda:"na legenda", ambos:"na arte e na legenda", texto:"no texto"}[lastAdj.tipo] || "") : ""}` : "Ajuste pedido pelo planejamento"}</h3><div class="warnbox">${esc(lastAdj.texto || "Sem detalhes.")}</div></div>` : ""}
       ${actionsHTML(p, c, edFiles)}
       <div class="form">
-        <div class="field"><label for="f-data">Data de postagem</label><input class="inp" type="date" id="f-data" data-top="data" value="${esc(p.data)}" ${edT ? "" : "disabled"}></div>
-        <div class="field"><span class="lb">Rede</span><div class="row" style="min-height:38px">${redesField}</div></div>
-        <div class="field full"><span class="lb">Formatos de entrega</span><div class="seg">${txt ? `<label><input type="checkbox" data-card ${b.card ? "checked" : ""} ${dis}> Card estático</label>${b.card ? "" : `<span class="hint" style="align-self:center">Marque se o conteúdo leva banner ou card. Abre o briefing para o design.</span>`}` : FORMATOS.map(f => `<label><input type="checkbox" data-fmt value="${esc(f)}" ${(b.formatos || []).includes(f) ? "checked" : ""} ${dis}> ${esc(f)}</label>`).join("")}</div></div>
+        <div class="field"><label for="f-data">${canal(p).grupo === "avulsa" ? "Prazo de entrega" : "Data de postagem"}</label><input class="inp" type="date" id="f-data" data-top="data" value="${esc(p.data)}" ${edT ? "" : "disabled"}></div>
+        <div class="field"><span class="lb">${canal(p).grupo === "avulsa" ? "Formato" : "Rede"}</span><div class="row" style="min-height:38px">${redesField}</div></div>
+        <div class="field full"><span class="lb">Formatos de entrega</span><div class="seg">${txt ? `<label><input type="checkbox" data-card ${b.card ? "checked" : ""} ${dis}> Card estático</label>${b.card ? "" : `<span class="hint" style="align-self:center">Marque se o conteúdo leva banner ou card. Abre o briefing para o design.</span>`}` : (canal(p).grupo === "avulsa" ? FORMATOS_GEN : FORMATOS).map(f => `<label><input type="checkbox" data-fmt value="${esc(f)}" ${(b.formatos || []).includes(f) ? "checked" : ""} ${dis}> ${esc(f)}</label>`).join("")}</div></div>
         <div class="field"><label for="f-rp">Planejamento</label><select class="inp" id="f-rp" data-top="plan" ${edT ? "" : "disabled"}>${opt(planners, (p.resp || {}).plan)}</select></div>
         ${art ? `<div class="field"><label for="f-rc">${txt ? "Design do card" : "Produção"}</label><select class="inp" id="f-rc" data-top="prod" ${edT ? "" : "disabled"}>${opt(producers, (p.resp || {}).prod)}</select></div>` : `<div class="field"></div>`}
         ${driveField}
@@ -1883,7 +1898,7 @@ function actionsHTML(p, c, edFiles){
   }
   if (p.status === "ajuste" && (p.ajusteCom === "planejamento" || !art) && canPlan(p)) out.push(`<div class="actions"><button type="button" class="btn primary" data-act="ajusteOk">Ajuste concluído: enviar para revisão</button></div><div class="muted" style="font-size:12px">Depois da revisão, a pauta volta para o cliente.</div>`);
   if (p.status === "revisao" && canPlan(p)) {
-    out.push(`<div class="actions"><button type="button" class="btn primary" data-act="toClient">Enviar ao cliente</button>${art ? `<button type="button" class="btn" data-act="toggleBack">Devolver para produção</button>` : ""}</div>`);
+    out.push(`<div class="actions">${semCli(p) ? `<button type="button" class="btn primary" data-act="approveInternal">Aprovar (sem cliente)</button>` : `<button type="button" class="btn primary" data-act="toClient">Enviar ao cliente</button>`}${art ? `<button type="button" class="btn" data-act="toggleBack">Devolver para produção</button>` : ""}</div>`);
     if (u.back) out.push(`<div class="box"><label for="backtxt" style="font-weight:700;font-size:12.5px">O que precisa ajustar?</label><textarea id="backtxt" rows="3">${esc(u.backText || "")}</textarea><div class="actions"><button type="button" class="btn primary" data-act="sendBack">Devolver para ${esc(mName((p.resp || {}).prod))}</button></div></div>`);
   }
   if (["cliente","ajuste","aprovado"].includes(p.status) && canPlan(p) && (p.status === "cliente" || u.reg)) {
@@ -1910,7 +1925,7 @@ const stb = p => `<span class="stb ${p.status}">${{cliente:"Aguardando você", a
 function portalHTML(){
   const {c, ps, weekly, weeks} = portalSet(), internal = !isClient();
   const groups = {}; ps.forEach(p => { const g = canal(p).grupo; (groups[g] = groups[g] || []).push(p); });
-  const avail = ["meta","stories","ads","linkedin","youtube","tiktok","blog"].filter(g => groups[g]);
+  const avail = ["meta","stories","ads","linkedin","youtube","tiktok","blog","avulsa"].filter(g => groups[g]);
   if (!avail.includes(ui.ntab)) ui.ntab = avail[0] || "meta";
   const pend = ps.filter(p => p.status === "cliente").length, apr = ps.filter(p => ["aprovado","publicado"].includes(p.status)).length, adj = ps.filter(p => p.status === "ajuste").length;
   const list = groups[ui.ntab] || [];
@@ -1976,19 +1991,23 @@ function approveAllHTML(){
 function canaisDoCliente(c){ const s = scopeItems(c).map(x => x.tipo); return s.length ? [...new Set(s)] : Object.keys(CANAIS).filter(k => !["anuncio","tarefa"].includes(k)); }
 function newPecaHTML(){
   const vc = visibleClients().filter(canEditClient), u = ui.tmp;
-  const cid = u.cid || (ui.cf !== "todos" ? ui.cf : (vc[0] || {}).id), c = cli(cid), cat = u.cat || "conteudo";
-  const opts = canaisDoCliente(c).filter(k => !["anuncio","tarefa"].includes(k));
+  const cid = u.cid !== undefined ? u.cid : ui.cf === "_sem" ? "" : (ui.cf !== "todos" ? ui.cf : (vc[0] || {}).id || ""), c = cli(cid), cat = u.cat || "conteudo", sem = !cid;
+  const opts = sem ? [] : canaisDoCliente(c).filter(k => !["anuncio","tarefa"].includes(k) && !GENERICOS.includes(k));
+  const tipoSel = u.tipo || (sem ? "arte" : opts[0]), generico = sem || GENERICOS.includes(tipoSel);
   const lbl = k => CANAIS[k].grupo === "meta" ? "Instagram e Facebook · Feed" : CANAIS[k].grupo === "stories" ? "Instagram e Facebook · Stories" : CANAIS[k].label;
   const people = ativos().filter(m => m.unidade === c.unidade);
   return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="npT"><div class="m-head"><h2 id="npT">Nova pauta</h2><button type="button" class="x" data-act="close" aria-label="Fechar">×</button></div>
     <form class="m-body" id="npForm" novalidate>
     <div class="field"><span class="lb">Tipo de pauta</span><div class="seg">${Object.entries(CATS).map(([k, l]) => `<label><input type="radio" name="npcat" value="${k}" ${cat === k ? "checked" : ""}> ${l}</label>`).join("")}</div></div>
-    <div class="form"><div class="field full"><label for="np-cli">Cliente</label><select class="inp" id="np-cli">${vc.map(x => `<option value="${esc(x.id)}" ${cid === x.id ? "selected" : ""}>${esc(x.nome)}</option>`).join("")}</select></div>
-    ${cat === "conteudo" ? `<div class="field full"><label for="np-tipo">Rede</label><select class="inp" id="np-tipo">${opts.map(k => `<option value="${k}" ${u.tipo === k ? "selected" : ""}>${lbl(k)}${CANAIS[k].texto ? " (texto)" : ""}</option>`).join("")}</select><span class="hint">Só as redes do escopo do cliente. Newsletter, artigo e blog são pautas de texto.</span></div>`
+    <div class="form"><div class="field full"><label for="np-cli">Cliente</label><select class="inp" id="np-cli"><option value="" ${sem ? "selected" : ""}>Sem cliente · demanda avulsa</option>${vc.map(x => `<option value="${esc(x.id)}" ${cid === x.id ? "selected" : ""}>${esc(x.nome)}</option>`).join("")}</select></div>
+    ${cat === "conteudo" ? `<div class="field full"><label for="np-tipo">${sem ? "Formato" : "Rede ou formato"}</label><select class="inp" id="np-tipo">${opts.length ? `<optgroup label="Redes do escopo">${opts.map(k => `<option value="${k}" ${tipoSel === k ? "selected" : ""}>${lbl(k)}${CANAIS[k].texto ? " (texto)" : ""}</option>`).join("")}</optgroup>` : ""}<optgroup label="Demandas pontuais">${GENERICOS.map(k => `<option value="${k}" ${tipoSel === k ? "selected" : ""}>${CANAIS[k].label}</option>`).join("")}</optgroup></select><span class="hint">${sem ? "Formatos genéricos para demandas sem cliente." : "Redes do escopo do cliente ou um formato genérico para demandas pontuais."}</span></div>
+      ${generico ? `<div class="field full"><label for="np-tit">O que precisa ser feito</label><input class="inp" id="np-tit" value="${esc(u.tit || "")}" placeholder="Ex.: Flyer da palestra de sábado, vídeo de boas-vindas, apresentação comercial"></div>` : ""}`
       : cat === "trafego" ? `<div class="field full"><span class="lb">Plataforma do anúncio</span><div class="seg">${REDES_ADS.map(r => `<label><input type="checkbox" data-npads value="${r}" ${(u.ads || ["Meta Ads"]).includes(r) ? "checked" : ""}> ${r}</label>`).join("")}</div></div>`
       : `<div class="field full"><label for="np-tit">Tarefa</label><input class="inp" id="np-tit" value="${esc(u.tit || "")}" placeholder="Ex.: Montar newsletter de novembro, subir campanha de Black Friday"></div><div class="field"><label for="np-resp">Responsável</label><select class="inp" id="np-resp">${people.map(m => `<option value="${esc(m.id)}" ${(u.resp || ui.me) === m.id ? "selected" : ""}>${esc(m.nome)}</option>`).join("")}</select></div>`}
-    <div class="field"><label for="np-data">${cat === "interna" ? "Prazo" : "Data de postagem"}</label><input class="inp" type="date" id="np-data" value="${esc(u.data || ymd(addDays(TODAY, 3)))}"></div></div>
-    <p class="muted" style="font-size:12.5px">${cat === "interna" ? "Tarefas internas não vão para o cliente: andam em A fazer, Fazendo e Concluída." : "A pauta abre em seguida para você preencher o briefing."}</p><div class="actions"><button type="submit" class="btn primary" ${vc.length ? "" : "disabled"}>Criar pauta</button><button type="button" class="btn ghost" data-act="close">Cancelar</button></div></form></div>`;
+    <div class="field"><label for="np-data">${cat === "interna" || generico && cat === "conteudo" ? "Prazo de entrega" : "Data de postagem"}</label><input class="inp" type="date" id="np-data" value="${esc(u.data || ymd(addDays(TODAY, 3)))}"></div>
+    ${sem && cat !== "interna" ? `<div class="field"><label for="np-sol">Para quem <span class="hint">· opcional</span></label><input class="inp" id="np-sol" value="${esc(u.sol || "")}" placeholder="Ex.: Alra (interno), prospect, parceiro"></div>` : ""}
+    ${(sem || generico) && cat === "conteudo" && !(CANAIS[tipoSel] || {}).texto ? `<div class="field"><label for="np-prod">Quem produz</label><select class="inp" id="np-prod"><option value="">Definir depois</option>${people.filter(m => (m.papeis || []).some(r => ["design","audiovisual"].includes(r))).map(m => `<option value="${esc(m.id)}" ${u.prod === m.id ? "selected" : ""}>${esc(m.nome)}</option>`).join("")}</select></div>` : ""}</div>
+    <p class="muted" style="font-size:12.5px">${cat === "interna" ? "Tarefas internas não vão para o cliente: andam em A fazer, Fazendo e Concluída." : sem ? "Pauta sem cliente: não passa pela aprovação do cliente. Depois da revisão, o planejamento aprova direto." : "A pauta abre em seguida para você preencher o briefing."}</p><div class="actions"><button type="submit" class="btn primary">Criar pauta</button><button type="button" class="btn ghost" data-act="close">Cancelar</button></div></form></div>`;
 }
 function genHTML(){
   const u = ui.tmp, vc = visibleClients().filter(c => canEditClient(c) && scopeItems(c).length);
@@ -2145,7 +2164,7 @@ function dayAllHTML(day, kind){
   const cid = (kind || "").startsWith("cli:") ? kind.slice(4) : null;
   const head = `<div class="m-head"><h2 id="dyT">${esc(fmtD(day,{weekday:"long", day:"2-digit", month:"long"}))}</h2><button type="button" class="x" data-act="close" aria-label="Fechar">×</button></div>`;
   if (kind === "caps") return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="dyT">${head}<div class="m-body"><div class="list">${S.captacoes.filter(x => x.data === day).map(capLi).join("")}</div></div></div>`;
-  const ps = sortP(S.pecas.filter(canSee).filter(p => p.data === day && (cid ? p.clienteId === cid : (ui.cf === "todos" || p.clienteId === ui.cf))));
+  const ps = sortP(S.pecas.filter(canSee).filter(p => p.data === day && (cid ? p.clienteId === cid : cfMatch(p))));
   return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="dyT">${head}<div class="m-body"><div class="list">${ps.map(liHTML).join("")}</div></div></div>`;
 }
 function msgHTML(){
@@ -2327,6 +2346,7 @@ document.addEventListener("click", async ev => {
     case "next": { const n = (p.midias || []).length; if (n) { ui.idx = (ui.idx + 1) % n; fillOverlay(); } break; }
     case "toProd": if (prodBlock(p)) { toast(prodBlock(p)); break; } setStatus(p, "producao", entry("producao"), {retorno:false}); toast(`Enviada para ${mName(p.resp.prod)}`); render(); break;
     case "toReview": if (!(p.midias || []).length && !p.drive) { toast("Anexe os arquivos ou preencha o link do Drive antes."); break; } sendToReview(p); ui.tmp = {}; toast("Enviada para revisão do planejamento"); render(); break;
+    case "approveInternal": if (!semCli(p) || !canPlan(p)) break; setStatus(p, "aprovado", entry("aprovou_interno")); toast("Aprovada. Quando entregar, marque como concluída."); render(); break;
     case "toClient": if (readyToSend(p)) { toast(readyToSend(p)); fillOverlay(); break; } if ([...String((p.briefing || {}).legenda || "")].length > 2200) { toast("A legenda passa de 2.200 caracteres, o limite do Instagram."); break; } setStatus(p, "cliente", entry("enviou_cliente"), {ajusteCom:null}); toast("Enviada ao cliente"); render(); break;
     case "toggleBack": u.back = !u.back; fillOverlay(); break;
     case "sendBack": { const txt = (u.backText || "").trim(); if (!txt) { toast("Descreva o ajuste para a produção."); break; } setStatus(p, "producao", entry("devolveu", {texto:txt}), {retorno:true}); ui.tmp = {}; toast("Devolvida para a produção"); render(); break; }
@@ -2441,7 +2461,10 @@ document.addEventListener("change", async ev => {
   if (t.name === "regtipo") { ui.tmp.regTipo = t.value; return; }
   if (t.name === "aadec") { ui.tmp.dec = t.value; fillOverlay(); return; }
   if (t.name === "cfcor" && ui.tmp.cd) { ui.tmp.cd.cor = t.value; fillOverlay(); return; }
-  if (t.id === "np-cli") { ui.tmp.cid = t.value; ui.tmp.data = ($("#np-data") || {}).value; ui.tmp.tipo = null; fillOverlay(); return; }
+  if (t.id === "np-cli") { ui.tmp.cid = t.value; ui.tmp.data = ($("#np-data") || {}).value; ui.tmp.tit = ($("#np-tit") || {}).value || ui.tmp.tit; ui.tmp.tipo = null; fillOverlay(); return; }
+  if (t.id === "np-tipo") { ui.tmp.tipo = t.value; ui.tmp.data = ($("#np-data") || {}).value; ui.tmp.tit = ($("#np-tit") || {}).value || ui.tmp.tit; fillOverlay(); return; }
+  if (t.id === "np-prod") { ui.tmp.prod = t.value; return; }
+  if (t.id === "np-sol") { ui.tmp.sol = t.value; return; }
   if (t.name === "npcat") { ui.tmp.cat = t.value; ui.tmp.data = ($("#np-data") || {}).value; fillOverlay(); return; }
   if (t.id === "np-tipo") { ui.tmp.tipo = t.value; return; }
   if (t.dataset.sela !== undefined) { t.checked ? ui.sel.add(t.dataset.sela) : ui.sel.delete(t.dataset.sela); ui.tmp.bulkDel = false; render(); return; }
@@ -2516,8 +2539,12 @@ document.addEventListener("submit", async ev => {
     let tp, redes, briefing = {formatos:[]}, resp = {plan:((c.squad || {}).planejamento || []).includes(ui.me) || isHead() ? ui.me : (((c.squad || {}).planejamento || [])[0] || ui.me), prod:null};
     if (cat === "interna") { const tit = ($("#np-tit").value || "").trim(); if (!tit) { toast("Descreva a tarefa."); return; } tp = "tarefa"; redes = []; briefing.headline = tit; resp.prod = $("#np-resp").value || ui.me; resp.plan = ui.me; }
     else if (cat === "trafego") { tp = "anuncio"; redes = (u.ads || ["Meta Ads"]); if (!redes.length) { toast("Marque ao menos uma plataforma."); return; } resp.prod = defaultProd(c, "feed"); }
-    else { tp = $("#np-tipo").value; redes = ["feed","stories"].includes(tp) ? (metaRedes(c).length ? metaRedes(c) : ["Instagram","Facebook"]) : [CANAIS[tp].net]; resp.prod = CANAIS[tp].texto ? null : defaultProd(c, tp); }
-    const np = {id:uid(), clienteId:c.id, data, tipo:tp, redes, status:"pauta", resp, briefing, versao:0, midias:[], hist:[entry("pauta")], coments:[], ajusteCom:null, criadoEm:nowIso(), v3:true};
+    else { tp = $("#np-tipo").value; const gen = GENERICOS.includes(tp); if (gen) { const tit = ($("#np-tit").value || "").trim(); if (!tit) { toast("Descreva o que precisa ser feito."); return; } briefing.headline = tit; }
+      redes = gen ? [] : ["feed","stories"].includes(tp) ? (metaRedes(c).length ? metaRedes(c) : ["Instagram","Facebook"]) : [CANAIS[tp].net];
+      resp.prod = CANAIS[tp].texto ? null : $("#np-prod") ? ($("#np-prod").value || null) : defaultProd(c, tp); }
+    const np = {id:uid(), clienteId:c.id, data, tipo:tp, redes, status:"pauta", resp, briefing, versao:0, midias:[], hist:[entry("pauta")], coments:[], ajusteCom:null, criadoEm:nowIso(), criadoPor:ui.me, v3:true};
+    if (!c.id) { np.unidade = (ME() || {}).unidade || ""; const sol = (($("#np-sol") || {}).value || "").trim(); if (sol) np.solicitante = sol; }
+    if (resp.prod && resp.prod !== ui.me && cat !== "interna" && GENERICOS.includes(tp)) notify([resp.prod], `Demanda para você: ${briefing.headline}${c.id ? " (" + c.nome + ")" : ""}`, np);
     if (cat === "interna" && resp.prod !== ui.me) notify([resp.prod], `Tarefa para você: ${briefing.headline} (${c.nome})`, np);
     S.pecas.push(np); save(); ui.modal = null; ui.tmp = {}; ui.openId = np.id; ui.idx = 0; ui.month = firstOfMonth(pd(data)); render(); return; }
   if (id === "genForm") {
