@@ -21,3 +21,10 @@ Sistema de conteúdo da Alra Marketing: calendário, pautas, aprovação do clie
 - Administradores iniciais ficam na tabela `admins` (ver `schema.sql`).
 - Os demais entram quando a Diretoria/Head cadastra o e-mail da pessoa em **Equipe**. Vale Gmail ou e-mail da Alra.
 - Clientes não precisam de conta: usam o link de aprovação gerado em **Clientes → Informações do cliente → Link de aprovação**.
+
+## Reorganização (out/2026)
+- Times derivados do papel: Diretoria → A, Head → B, demais → C (pode ser fixado em Configurações → Usuários, campo `time`). Clientes = Time D, só pelos links públicos.
+- Menus: C = Início, Pauta da equipe, Kanban, Calendário, Aprovações, Captações, Clientes; B = + Publicações, Dashboards; A = + Configurações.
+- Campos novos (opcionais, nunca renomeados): `pecas.dataProducao`, `captacoes.driveBruto`, `pessoas.time`.
+- Modo demonstração sem banco: abra `/?demo=1`.
+- Backup: Configurações → Segurança e backup → "Fazer backup agora" (bucket privado `backups`). Cópia do banco antes da reorganização: tabela `docs_backup_20261023`. Versão anterior do código: branch `v1-estavel`.
