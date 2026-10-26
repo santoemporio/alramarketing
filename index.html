@@ -1053,7 +1053,7 @@ const isGenerated = (c, d) => !!((c.gerado || {})[ym(d)]) || S.pecas.some(p => p
 
 /* ================= tipos de pauta ================= */
 const REDES_ADS = ["Meta Ads","Google Ads","TikTok Ads","LinkedIn Ads"];
-const CATS = {conteudo:"Conteúdo orgânico", trafego:"Tráfego pago", interna:"Interna (to-do)"};
+const CATS = {simples:"Cartão simples", conteudo:"Conteúdo orgânico", trafego:"Tráfego pago", interna:"Interna (to-do)"};
 const isTask = p => p.tipo === "tarefa";
 const isText = p => !!(CANAIS[p.tipo] || {}).texto;
 const needsArt = p => !isTask(p) && (!isText(p) || !!(p.briefing || {}).card);
@@ -1853,7 +1853,7 @@ function kcHTML(p){
 function kcBtn(p){
   const c = cli(p.clienteId), o = owner(p);
   const sm = ui.selMode, can = canPlan(p), on = ui.sel.has(p.id);
-  return `<button type="button" class="kc${myTurn(p) ? " mine" : ""}${isTask(p) ? " task" : ""}${sm ? " selmode" : ""}${on ? " picked" : ""}" ${sm ? (can ? `data-selp="${esc(p.id)}" aria-pressed="${on}"` : `disabled title="Só o planejamento desta pauta pode arquivar ou excluir"`) : `data-open="${esc(p.id)}" draggable="true"`}>${sm ? `<span class="ck${on ? " on" : ""}" aria-hidden="true">${on ? "✓" : ""}</span>` : ""}${isTask(p) ? `<span class="th tk">✓</span>` : isText(p) && !(p.midias || []).length ? `<span class="th tx">Aa</span>` : `<span class="th">${thumb(p)}</span>`}<span style="min-width:0"><span class="t">${esc(titleOf(p))}</span><span class="m">${cliTag(c)}</span><span class="m"><span>${canal(p).k}</span><span class="tnum">${esc(fmtShort(p.data))}</span>${isTask(p) && p.status === "publicado" ? `<span>Concluída</span>` : janela(p)}${o && o !== "cliente" ? av(o, 18) : ""}</span></span></button>`;
+  return `<button type="button" class="kc${myTurn(p) ? " mine" : ""}${isTask(p) ? " task" : ""}${sm ? " selmode" : ""}${on ? " picked" : ""}" ${sm ? (can ? `data-selp="${esc(p.id)}" aria-pressed="${on}"` : `disabled title="Só o planejamento desta pauta pode arquivar ou excluir"`) : `data-open="${esc(p.id)}" draggable="true"`}>${sm ? `<span class="ck${on ? " on" : ""}" aria-hidden="true">${on ? "✓" : ""}</span>` : ""}${isTask(p) ? `<span class="th tk">✓</span>` : isText(p) && !(p.midias || []).length ? `<span class="th tx">Aa</span>` : `<span class="th">${thumb(p)}</span>`}<span style="min-width:0"><span class="t">${esc(titleOf(p))}</span><span class="m">${p.simples ? `<span>Cartão</span>` : cliTag(c)}</span><span class="m"><span>${canal(p).k}</span><span class="tnum">${esc(fmtShort(p.data))}</span>${isTask(p) && p.status === "publicado" ? `<span>Concluída</span>` : janela(p)}${o && o !== "cliente" ? av(o, 18) : ""}</span></span></button>`;
 }
 function readyToSend(p){
   const b = p.briefing || {}, c = cli(p.clienteId);
@@ -2076,7 +2076,7 @@ function drawerHTML(p){
   const edFiles = canProduce(p) && ["producao","ajuste","pauta","revisao"].includes(p.status) && !(p.status === "ajuste" && p.ajusteCom === "planejamento");
   const unitPpl = ativos().filter(m => m.unidade === c.unidade);
   const opt = (list, sel) => `<option value="">Definir…</option>` + list.map(m => `<option value="${esc(m.id)}" ${sel === m.id ? "selected" : ""}>${esc(m.nome)}</option>`).join("");
-  const top = `<div class="d-top"><button type="button" class="x" data-act="close" aria-label="Fechar">×</button><div class="ttl"><b>${esc(titleOf(p))}</b><span>${cliTag(c)}${p.solicitante ? ` · para ${esc(p.solicitante)}` : ""} · ${esc(fmtD(p.data))} · ${esc(isTask(p) ? "Tarefa interna" : t.label)}</span></div>${pillP(p)}${canEd ? `<button type="button" class="btn sm${ed ? " primary" : ""}" data-act="pgEdit">${ed ? "Concluir edição" : "Editar"}</button>` : ""}</div>`;
+  const top = `<div class="d-top"><button type="button" class="x" data-act="close" aria-label="Fechar">×</button><div class="ttl"><b>${esc(titleOf(p))}</b><span>${p.simples ? "Cartão simples" : cliTag(c)}${p.solicitante ? ` · para ${esc(p.solicitante)}` : ""} · ${esc(fmtD(p.data))}${p.simples ? "" : " · " + esc(isTask(p) ? "Tarefa interna" : t.label)}</span></div>${pillP(p)}${canEd ? `<button type="button" class="btn sm${ed ? " primary" : ""}" data-act="pgEdit">${ed ? "Concluir edição" : "Editar"}</button>` : ""}</div>`;
   const comentsSec = `<div class="sec"><h3>Comentários</h3><div class="list">${(p.coments || []).map(m => `<div class="cm">${av(m.por, 26)}<div><div class="s">${esc(mName(m.por))} · ${esc(fmtStamp(m.em))}</div><div class="b">${esc(m.texto)}</div></div></div>`).join("") || `<span class="muted" style="font-size:12.5px">Nenhum comentário. O cliente não vê esta conversa.</span>`}</div>
         <div class="row" style="margin-top:8px;flex-wrap:nowrap"><input class="inp" id="cmtxt" placeholder="Escreva para a equipe… (os responsáveis são avisados)" value="${esc(u.cm || "")}" aria-label="Comentário interno"><button type="button" class="btn sm" data-act="comment">Enviar</button></div></div>`;
   const histSec = `<div class="sec"><h3>Histórico</h3><ul class="hist">${[...(p.hist || [])].reverse().map((h, i) => `<li class="${i === 0 ? "hl" : ""}"><div><div class="a">${esc(ACOES[h.acao] || h.acao)}${h.versao ? ` (v${h.versao})` : ""}</div><div class="s">${esc(h.por === "cliente" && h.nome ? "Cliente · " + h.nome : mName(h.por))} · ${esc(fmtStamp(h.em))}</div>${h.texto ? `<div class="q">${esc(h.texto)}</div>` : ""}</div></li>`).join("")}</ul></div>`;
@@ -2087,11 +2087,11 @@ function drawerHTML(p){
   if (isTask(p)) {
     return `<aside class="drawer pg ${ed ? "edit" : "view"}" role="dialog" aria-modal="true" aria-label="${esc(titleOf(p))}">${top}<div class="d-body one"><div class="detail">
       ${actionsHTML(p, c, false)}
-      <div class="form"><div class="field full"><label for="f-hl">Tarefa</label><input class="inp" id="f-hl" data-b="headline" value="${esc(b.headline)}" ${ed ? "" : "disabled"}></div>
-        <div class="field full"><label for="f-ideia">Descrição e checklist</label><textarea id="f-ideia" data-b="ideia" rows="6" placeholder="O que precisa ser feito, links, passos…" ${ed ? "" : "disabled"}>${esc(b.ideia)}</textarea></div>
-        <div class="field"><label for="f-rc">Responsável</label><select class="inp" id="f-rc" data-top="prod" ${ed ? "" : "disabled"}>${opt(unitPpl, (p.resp || {}).prod)}</select></div>
-        <div class="field"><label for="f-data">Prazo</label><input class="inp" type="date" id="f-data" data-top="data" value="${esc(p.data)}" ${ed ? "" : "disabled"}></div>
-        ${driveField}</div>${chat}</div></div></aside>`;
+      <div class="form"><div class="field full"><label for="f-hl">${p.simples ? "Título" : "Tarefa"}</label><input class="inp" id="f-hl" data-b="headline" value="${esc(b.headline)}" ${ed ? "" : "disabled"}></div>
+        <div class="field full"><label for="f-ideia">${p.simples ? "Texto" : "Descrição e checklist"}</label><textarea id="f-ideia" data-b="ideia" rows="${p.simples ? 10 : 6}" placeholder="O que precisa ser feito, links, passos…" ${ed ? "" : "disabled"}>${esc(b.ideia)}</textarea></div>
+        <div class="field"><label for="f-data">${p.simples ? "Data de fim" : "Prazo"}</label><input class="inp" type="date" id="f-data" data-top="data" value="${esc(p.data)}" ${ed ? "" : "disabled"}></div>
+        <div class="field"><label for="f-rc">Responsável</label><select class="inp" id="f-rc" data-top="prod" ${ed ? "" : "disabled"}>${opt(p.simples ? ativos().filter(m => unitScope().includes(m.unidade)) : unitPpl, (p.resp || {}).prod)}</select></div>
+        ${p.simples ? "" : driveField}</div>${chat}</div></div></aside>`;
   }
   const si = ORDER.indexOf(p.status), txt = isText(p), art = needsArt(p);
   const planners = unitPpl.filter(m => (m.papeis || []).includes("planejamento") || (m.papeis || []).includes("head"));
@@ -2268,7 +2268,26 @@ function approveAllHTML(){
 
 /* ================= modais ================= */
 function canaisDoCliente(c){ const s = scopeItems(c).map(x => x.tipo); return s.length ? [...new Set(s)] : Object.keys(CANAIS).filter(k => !["anuncio","tarefa"].includes(k)); }
+function simplesHTML(){
+  const u = ui.tmp, ppl = ativos().filter(m => unitScope().includes(m.unidade)).sort((a, b) => a.nome.localeCompare(b.nome));
+  return `<aside class="drawer pg edit" role="dialog" aria-modal="true" aria-label="Novo cartão"><div class="d-top"><button type="button" class="x" data-act="close" aria-label="Fechar">×</button><div class="ttl"><b>Novo cartão</b><span>Sem cliente, briefing ou rede: título, texto, data de fim e responsável.</span></div><button type="submit" form="npForm" class="btn sm primary">Criar cartão</button></div>
+    <form class="d-body pgb" id="npForm" novalidate><div class="pgw"><div class="pgmain">
+      <section class="psec"><h3>Cartão</h3><div class="form">
+        <div class="field full"><label for="np-tit">Título</label><input class="inp" id="np-tit" value="${esc(u.tit || "")}" placeholder="Ex.: Organizar pasta de fotos de novembro"></div>
+        <div class="field full"><label for="np-ideia">Texto <span class="hint">· informações, links, checklist</span></label><textarea id="np-ideia" rows="10" placeholder="Escreva aqui o que precisa ser feito…">${esc(u.ideia || "")}</textarea></div>
+      </div></section>
+    </div><div class="pgside">
+      <section class="psec"><h3>Propriedades</h3><div class="form props">
+        <div class="field full"><span class="lb">Tipo de pauta</span><div class="seg">${Object.entries(CATS).map(([k, l]) => `<label><input type="radio" name="npcat" value="${k}" ${k === "simples" ? "checked" : ""}> ${l}</label>`).join("")}</div></div>
+        <div class="field full"><label for="np-data">Data de fim</label><input class="inp" type="date" id="np-data" value="${esc(u.data || ymd(addDays(TODAY, 3)))}"></div>
+        <div class="field full"><label for="np-resp">Responsável</label><select class="inp" id="np-resp">${ppl.map(m => `<option value="${esc(m.id)}" ${(u.resp || ui.me) === m.id ? "selected" : ""}>${esc(m.nome)}</option>`).join("")}</select></div>
+      </div></section>
+      <p class="muted" style="font-size:12.5px">O cartão anda em A fazer, Fazendo e Concluída no Kanban, sem passar por cliente ou aprovação.</p>
+      <div class="actions"><button type="submit" class="btn primary">Criar cartão</button><button type="button" class="btn ghost" data-act="close">Cancelar</button></div>
+    </div></div></form></aside>`;
+}
 function newPecaHTML(){
+  if (ui.tmp.cat === "simples") return simplesHTML();
   const vc = visibleClients().filter(canEditClient), u = ui.tmp;
   const cid = u.cid !== undefined ? u.cid : ui.cf === "_sem" ? "" : (ui.cf !== "todos" ? ui.cf : (vc[0] || {}).id || ""), c = cli(cid), cat = u.cat || "conteudo", sem = !cid;
   const opts = sem ? [] : canaisDoCliente(c).filter(k => !["anuncio","tarefa"].includes(k) && !GENERICOS.includes(k));
@@ -2788,7 +2807,7 @@ document.addEventListener("change", async ev => {
   if (t.id === "np-prod") { ui.tmp.prod = t.value; return; }
   if (["np-ideia","np-hl","np-leg","np-ref","np-dprod"].includes(t.id)) { ui.tmp[{"np-ideia":"ideia","np-hl":"hl","np-leg":"leg","np-ref":"ref","np-dprod":"dprod"}[t.id]] = t.value; return; }
   if (t.id === "np-sol") { ui.tmp.sol = t.value; return; }
-  if (t.name === "npcat") { ui.tmp.cat = t.value; ui.tmp.data = ($("#np-data") || {}).value; fillOverlay(); return; }
+  if (t.name === "npcat") { ui.tmp.cat = t.value; ui.tmp.data = ($("#np-data") || {}).value; ui.tmp.tit = ($("#np-tit") || {}).value || ui.tmp.tit; ui.tmp.ideia = ($("#np-ideia") || {}).value || ui.tmp.ideia; fillOverlay(); return; }
   if (t.id === "np-tipo") { ui.tmp.tipo = t.value; return; }
   if (t.dataset.sela !== undefined) { t.checked ? ui.sel.add(t.dataset.sela) : ui.sel.delete(t.dataset.sela); ui.tmp.bulkDel = false; render(); return; }
   if (t.id === "np-resp") { ui.tmp.resp = t.value; return; }
@@ -2860,14 +2879,15 @@ document.addEventListener("submit", async ev => {
     if (id === "setPwdForm") { await sb.auth.refreshSession().catch(() => {}); location.replace("/"); return; }
     ui.modal = null; ui.tmp = {}; toast("Senha salva"); render(); return;
   }
-  if (id === "npForm") { const u = ui.tmp, cat = u.cat || "conteudo", c = cli($("#np-cli").value), data = $("#np-data").value; if (!data) { toast("Escolha a data."); return; }
+  if (id === "npForm") { const u = ui.tmp, cat = u.cat || "conteudo", c = cli(cat === "simples" ? "" : (($("#np-cli") || {}).value || "")), data = $("#np-data").value; if (!data) { toast("Escolha a data."); return; }
     let tp, redes, briefing = {formatos:[]}, resp = {plan:((c.squad || {}).planejamento || []).includes(ui.me) || isHead() ? ui.me : (((c.squad || {}).planejamento || [])[0] || ui.me), prod:null};
-    if (cat === "interna") { const tit = ($("#np-tit").value || "").trim(); if (!tit) { toast("Descreva a tarefa."); return; } tp = "tarefa"; redes = []; briefing.headline = tit; resp.prod = $("#np-resp").value || ui.me; resp.plan = ui.me; }
+    if (cat === "interna" || cat === "simples") { const tit = ($("#np-tit").value || "").trim(); if (!tit) { toast(cat === "simples" ? "Dê um título ao cartão." : "Descreva a tarefa."); return; } tp = "tarefa"; redes = []; briefing.headline = tit; resp.prod = $("#np-resp").value || ui.me; resp.plan = ui.me; }
     else if (cat === "trafego") { tp = "anuncio"; redes = (u.ads || ["Meta Ads"]); if (!redes.length) { toast("Marque ao menos uma plataforma."); return; } resp.prod = defaultProd(c, "feed"); }
     else { tp = $("#np-tipo").value; const gen = GENERICOS.includes(tp); if (gen) { const tit = ($("#np-tit").value || "").trim(); if (!tit) { toast("Descreva o que precisa ser feito."); return; } briefing.headline = tit; }
       redes = gen ? [] : ["feed","stories"].includes(tp) ? (metaRedes(c).length ? metaRedes(c) : ["Instagram","Facebook"]) : [CANAIS[tp].net];
       resp.prod = CANAIS[tp].texto ? null : $("#np-prod") ? ($("#np-prod").value || null) : defaultProd(c, tp); }
     const np = {id:uid(), clienteId:c.id, data, tipo:tp, redes, status:"pauta", resp, briefing, versao:0, midias:[], hist:[entry("pauta")], coments:[], ajusteCom:null, criadoEm:nowIso(), criadoPor:ui.me, v3:true};
+    if (cat === "simples") np.simples = true;
     if (!c.id) { np.unidade = (ME() || {}).unidade || ""; const sol = (($("#np-sol") || {}).value || "").trim(); if (sol) np.solicitante = sol; }
     { const v = id => (($("#" + id) || {}).value || "").trim(); if (v("np-ideia")) briefing.ideia = v("np-ideia"); if (v("np-hl") && !briefing.headline) briefing.headline = v("np-hl"); if (v("np-leg")) briefing.legenda = v("np-leg"); if (v("np-ref")) briefing.referencias = v("np-ref"); if (v("np-dprod")) np.dataProducao = v("np-dprod"); }
     if (resp.prod && resp.prod !== ui.me && cat !== "interna" && GENERICOS.includes(tp)) notify([resp.prod], `Demanda para você: ${briefing.headline}${c.id ? " (" + c.nome + ")" : ""}`, np);
