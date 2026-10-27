@@ -321,6 +321,7 @@ button.ccard:hover{border-color:var(--line2)}
 .hint{font-size:11.5px;color:var(--muted);font-weight:500}
 textarea,.inp{width:100%;border:1px solid var(--line2);border-radius:10px;padding:8px 11px;background:var(--raised);line-height:1.5}
 textarea{resize:vertical;field-sizing:content;min-height:3.4em;overflow-y:hidden}
+.clilink{border:0;background:none;padding:0;font:inherit;color:inherit;cursor:pointer;border-radius:6px}.clilink:hover span:nth-child(2),.clilink:focus-visible span:nth-child(2){text-decoration:underline;color:var(--accent-fg)}.clilink .arr{font-size:11px;color:var(--accent-fg);margin-left:2px}.clinks{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;font-size:12px;color:var(--muted)}.clinks .linkbtn{font-size:12px}
 .etqs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:3px}.etq{--c:#667085;display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;padding:1px 7px;border-radius:5px;background:color-mix(in srgb,var(--c) 15%,transparent);color:var(--c);border:1px solid color-mix(in srgb,var(--c) 35%,transparent);line-height:1.6}
 button.etq{cursor:pointer;font-size:11px;padding:3px 9px;opacity:.55}button.etq[aria-pressed=true]{opacity:1;background:var(--c);color:#fff}button.etq:disabled{cursor:default}
 .etq .rm{margin-left:2px;font-weight:900;cursor:pointer}.etqbox{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.etqnew{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px}.etqnew .sw{width:20px;height:20px;border-radius:50%;border:2px solid transparent;cursor:pointer}.etqnew .sw[aria-pressed=true]{border-color:var(--ink)}
@@ -1270,6 +1271,9 @@ function relatoriosHTML(inner){
 const canal = p => CANAIS[p.tipo] || CANAIS.feed;
 const titleOf = p => (p.briefing || {}).headline || (p.briefing || {}).ideia || `${canal(p).label} sem pauta`;
 const pill = st => { const s = STATUS[st] || STATUS.pauta; return `<span class="pill t-${s.tone}">${esc(s.label)}</span>`; };
+const canHub = c => !!(c && c.id) && !isClient() && visibleClients().some(x => x.id === c.id);
+const cliLink = c => canHub(c) ? `<button type="button" class="cli clilink" data-hub="${esc(c.id)}" title="Abrir a ficha do cliente"><span class="dot" style="background:${esc(c.cor)}"></span><span>${esc(c.nome)}</span><span class="arr" aria-hidden="true">↗</span></button>` : cliTag(c);
+const cliAtalhos = c => canHub(c) ? `<div class="clinks">${[["geral","Escopo"],["info","Cadastro"],["materiais","Materiais"],["orient","Orientações"]].map(([k, l]) => `<button type="button" class="linkbtn" data-hub="${esc(c.id)}" data-hubtab="${k}">${l}</button>`).join("<span aria-hidden=\"true\">·</span>")}</div>` : "";
 const cliTag = c => `<span class="cli"><span class="dot" style="background:${esc(c.cor)}"></span><span>${esc(c.nome)}</span></span>`;
 const netBadge = p => ["meta","stories"].includes(canal(p).grupo) ? "" : `<span class="netb">${esc(canal(p).net)}</span>`;
 const FILES = {};
@@ -2196,7 +2200,7 @@ function drawerHTML(p){
   const edFiles = (headOfUnit(unitOf(p)) && ["pauta","producao","revisao","ajuste"].includes(p.status)) || (canProduce(p) && ["producao","ajuste","pauta","revisao"].includes(p.status) && !(p.status === "ajuste" && p.ajusteCom === "planejamento"));
   const unitPpl = ativos().filter(m => m.unidade === c.unidade);
   const opt = (list, sel) => `<option value="">Definir…</option>` + list.map(m => `<option value="${esc(m.id)}" ${sel === m.id ? "selected" : ""}>${esc(m.nome)}</option>`).join("");
-  const top = `<div class="d-top"><button type="button" class="x" data-act="close" aria-label="Fechar">×</button><div class="ttl"><b>${esc(titleOf(p))}</b><span>${p.simples ? "Cartão simples" : cliTag(c)}${p.solicitante ? ` · para ${esc(p.solicitante)}` : ""} · ${esc(fmtD(p.data))}${p.simples ? "" : " · " + esc(isTask(p) ? "Pauta" : t.label)}</span></div>${pillP(p)}${canEd ? `<button type="button" class="btn sm${ed ? " primary" : ""}" data-act="pgEdit">${ed ? "Concluir edição" : "Editar"}</button>` : ""}</div>`;
+  const top = `<div class="d-top"><button type="button" class="x" data-act="close" aria-label="Fechar">×</button><div class="ttl"><b>${esc(titleOf(p))}</b><span>${p.simples ? "Cartão simples" : cliLink(c)}${p.solicitante ? ` · para ${esc(p.solicitante)}` : ""} · ${esc(fmtD(p.data))}${p.simples ? "" : " · " + esc(isTask(p) ? "Pauta" : t.label)}</span></div>${pillP(p)}${canEd ? `<button type="button" class="btn sm${ed ? " primary" : ""}" data-act="pgEdit">${ed ? "Concluir edição" : "Editar"}</button>` : ""}</div>`;
   const comentsSec = `<div class="sec"><h3>Comentários</h3><div class="list">${(p.coments || []).map(m => `<div class="cm">${av(m.por, 26)}<div><div class="s">${esc(mName(m.por))} · ${esc(fmtStamp(m.em))}</div><div class="b">${esc(m.texto)}</div></div></div>`).join("") || `<span class="muted" style="font-size:12.5px">Nenhum comentário. O cliente não vê esta conversa.</span>`}</div>
         <div class="row" style="margin-top:8px;flex-wrap:nowrap"><input class="inp" id="cmtxt" placeholder="Escreva para a equipe… (os responsáveis são avisados)" value="${esc(u.cm || "")}" aria-label="Comentário interno"><button type="button" class="btn sm" data-act="comment">Enviar</button></div></div>`;
   const histSec = `<div class="sec"><h3>Histórico</h3><ul class="hist">${[...(p.hist || [])].reverse().map((h, i) => `<li class="${i === 0 ? "hl" : ""}"><div><div class="a">${esc(ACOES[h.acao] || h.acao)}${h.versao ? ` (v${h.versao})` : ""}</div><div class="s">${esc(h.por === "cliente" && h.nome ? "Cliente · " + h.nome : mName(h.por))} · ${esc(fmtStamp(h.em))}</div>${h.texto ? `<div class="q">${esc(h.texto)}</div>` : ""}</div></li>`).join("")}</ul></div>`;
@@ -2218,7 +2222,7 @@ function drawerHTML(p){
       ${tstep}
       ${actionsHTML(p, c, false)}
       <section class="psec"><h3>Propriedades</h3><div class="form props">
-        <div class="field full"><span class="lb">Cliente</span><div style="min-height:30px;display:flex;align-items:center">${p.simples ? `<span class="muted" style="font-size:12.5px">Sem cliente</span>` : cliTag(c)}</div></div>
+        <div class="field full"><span class="lb">Cliente</span><div style="min-height:30px;display:flex;align-items:center">${p.simples ? `<span class="muted" style="font-size:12.5px">Sem cliente</span>` : cliLink(c)}</div>${p.simples ? "" : cliAtalhos(c)}</div>
         <div class="field"><label for="f-data">Data de fim</label><input class="inp" type="date" id="f-data" data-top="data" value="${esc(p.data)}" ${(canPlan(p) || canProduce(p)) && p.status !== "publicado" ? "" : "disabled"}></div>
         <div class="field"><label for="f-rc">Responsável</label><select class="inp" id="f-rc" data-top="prod" ${ed ? "" : "disabled"}>${opt(tppl, (p.resp || {}).prod)}</select></div>
         ${etqField(p.etiquetas || [], canEtq(p), "data-etq")}
@@ -2279,7 +2283,7 @@ function drawerHTML(p){
       ${stepper}
       ${actionsHTML(p, c, edFiles)}
       <section class="psec"><h3>Propriedades</h3><div class="form props">
-        <div class="field full"><span class="lb">Cliente</span><div style="min-height:30px;display:flex;align-items:center">${cliTag(c)}${p.solicitante ? `<span class="muted" style="font-size:12px;margin-left:6px">· para ${esc(p.solicitante)}</span>` : ""}</div></div>
+        <div class="field full"><span class="lb">Cliente</span><div style="min-height:30px;display:flex;align-items:center">${cliLink(c)}${p.solicitante ? `<span class="muted" style="font-size:12px;margin-left:6px">· para ${esc(p.solicitante)}</span>` : ""}</div>${cliAtalhos(c)}</div>
         <div class="field full"><span class="lb">${canal(p).grupo === "avulsa" ? "Formato" : "Rede"}</span><div class="row" style="min-height:30px">${redesField}</div></div>
         <div class="field"><label for="f-data">${canal(p).grupo === "avulsa" ? "Prazo de entrega" : "Data de postagem"}</label><input class="inp" type="date" id="f-data" data-top="data" value="${esc(p.data)}" ${canPlan(p) && p.status !== "publicado" ? "" : "disabled"}></div>
         <div class="field"><label for="f-dprod">Data de produção</label><input class="inp" type="date" id="f-dprod" data-top="dataProducao" value="${esc(p.dataProducao || "")}" ${p.dataProducao ? "" : "data-empty"} ${canPlan(p) && p.status !== "publicado" ? "" : "disabled"}><span class="hint">${p.dataProducao ? "Definida na pauta." : isEscopo(p) ? `Vazia: ${esc(fmtShort(pdDef))}, pela antecedência do cliente.` : "Vazia: vale a data da pauta."}</span></div>
@@ -2794,7 +2798,7 @@ document.addEventListener("click", async ev => {
   if (d.newday) { ui.tmp = {data:d.newday}; ui.modal = "newPeca"; fillOverlay(); return; }
   if (d.newcap) { openCap({data:d.newcap}); return; }
   if (d.dayall) { ui.tmp = {day:d.dayall, kind:d.kind}; ui.modal = "day"; fillOverlay(); return; }
-  if (d.hub) { ui.hubId = d.hub; ui.hubTab = "geral"; ui.oriMode = null; ui.tmp = {}; ui.dashSt = null; ui.view = "hub"; render(); window.scrollTo(0,0); return; }
+  if (d.hub) { if (ui.openId || ui.modal) flushNow(); ui.openId = null; ui.modal = null; ui.hubId = d.hub; ui.hubTab = d.hubtab || "geral"; ui.oriMode = null; ui.tmp = {}; ui.dashSt = null; ui.view = "hub"; render(); window.scrollTo(0,0); return; }
   if (d.htab) { ui.hubTab = d.htab; ui.tmp = {}; if (d.htab === "materiais") watchDrive(cli(ui.hubId)); render(); return; }
   if (d.eqtab) { ui.eqTab = d.eqtab; render(); return; }
   if (d.ntab) { ui.ntab = d.ntab; render(); return; }
