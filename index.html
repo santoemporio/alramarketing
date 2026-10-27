@@ -320,7 +320,10 @@ button.ccard:hover{border-color:var(--line2)}
 .field>label,.field>.lb{font-size:12px;font-weight:700}
 .hint{font-size:11.5px;color:var(--muted);font-weight:500}
 textarea,.inp{width:100%;border:1px solid var(--line2);border-radius:10px;padding:8px 11px;background:var(--raised);line-height:1.5}
-textarea{resize:vertical}
+textarea{resize:vertical;field-sizing:content;min-height:3.4em;overflow-y:hidden}
+.etqs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:3px}.etq{--c:#667085;display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;padding:1px 7px;border-radius:5px;background:color-mix(in srgb,var(--c) 15%,transparent);color:var(--c);border:1px solid color-mix(in srgb,var(--c) 35%,transparent);line-height:1.6}
+button.etq{cursor:pointer;font-size:11px;padding:3px 9px;opacity:.55}button.etq[aria-pressed=true]{opacity:1;background:var(--c);color:#fff}button.etq:disabled{cursor:default}
+.etq .rm{margin-left:2px;font-weight:900;cursor:pointer}.etqbox{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.etqnew{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px}.etqnew .sw{width:20px;height:20px;border-radius:50%;border:2px solid transparent;cursor:pointer}.etqnew .sw[aria-pressed=true]{border-color:var(--ink)}
 textarea:focus,.inp:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
 textarea:disabled,.inp:disabled{background:var(--surface);opacity:1;border-color:transparent;color:var(--fg)}
 .cap-foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;font-size:11.5px;color:var(--muted)}
@@ -605,7 +608,7 @@ const CANAIS = {
   newsletter:{label:"Newsletter LinkedIn", k:"NEWS", grupo:"linkedin", ratio:"1.91 / 1", net:"LinkedIn", texto:true},
   blog:{label:"Post do blog", k:"BLOG", grupo:"blog", ratio:"1.91 / 1", net:"Blog", texto:true},
   anuncio:{label:"Anúncio", k:"ADS", grupo:"ads", ratio:"4 / 5", net:"Tráfego pago"},
-  tarefa:{label:"Tarefa interna", k:"TAREFA", grupo:"interna", ratio:"4 / 5", net:"Interna"},
+  tarefa:{label:"Pauta", k:"PAUTA", grupo:"interna", ratio:"4 / 5", net:"Interna"},
   arte:{label:"Peça gráfica / arte", k:"ARTE", grupo:"avulsa", ratio:"4 / 5", net:"Outros"},
   video:{label:"Vídeo", k:"VÍDEO", grupo:"avulsa", ratio:"9 / 16", net:"Outros", video:true},
   fotos:{label:"Fotos", k:"FOTOS", grupo:"avulsa", ratio:"4 / 5", net:"Outros"},
@@ -1072,7 +1075,19 @@ const isGenerated = (c, d) => !!((c.gerado || {})[ym(d)]) || S.pecas.some(p => p
 
 /* ================= tipos de pauta ================= */
 const REDES_ADS = ["Meta Ads","Google Ads","TikTok Ads","LinkedIn Ads"];
-const CATS = {simples:"Cartão simples", conteudo:"Conteúdo orgânico", trafego:"Tráfego pago", interna:"Interna (to-do)"};
+const CATS = {conteudo:"Conteúdo orgânico", trafego:"Tráfego pago", interna:"Pauta"};
+const ETQ_PAD = [{id:"urgencia", nome:"URGÊNCIA", cor:"#d92d20"}, {id:"prioridade", nome:"PRIORIDADE", cor:"#dc6803"}, {id:"ajuste", nome:"AJUSTE", cor:"#1570ef"}];
+const ETQ_CORES = ["#d92d20","#dc6803","#ca8a04","#16a34a","#0891b2","#1570ef","#7c3aed","#db2777","#667085"];
+const etiquetas = () => [...ETQ_PAD.filter(e => !((S.cfg || {}).etqOff || []).includes(e.id)), ...(((S.cfg || {}).etiquetas) || [])];
+const etqOf = id => etiquetas().find(e => e.id === id);
+const etqChips = p => { const l = (p.etiquetas || []).map(etqOf).filter(Boolean); return l.length ? `<span class="etqs">${l.map(e => `<span class="etq" style="--c:${esc(e.cor)}">${esc(e.nome)}</span>`).join("")}</span>` : ""; };
+const canEtq = p => !isClient() && (canPlan(p) || canProduce(p) || timeAtLeast("B"));
+function etqField(sel, can, attr){
+  const u = ui.tmp, mng = can && timeAtLeast("B");
+  return `<div class="field full"><span class="lb">Etiquetas</span><div class="etqbox">${etiquetas().map(e => `<button type="button" class="etq" style="--c:${esc(e.cor)}" ${attr}="${esc(e.id)}" aria-pressed="${sel.includes(e.id)}" ${can ? "" : "disabled"}>${esc(e.nome)}${u.etqMng && mng ? `<span class="rm" data-etqdel="${esc(e.id)}" title="Excluir etiqueta" aria-label="Excluir etiqueta ${esc(e.nome)}">×</span>` : ""}</button>`).join("") || `<span class="muted" style="font-size:12px">Nenhuma etiqueta.</span>`}
+    ${can ? `<button type="button" class="linkbtn" data-act="etqNovaTg">+ Nova</button>${mng ? `<button type="button" class="linkbtn" data-act="etqMng">${u.etqMng ? "Pronto" : "Gerenciar"}</button>` : ""}` : ""}</div>
+    ${can && u.etqNova ? `<div class="etqnew"><input class="inp sm" id="etqnome" maxlength="24" placeholder="Nome da etiqueta" value="${esc(u.etqNome || "")}" style="max-width:180px">${ETQ_CORES.map(c => `<button type="button" class="sw" style="background:${c}" data-etqcor="${c}" aria-pressed="${(u.etqCor || ETQ_CORES[5]) === c}" aria-label="Cor"></button>`).join("")}<button type="button" class="btn sm primary" data-act="etqCriar">Criar</button></div>` : ""}</div>`;
+}
 const isTask = p => p.tipo === "tarefa";
 const isRel = p => p.tipo === "relatorio";
 /* fluxo de cada tipo de pauta (documento "Organograma e fluxos de pauta") */
@@ -1093,7 +1108,7 @@ const FLUXOS = {
   trafego:{nome:"Tráfego pago", etapas:"Briefing → Criativo → Revisão → Cliente → Aprovado → No ar → Encerrada"},
   pontual:{nome:"Demanda pontual do cliente", etapas:"Solicitação → Produção → Revisão → Cliente → Aprovado → Entregue"},
   interna:{nome:"Demanda interna (sem cliente)", etapas:"Pauta → Produção → Revisão → Aprovado → Entregue"},
-  tarefa:{nome:"Cartão simples e tarefa", etapas:"A fazer → Fazendo → Concluída"},
+  tarefa:{nome:"Pauta (to-do)", etapas:"A fazer → Fazendo → Concluída"},
   relatorio:{nome:"Relatório de resultados", etapas:"Coleta → Análise → Revisão da Diretoria → Pronto → Apresentado"}
 };
 /* pauta gerada pelo escopo do mês: atraso pela antecedência do cliente; as demais, pela própria data */
@@ -1891,10 +1906,10 @@ function filtersHTML(vc, opts){
   if (ui.pf && !ppl.some(m => m.id === ui.pf)) ui.pf = "";
   return `<div class="filters"><label class="selw"><span>Cliente</span><select class="inp sm" id="fCli"><option value="todos">${isHead() ? "Todos os clientes" : "Meus clientes"}</option>${vc.map(c => `<option value="${esc(c.id)}" ${ui.cf === c.id ? "selected" : ""}>${esc(c.nome)}</option>`).join("")}${sem || ui.cf === "_sem" ? `<option value="_sem" ${ui.cf === "_sem" ? "selected" : ""}>Sem cliente</option>` : ""}</select></label>
     ${o.fmt === false ? "" : `<label class="selw"><span>Formato</span><select class="inp sm" id="fFmt"><option value="todos">Todos os formatos</option>${Object.keys(GRUPOS).filter(g => grupos.includes(g) || g === "avulsa").map(g => `<option value="${g}" ${ui.tf === g ? "selected" : ""}>${esc(GRUPOS[g])}</option>`).join("")}</select></label>`}
-    ${ppl.length && o.pes !== false ? `<label class="selw"><span>Pessoa</span><select class="inp sm" id="fPes"><option value="">Todas as pessoas</option>${ppl.map(m => `<option value="${esc(m.id)}" ${ui.pf === m.id ? "selected" : ""}>${esc(m.nome)}</option>`).join("")}</select></label>` : ""}${o.extra || ""}</div>`;
+    ${ppl.length && o.pes !== false ? `<label class="selw"><span>Pessoa</span><select class="inp sm" id="fPes"><option value="">Todas as pessoas</option>${ppl.map(m => `<option value="${esc(m.id)}" ${ui.pf === m.id ? "selected" : ""}>${esc(m.nome)}</option>`).join("")}</select></label>` : ""}${(() => { const es = etiquetas(); if (ui.ef && !es.some(e => e.id === ui.ef)) ui.ef = ""; return es.length && o.fmt !== false ? `<label class="selw"><span>Etiqueta</span><select class="inp sm" id="fEtq"><option value="">Todas as etiquetas</option>${es.map(e => `<option value="${esc(e.id)}" ${ui.ef === e.id ? "selected" : ""}>${esc(e.nome)}</option>`).join("")}</select></label>` : ""; })()}${o.extra || ""}</div>`;
 }
 const pfMatch = p => !ui.pf || (p.resp || {}).plan === ui.pf || (p.resp || {}).prod === ui.pf;
-const tfMatch = p => ui.tf === "todos" || canal(p).grupo === ui.tf;
+const tfMatch = p => (ui.tf === "todos" || canal(p).grupo === ui.tf) && (!ui.ef || (p.etiquetas || []).includes(ui.ef));
 function chipsClients(vc){
   return [`<button type="button" class="chip" data-cf="todos" aria-pressed="${ui.cf === "todos"}">${isHead() ? "Todos os clientes" : "Meus clientes"}</button>`]
     .concat(vc.map(c => `<button type="button" class="chip" data-cf="${esc(c.id)}" aria-pressed="${ui.cf === c.id}"><span class="dot" style="background:${esc(c.cor)}"></span>${esc(c.nome)}</button>`))
@@ -1955,7 +1970,7 @@ function kcHTML(p){
 function kcBtn(p){
   const c = cli(p.clienteId), o = owner(p);
   const sm = ui.selMode, can = canPlan(p), on = ui.sel.has(p.id);
-  return `<button type="button" class="kc${myTurn(p) ? " mine" : ""}${isTask(p) ? " task" : ""}${sm ? " selmode" : ""}${on ? " picked" : ""}" ${sm ? (can ? `data-selp="${esc(p.id)}" aria-pressed="${on}"` : `disabled title="Só o planejamento desta pauta pode arquivar ou excluir"`) : `data-open="${esc(p.id)}" draggable="true"`}>${sm ? `<span class="ck${on ? " on" : ""}" aria-hidden="true">${on ? "✓" : ""}</span>` : ""}${isTask(p) ? `<span class="th tk">✓</span>` : isText(p) && !(p.midias || []).length ? `<span class="th tx">Aa</span>` : `<span class="th">${thumb(p)}</span>`}<span style="min-width:0"><span class="t">${esc(titleOf(p))}</span><span class="m">${p.simples ? `<span>Cartão</span>` : cliTag(c)}</span><span class="m"><span>${canal(p).k}</span><span class="tnum">${esc(fmtShort(p.data))}</span>${isTask(p) && p.status === "publicado" ? `<span>Concluída</span>` : janela(p) || paradaTag(p)}${stLabel(p) !== (STATUS[p.status] || {}).label && !isTask(p) ? `<span class="stx">${esc(stLabel(p))}</span>` : ""}${o && o !== "cliente" ? av(o, 18) : ""}</span></span></button>`;
+  return `<button type="button" class="kc${myTurn(p) ? " mine" : ""}${isTask(p) ? " task" : ""}${sm ? " selmode" : ""}${on ? " picked" : ""}" ${sm ? (can ? `data-selp="${esc(p.id)}" aria-pressed="${on}"` : `disabled title="Só o planejamento desta pauta pode arquivar ou excluir"`) : `data-open="${esc(p.id)}" draggable="true"`}>${sm ? `<span class="ck${on ? " on" : ""}" aria-hidden="true">${on ? "✓" : ""}</span>` : ""}${isTask(p) ? `<span class="th tk">✓</span>` : isText(p) && !(p.midias || []).length ? `<span class="th tx">Aa</span>` : `<span class="th">${thumb(p)}</span>`}<span style="min-width:0">${etqChips(p)}<span class="t">${esc(titleOf(p))}</span><span class="m">${p.simples ? `<span>Cartão</span>` : cliTag(c)}</span><span class="m"><span>${canal(p).k}</span><span class="tnum">${esc(fmtShort(p.data))}</span>${isTask(p) && p.status === "publicado" ? `<span>Concluída</span>` : janela(p) || paradaTag(p)}${stLabel(p) !== (STATUS[p.status] || {}).label && !isTask(p) ? `<span class="stx">${esc(stLabel(p))}</span>` : ""}${o && o !== "cliente" ? av(o, 18) : ""}</span></span></button>`;
 }
 function readyToSend(p){
   const b = p.briefing || {}, c = cli(p.clienteId);
@@ -2181,7 +2196,7 @@ function drawerHTML(p){
   const edFiles = (headOfUnit(unitOf(p)) && ["pauta","producao","revisao","ajuste"].includes(p.status)) || (canProduce(p) && ["producao","ajuste","pauta","revisao"].includes(p.status) && !(p.status === "ajuste" && p.ajusteCom === "planejamento"));
   const unitPpl = ativos().filter(m => m.unidade === c.unidade);
   const opt = (list, sel) => `<option value="">Definir…</option>` + list.map(m => `<option value="${esc(m.id)}" ${sel === m.id ? "selected" : ""}>${esc(m.nome)}</option>`).join("");
-  const top = `<div class="d-top"><button type="button" class="x" data-act="close" aria-label="Fechar">×</button><div class="ttl"><b>${esc(titleOf(p))}</b><span>${p.simples ? "Cartão simples" : cliTag(c)}${p.solicitante ? ` · para ${esc(p.solicitante)}` : ""} · ${esc(fmtD(p.data))}${p.simples ? "" : " · " + esc(isTask(p) ? "Tarefa interna" : t.label)}</span></div>${pillP(p)}${canEd ? `<button type="button" class="btn sm${ed ? " primary" : ""}" data-act="pgEdit">${ed ? "Concluir edição" : "Editar"}</button>` : ""}</div>`;
+  const top = `<div class="d-top"><button type="button" class="x" data-act="close" aria-label="Fechar">×</button><div class="ttl"><b>${esc(titleOf(p))}</b><span>${p.simples ? "Cartão simples" : cliTag(c)}${p.solicitante ? ` · para ${esc(p.solicitante)}` : ""} · ${esc(fmtD(p.data))}${p.simples ? "" : " · " + esc(isTask(p) ? "Pauta" : t.label)}</span></div>${pillP(p)}${canEd ? `<button type="button" class="btn sm${ed ? " primary" : ""}" data-act="pgEdit">${ed ? "Concluir edição" : "Editar"}</button>` : ""}</div>`;
   const comentsSec = `<div class="sec"><h3>Comentários</h3><div class="list">${(p.coments || []).map(m => `<div class="cm">${av(m.por, 26)}<div><div class="s">${esc(mName(m.por))} · ${esc(fmtStamp(m.em))}</div><div class="b">${esc(m.texto)}</div></div></div>`).join("") || `<span class="muted" style="font-size:12.5px">Nenhum comentário. O cliente não vê esta conversa.</span>`}</div>
         <div class="row" style="margin-top:8px;flex-wrap:nowrap"><input class="inp" id="cmtxt" placeholder="Escreva para a equipe… (os responsáveis são avisados)" value="${esc(u.cm || "")}" aria-label="Comentário interno"><button type="button" class="btn sm" data-act="comment">Enviar</button></div></div>`;
   const histSec = `<div class="sec"><h3>Histórico</h3><ul class="hist">${[...(p.hist || [])].reverse().map((h, i) => `<li class="${i === 0 ? "hl" : ""}"><div><div class="a">${esc(ACOES[h.acao] || h.acao)}${h.versao ? ` (v${h.versao})` : ""}</div><div class="s">${esc(h.por === "cliente" && h.nome ? "Cliente · " + h.nome : mName(h.por))} · ${esc(fmtStamp(h.em))}</div>${h.texto ? `<div class="q">${esc(h.texto)}</div>` : ""}</div></li>`).join("")}</ul></div>`;
@@ -2190,13 +2205,27 @@ function drawerHTML(p){
   const driveField = `<div class="field full"><label for="f-drive">Link do Drive <span class="hint">· imagens, vídeos e arquivos abertos da criação</span></label><div class="row" style="flex-wrap:nowrap"><input class="inp" id="f-drive" value="${esc(p.drive || "")}" placeholder="https://drive.google.com/…" ${ed ? "" : "disabled"}>${c.drive ? `<a class="btn sm" href="${esc(c.drive)}" target="_blank" rel="noopener" title="Pasta do cliente no Drive da Alra">${svgi("drive")} Pasta do cliente</a>` : ""}</div></div>`;
 
   if (isTask(p)) {
-    return `<aside class="drawer pg ${ed ? "edit" : "view"}" role="dialog" aria-modal="true" aria-label="${esc(titleOf(p))}">${top}<div class="d-body one"><div class="detail">
+    const tst = [["pauta","A fazer"],["producao","Fazendo"],["publicado","Concluída"]], tj = tst.findIndex(x => x[0] === p.status);
+    const tstep = `<div><div class="stepbar" style="grid-template-columns:repeat(3,1fr)">${tst.map((x, i) => `<div class="${i === tj ? "on" : i < tj ? "past" : ""}"></div>`).join("")}</div><div class="stepl" style="grid-template-columns:repeat(3,1fr)">${tst.map((x, i) => `<span class="${i === tj ? "on" : ""}">${x[1]}</span>`).join("")}</div></div>`;
+    const tppl = semCli(p) ? ativos().filter(m => unitScope().includes(m.unidade)) : unitPpl;
+    return `<aside class="drawer pg ${ed ? "edit" : "view"}" role="dialog" aria-modal="true" aria-label="${esc(titleOf(p))}">${top}
+    <div class="d-body pgb"><div class="pgw"><div class="pgmain">
+      <section class="psec"><h3>Conteúdo</h3><div class="form"><div class="field full"><label for="f-hl">Título da pauta</label><input class="inp" id="f-hl" data-b="headline" value="${esc(b.headline)}" ${ed ? "" : "disabled"}></div>
+        <div class="field full"><label for="f-ideia">Descrição e checklist</label><textarea id="f-ideia" data-b="ideia" rows="4" placeholder="O que precisa ser feito, links, passos…" ${ed ? "" : "disabled"}>${esc(b.ideia)}</textarea></div></div></section>
+      <section class="psec">${comentsSec}</section>
+      <section class="psec">${histSec}</section>
+    </div><div class="pgside">
+      ${tstep}
       ${actionsHTML(p, c, false)}
-      <div class="form"><div class="field full"><label for="f-hl">${p.simples ? "Título" : "Tarefa"}</label><input class="inp" id="f-hl" data-b="headline" value="${esc(b.headline)}" ${ed ? "" : "disabled"}></div>
-        <div class="field full"><label for="f-ideia">${p.simples ? "Texto" : "Descrição e checklist"}</label><textarea id="f-ideia" data-b="ideia" rows="${p.simples ? 10 : 6}" placeholder="O que precisa ser feito, links, passos…" ${ed ? "" : "disabled"}>${esc(b.ideia)}</textarea></div>
-        <div class="field"><label for="f-data">${p.simples ? "Data de fim" : "Prazo"}</label><input class="inp" type="date" id="f-data" data-top="data" value="${esc(p.data)}" ${(canPlan(p) || canProduce(p)) && p.status !== "publicado" ? "" : "disabled"}></div>
-        <div class="field"><label for="f-rc">Responsável</label><select class="inp" id="f-rc" data-top="prod" ${ed ? "" : "disabled"}>${opt(p.simples ? ativos().filter(m => unitScope().includes(m.unidade)) : unitPpl, (p.resp || {}).prod)}</select></div>
-        ${p.simples ? "" : driveField}</div>${chat}</div></div></aside>`;
+      <section class="psec"><h3>Propriedades</h3><div class="form props">
+        <div class="field full"><span class="lb">Cliente</span><div style="min-height:30px;display:flex;align-items:center">${p.simples ? `<span class="muted" style="font-size:12.5px">Sem cliente</span>` : cliTag(c)}</div></div>
+        <div class="field"><label for="f-data">Data de fim</label><input class="inp" type="date" id="f-data" data-top="data" value="${esc(p.data)}" ${(canPlan(p) || canProduce(p)) && p.status !== "publicado" ? "" : "disabled"}></div>
+        <div class="field"><label for="f-rc">Responsável</label><select class="inp" id="f-rc" data-top="prod" ${ed ? "" : "disabled"}>${opt(tppl, (p.resp || {}).prod)}</select></div>
+        ${etqField(p.etiquetas || [], canEtq(p), "data-etq")}
+        ${driveField}
+      </div></section>
+      ${delRow}
+    </div></div></div></aside>`;
   }
   const si = ORDER.indexOf(p.status), txt = isText(p), art = needsArt(p);
   const planners = unitPpl.filter(m => (m.papeis || []).includes("planejamento") || (m.papeis || []).includes("head"));
@@ -2259,6 +2288,7 @@ function drawerHTML(p){
         <div class="field"><label for="f-rp">Planejamento</label><select class="inp" id="f-rp" data-top="plan" ${edT ? "" : "disabled"}>${opt(planners, (p.resp || {}).plan)}</select></div>`}
         ${isRel(p) ? "" : art ? `<div class="field"><label for="f-rc">${txt ? "Design do card" : "Produção"}</label><select class="inp" id="f-rc" data-top="prod" ${edT ? "" : "disabled"}>${opt(producers, (p.resp || {}).prod)}</select></div>` : `<div class="field"></div>`}
         ${isRel(p) ? "" : `<div class="field full"><span class="lb">Formatos de entrega</span><div class="seg">${txt ? `<label><input type="checkbox" data-card ${b.card ? "checked" : ""} ${dis}> Card estático</label>${b.card ? "" : `<span class="hint" style="align-self:center">Marque se o conteúdo leva banner ou card.</span>`}` : (canal(p).grupo === "avulsa" ? FORMATOS_GEN : FORMATOS).map(f => `<label><input type="checkbox" data-fmt value="${esc(f)}" ${(b.formatos || []).includes(f) ? "checked" : ""} ${dis}> ${esc(f)}</label>`).join("")}</div></div>`}
+        ${etqField(p.etiquetas || [], canEtq(p), "data-etq")}
         ${driveField}
       </div></section>
       ${delRow}
@@ -2391,53 +2421,69 @@ function approveAllHTML(){
 
 /* ================= modais ================= */
 function canaisDoCliente(c){ const s = scopeItems(c).map(x => x.tipo); return s.length ? [...new Set(s)] : Object.keys(CANAIS).filter(k => !["anuncio","tarefa"].includes(k)); }
-function simplesHTML(){
-  const u = ui.tmp, ppl = ativos().filter(m => unitScope().includes(m.unidade)).sort((a, b) => a.nome.localeCompare(b.nome));
-  return `<aside class="drawer pg edit" role="dialog" aria-modal="true" aria-label="Novo cartão"><div class="d-top"><button type="button" class="x" data-act="close" aria-label="Fechar">×</button><div class="ttl"><b>Novo cartão</b><span>Sem cliente, briefing ou rede: título, texto, data de fim e responsável.</span></div><button type="submit" form="npForm" class="btn sm primary">Criar cartão</button></div>
-    <form class="d-body pgb" id="npForm" novalidate><div class="pgw"><div class="pgmain">
-      <section class="psec"><h3>Cartão</h3><div class="form">
-        <div class="field full"><label for="np-tit">Título</label><input class="inp" id="np-tit" value="${esc(u.tit || "")}" placeholder="Ex.: Organizar pasta de fotos de novembro"></div>
-        <div class="field full"><label for="np-ideia">Texto <span class="hint">· informações, links, checklist</span></label><textarea id="np-ideia" rows="10" placeholder="Escreva aqui o que precisa ser feito…">${esc(u.ideia || "")}</textarea></div>
-      </div></section>
-    </div><div class="pgside">
-      <section class="psec"><h3>Propriedades</h3><div class="form props">
-        <div class="field full"><span class="lb">Tipo de pauta</span><div class="seg">${Object.entries(CATS).map(([k, l]) => `<label><input type="radio" name="npcat" value="${k}" ${k === "simples" ? "checked" : ""}> ${l}</label>`).join("")}</div></div>
-        <div class="field full"><label for="np-data">Data de fim</label><input class="inp" type="date" id="np-data" value="${esc(u.data || ymd(addDays(TODAY, 3)))}"></div>
-        <div class="field full"><label for="np-resp">Responsável</label><select class="inp" id="np-resp">${ppl.map(m => `<option value="${esc(m.id)}" ${(u.resp || ui.me) === m.id ? "selected" : ""}>${esc(m.nome)}</option>`).join("")}</select></div>
-      </div></section>
-      <p class="muted" style="font-size:12.5px">O cartão anda em A fazer, Fazendo e Concluída no Kanban, sem passar por cliente ou aprovação.</p>
-      <div class="actions"><button type="submit" class="btn primary">Criar cartão</button><button type="button" class="btn ghost" data-act="close">Cancelar</button></div>
-    </div></div></form></aside>`;
-}
 function newPecaHTML(){
-  if (ui.tmp.cat === "simples") return simplesHTML();
   const vc = visibleClients().filter(canEditClient), u = ui.tmp;
-  const cid = u.cid !== undefined ? u.cid : ui.cf === "_sem" ? "" : (ui.cf !== "todos" ? ui.cf : (vc[0] || {}).id || ""), c = cli(cid), cat = u.cat || "conteudo", sem = !cid;
-  const opts = sem ? [] : canaisDoCliente(c).filter(k => !["anuncio","tarefa"].includes(k) && !GENERICOS.includes(k));
-  const tipoSel = u.tipo || (sem ? "arte" : opts[0]), generico = sem || GENERICOS.includes(tipoSel);
+  if (!u.f) u.f = {}; const f = u.f; if (u.data && !f.data) f.data = u.data; if (u.tit && f.tit === undefined) f.tit = u.tit;
+  const val = (k, d) => f[k] !== undefined ? f[k] : (d === undefined ? "" : d);
+  const cid = u.cid !== undefined ? u.cid : ui.cf === "_sem" ? "" : (ui.cf !== "todos" ? ui.cf : (vc[0] || {}).id || ""), c = cli(cid), cat = CATS[u.cat] ? u.cat : "conteudo", sem = !cid;
+  const escopo = sem ? [] : scopeItems(c).map(x => x.tipo);
+  const redesTodas = Object.keys(CANAIS).filter(k => !["anuncio","tarefa","relatorio"].includes(k) && !GENERICOS.includes(k));
+  const tipoSel = u.tipo && CANAIS[u.tipo] ? u.tipo : (sem ? "arte" : (escopo.find(k => redesTodas.includes(k)) || "feed")), generico = GENERICOS.includes(tipoSel);
   const tipoNow = cat === "interna" ? "tarefa" : cat === "trafego" ? "anuncio" : tipoSel, texto = !!(CANAIS[tipoNow] || {}).texto;
+  const card = texto && !!val("card", false), art = cat !== "interna" && (!texto || card);
   const lbl = k => CANAIS[k].grupo === "meta" ? "Instagram e Facebook · Feed" : CANAIS[k].grupo === "stories" ? "Instagram e Facebook · Stories" : CANAIS[k].label;
-  const people = ativos().filter(m => m.unidade === c.unidade);
-  const tit = cat === "interna" || (cat === "conteudo" && generico) ? `<div class="field full"><label for="np-tit">${cat === "interna" ? "Tarefa" : "O que precisa ser feito"}</label><input class="inp" id="np-tit" value="${esc(u.tit || "")}" placeholder="${cat === "interna" ? "Ex.: Montar newsletter de novembro, subir campanha de Black Friday" : "Ex.: Flyer da palestra de sábado, vídeo de boas-vindas, apresentação comercial"}"></div>` : "";
-  const conteudo = cat === "interna" ? `${tit}<div class="field full"><label for="np-ideia">Descrição e checklist <span class="hint">· opcional</span></label><textarea id="np-ideia" rows="4" placeholder="O que precisa ser feito, links, passos…">${esc(u.ideia || "")}</textarea></div>`
-    : `${tit}<div class="field full"><label for="np-ideia">Ideia <span class="hint">· por que este material existe · opcional</span></label><textarea id="np-ideia" rows="2">${esc(u.ideia || "")}</textarea></div>${!texto && !(cat === "conteudo" && generico) ? `<div class="field full"><label for="np-hl">Headline <span class="hint">· opcional</span></label><input class="inp" id="np-hl" value="${esc(u.hl || "")}"></div>` : ""}`;
-  return `<aside class="drawer pg edit" role="dialog" aria-modal="true" aria-label="Nova pauta"><div class="d-top"><button type="button" class="x" data-act="close" aria-label="Fechar">×</button><div class="ttl"><b>Nova pauta</b><span>Mesmo layout da pauta. Propriedades à direita; o conteúdo pode ser completado depois.</span></div><button type="submit" form="npForm" class="btn sm primary">Criar pauta</button></div>
+  const unidade = c.unidade || (ME() || {}).unidade;
+  const people = (sem ? ativos().filter(m => unitScope().includes(m.unidade)) : ativos().filter(m => m.unidade === unidade)).sort((a, b) => a.nome.localeCompare(b.nome));
+  const has = (m, rs) => (m.papeis || []).some(r => rs.includes(r));
+  const planners = people.filter(m => has(m, ["planejamento","head","diretoria"]) || m.id === ui.me);
+  const producers = people.filter(m => has(m, ["design","audiovisual"]));
+  const trafs = people.filter(m => has(m, ["trafego","head"]));
+  const planDef = ((c.squad || {}).planejamento || []).includes(ui.me) || isHead() || sem ? ui.me : (((c.squad || {}).planejamento || [])[0] || ui.me);
+  const prodDef = sem || generico ? "" : defaultProd(c, cat === "trafego" ? "feed" : tipoSel) || "";
+  const trafDef = (people.find(m => (m.papeis || []).includes("trafego")) || {}).id || "";
+  const sel = (id, list, cur, empty) => `<select class="inp" id="np-${id}">${empty ? `<option value="">${empty}</option>` : ""}${list.map(m => `<option value="${esc(m.id)}" ${cur === m.id ? "selected" : ""}>${esc(m.nome)}</option>`).join("")}</select>`;
+  const ta = (id, rows, ph) => `<textarea id="np-${id}" rows="${rows}" ${ph ? `placeholder="${esc(ph)}"` : ""}>${esc(val(id))}</textarea>`;
+  const inp = (id, ph) => `<input class="inp" id="np-${id}" value="${esc(val(id))}" ${ph ? `placeholder="${esc(ph)}"` : ""}>`;
+  const opc = `<span class="hint">· opcional</span>`;
+  let conteudo;
+  if (cat === "interna") conteudo = `<div class="field full"><label for="np-tit">Título da pauta</label>${inp("tit", "Ex.: Montar newsletter de novembro, organizar pasta de fotos")}</div>
+      <div class="field full"><label for="np-ideia">Descrição e checklist ${opc}</label>${ta("ideia", 4, "O que precisa ser feito, links, passos…")}</div>`;
+  else if (cat === "conteudo" && generico) conteudo = `<div class="field full"><label for="np-tit">O que precisa ser feito</label>${inp("tit", "Ex.: Flyer da palestra de sábado, vídeo de boas-vindas, apresentação comercial")}</div>
+      <div class="field full"><label for="np-ideia">Ideia e detalhes ${opc}</label>${ta("ideia", 3, "Por que este material existe, medidas, onde vai ser usado…")}</div>`;
+  else if (texto) conteudo = `<div class="txted"><div class="field"><label for="np-hl">Título</label>${inp("hl")}</div>
+      <div class="field"><label for="np-sub">Subtítulo ${opc}</label>${inp("sub")}</div>
+      <div class="field"><label for="np-corpo">Texto completo ${opc}</label>${ta("corpo", 6, `Escreva aqui o ${CANAIS[tipoNow].label.toLowerCase()}…`)}</div></div>`;
+  else conteudo = `<div class="field full"><label for="np-ideia">Ideia <span class="hint">· por que este material existe</span></label>${ta("ideia", 2)}</div>
+      <div class="field"><label for="np-obj">Objetivo</label><select class="inp" id="np-obj"><option value="">Definir…</option>${OBJETIVOS.map(o => `<option ${val("obj") === o ? "selected" : ""}>${o}</option>`).join("")}</select></div>
+      <div class="field"><label for="np-pub">Público</label>${inp("pub")}</div>
+      <div class="field full"><label for="np-hl">Headline</label>${inp("hl")}</div>
+      <div class="field full"><label for="np-sub">Sub-headline <span class="hint">· uma linha por lâmina no carrossel</span></label>${ta("sub", 2)}</div>`;
+  const fmts = u.fmts || [];
+  const redeField = cat === "conteudo" ? `<div class="field full"><label for="np-tipo">Rede de divulgação ou formato</label><select class="inp" id="np-tipo"><optgroup label="Redes e canais">${redesTodas.map(k => `<option value="${k}" ${tipoSel === k ? "selected" : ""}>${lbl(k)}${CANAIS[k].texto ? " (texto)" : ""}${escopo.includes(k) ? " · no escopo" : ""}</option>`).join("")}</optgroup><optgroup label="Demandas pontuais">${GENERICOS.map(k => `<option value="${k}" ${tipoSel === k ? "selected" : ""}>${CANAIS[k].label}</option>`).join("")}</optgroup></select>
+        ${["feed","stories"].includes(tipoSel) ? `<div class="seg" style="margin-top:6px">${["Instagram","Facebook"].map(r => `<label><input type="checkbox" data-npredes value="${r}" ${(u.redesM || (metaRedes(c).length ? metaRedes(c) : ["Instagram","Facebook"])).includes(r) ? "checked" : ""}> ${r}</label>`).join("")}</div>` : ""}</div>`
+    : cat === "trafego" ? `<div class="field full"><span class="lb">Plataforma do anúncio</span><div class="seg">${REDES_ADS.map(r => `<label><input type="checkbox" data-npads value="${r}" ${(u.ads || ["Meta Ads"]).includes(r) ? "checked" : ""}> ${r}</label>`).join("")}</div></div>` : "";
+  return `<aside class="drawer pg edit" role="dialog" aria-modal="true" aria-label="Nova pauta"><div class="d-top"><button type="button" class="x" data-act="close" aria-label="Fechar">×</button><div class="ttl"><b>Nova pauta</b><span>${esc(CATS[cat])} · preencha o que já souber; o resto pode ser completado na pauta.</span></div><button type="submit" form="npForm" class="btn sm primary">Criar pauta</button></div>
     <form class="d-body pgb" id="npForm" novalidate><div class="pgw"><div class="pgmain">
       <section class="psec"><h3>Conteúdo</h3><div class="form">${conteudo}</div></section>
-      ${cat !== "interna" && !texto ? `<section class="psec"><h3>${cat === "trafego" ? "Texto do anúncio" : "Legenda"} <span class="hint" style="text-transform:none;letter-spacing:0">· opcional</span></h3><textarea id="np-leg" rows="5">${esc(u.leg || "")}</textarea></section>` : ""}
-      ${cat !== "interna" ? `<section class="psec"><h3>Referências <span class="hint" style="text-transform:none;letter-spacing:0">· opcional</span></h3><textarea id="np-ref" rows="2" placeholder="Pinterest, Behance, sites…">${esc(u.ref || "")}</textarea></section>` : ""}
-      <p class="muted" style="font-size:12.5px">${cat === "interna" ? "Tarefas internas não vão para o cliente: andam em A fazer, Fazendo e Concluída." : sem ? "Pauta sem cliente: não passa pela aprovação do cliente. Depois da revisão, o planejamento aprova direto." : "Ao criar, a pauta abre em modo de edição para você completar o briefing."}</p>
+      ${cat === "interna" || texto ? "" : `<section class="psec"><h3>${cat === "trafego" ? "Texto do anúncio" : "Legenda"}</h3>${ta("leg", 4)}</section>`}
+      ${texto && card ? `<section class="psec"><h3>Card</h3><div class="form"><div class="field full"><label for="np-cardtx">Texto do card <span class="hint">· frase que vai na arte</span></label>${inp("cardtx")}</div></div></section>` : ""}
+      ${cat === "interna" ? "" : `<section class="psec"><h3>Referências</h3><div class="form"><div class="field full"><label for="np-ref">Referências</label>${ta("ref", 2, "Pinterest, Behance, sites…")}</div><div class="field full"><label for="np-refig">Link de referência do Instagram</label>${inp("refig", "https://www.instagram.com/p/…")}</div></div></section>`}
+      <p class="muted" style="font-size:12.5px">${cat === "interna" ? "A pauta não vai para o cliente: anda em A fazer, Fazendo e Concluída." : sem ? "Pauta sem cliente: não passa pela aprovação do cliente. Depois da revisão, o planejamento aprova direto." : "A pauta segue o fluxo do tipo escolhido: produção, revisão, validação do Head e aprovação do cliente."}</p>
     </div><div class="pgside">
       <section class="psec"><h3>Propriedades</h3><div class="form props">
         <div class="field full"><span class="lb">Tipo de pauta</span><div class="seg">${Object.entries(CATS).map(([k, l]) => `<label><input type="radio" name="npcat" value="${k}" ${cat === k ? "checked" : ""}> ${l}</label>`).join("")}</div></div>
         <div class="field full"><label for="np-cli">Cliente</label><select class="inp" id="np-cli"><option value="" ${sem ? "selected" : ""}>Sem cliente · demanda avulsa</option>${vc.map(x => `<option value="${esc(x.id)}" ${cid === x.id ? "selected" : ""}>${esc(x.nome)}</option>`).join("")}</select></div>
-        ${cat === "conteudo" ? `<div class="field full"><label for="np-tipo">${sem ? "Formato" : "Rede ou formato"}</label><select class="inp" id="np-tipo">${opts.length ? `<optgroup label="Redes do escopo">${opts.map(k => `<option value="${k}" ${tipoSel === k ? "selected" : ""}>${lbl(k)}${CANAIS[k].texto ? " (texto)" : ""}</option>`).join("")}</optgroup>` : ""}<optgroup label="Demandas pontuais">${GENERICOS.map(k => `<option value="${k}" ${tipoSel === k ? "selected" : ""}>${CANAIS[k].label}</option>`).join("")}</optgroup></select></div>`
-          : cat === "trafego" ? `<div class="field full"><span class="lb">Plataforma do anúncio</span><div class="seg">${REDES_ADS.map(r => `<label><input type="checkbox" data-npads value="${r}" ${(u.ads || ["Meta Ads"]).includes(r) ? "checked" : ""}> ${r}</label>`).join("")}</div></div>`
-          : `<div class="field full"><label for="np-resp">Responsável</label><select class="inp" id="np-resp">${people.map(m => `<option value="${esc(m.id)}" ${(u.resp || ui.me) === m.id ? "selected" : ""}>${esc(m.nome)}</option>`).join("")}</select></div>`}
-        <div class="field"><label for="np-data">${cat === "interna" || generico && cat === "conteudo" ? "Prazo de entrega" : "Data de postagem"}</label><input class="inp" type="date" id="np-data" value="${esc(u.data || ymd(addDays(TODAY, 3)))}"></div>
-        ${cat !== "interna" ? `<div class="field"><label for="np-dprod">Data de produção <span class="hint">· opcional</span></label><input class="inp" type="date" id="np-dprod" value="${esc(u.dprod || "")}"></div>` : ""}
-        ${sem && cat !== "interna" ? `<div class="field full"><label for="np-sol">Para quem <span class="hint">· opcional</span></label><input class="inp" id="np-sol" value="${esc(u.sol || "")}" placeholder="Ex.: Alra (interno), prospect, parceiro"></div>` : ""}
-        ${(sem || generico) && cat === "conteudo" && !texto ? `<div class="field full"><label for="np-prod">Quem produz</label><select class="inp" id="np-prod"><option value="">Definir depois</option>${people.filter(m => (m.papeis || []).some(r => ["design","audiovisual"].includes(r))).map(m => `<option value="${esc(m.id)}" ${u.prod === m.id ? "selected" : ""}>${esc(m.nome)}</option>`).join("")}</select></div>` : ""}
+        ${redeField}
+        <div class="field"><label for="np-data">${cat === "interna" ? "Data de fim" : generico && cat === "conteudo" ? "Prazo de entrega" : cat === "trafego" ? "Data de início" : "Data de postagem"}</label><input class="inp" type="date" id="np-data" value="${esc(val("data", ymd(addDays(TODAY, 3))))}"></div>
+        ${cat !== "interna" ? `<div class="field"><label for="np-dprod">Data de produção ${opc}</label><input class="inp" type="date" id="np-dprod" value="${esc(val("dprod"))}"></div>` : ""}
+        ${sem && cat !== "interna" ? `<div class="field full"><label for="np-sol">Para quem ${opc}</label>${inp("sol", "Ex.: Alra (interno), prospect, parceiro")}</div>` : ""}
+        ${cat === "interna" ? `<div class="field full"><label for="np-resp">Responsável</label>${sel("resp", people, val("resp", ui.me))}</div>`
+          : `<div class="field"><label for="np-plan">Planejamento</label>${sel("plan", planners, val("plan", planDef))}</div>
+        ${art ? `<div class="field"><label for="np-prod">${texto ? "Design do card" : "Produção"}</label>${sel("prod", producers, val("prod", prodDef), "Definir depois")}</div>` : `<div class="field"></div>`}
+        ${cat === "trafego" ? `<div class="field full"><label for="np-traf">Tráfego (configura e acompanha)</label>${sel("traf", trafs, val("traf", trafDef), "Definir depois")}</div>` : ""}
+        <div class="field full"><span class="lb">Formatos de entrega</span><div class="seg">${texto ? `<label><input type="checkbox" id="np-card" ${card ? "checked" : ""}> Card estático</label>` : (generico ? FORMATOS_GEN : FORMATOS).map(x => `<label><input type="checkbox" data-npfmt value="${esc(x)}" ${fmts.includes(x) ? "checked" : ""}> ${esc(x)}</label>`).join("")}</div></div>`}
+        ${etqField(u.etqs || [], true, "data-npetq")}
+        <div class="field full"><label for="np-drive">Link do Drive ${opc}</label>${inp("drive", "https://drive.google.com/…")}</div>
       </div></section>
       <div class="actions"><button type="submit" class="btn primary">Criar pauta</button><button type="button" class="btn ghost" data-act="close">Cancelar</button></div>
     </div></div></form></aside>`;
@@ -2696,6 +2742,31 @@ function openCap(pre){
 }
 
 document.addEventListener("click", ev => { if (ui.kmenu && !(ev.target.closest && ev.target.closest(".kcw"))) { ui.kmenu = null; const m = document.querySelector(".kmenu"); if (m) m.remove(); } }, true);
+document.addEventListener("click", ev => {
+  const t = ev.target.closest && ev.target.closest("[data-etqdel],[data-etq],[data-npetq],[data-etqcor],[data-act=etqNovaTg],[data-act=etqMng],[data-act=etqCriar]");
+  if (!t) return;
+  ev.preventDefault(); ev.stopImmediatePropagation();
+  const d = t.dataset, u = ui.tmp, p = S.pecas.find(x => x.id === ui.openId), redraw = () => (ui.modal || ui.openId) ? fillOverlay() : render();
+  if (d.etqdel) { if (!timeAtLeast("B")) return; const e = etqOf(d.etqdel); if (!e) return; S.cfg = S.cfg || {}; if (ETQ_PAD.some(x => x.id === e.id)) S.cfg.etqOff = [...new Set([...(S.cfg.etqOff || []), e.id])]; else S.cfg.etiquetas = (S.cfg.etiquetas || []).filter(x => x.id !== e.id); save(); toast(`Etiqueta ${e.nome} excluída.`); return redraw(); }
+  if (d.etq) { if (!p || !canEtq(p)) return; const l = p.etiquetas || []; p.etiquetas = l.includes(d.etq) ? l.filter(x => x !== d.etq) : [...l, d.etq]; save(); return redraw(); }
+  if (d.npetq) { const l = u.etqs || []; u.etqs = l.includes(d.npetq) ? l.filter(x => x !== d.npetq) : [...l, d.npetq]; return redraw(); }
+  if (d.etqcor) { u.etqCor = d.etqcor; return redraw(); }
+  if (d.act === "etqNovaTg") { u.etqNova = !u.etqNova; redraw(); const i = $("#etqnome"); if (i) i.focus(); return; }
+  if (d.act === "etqMng") { u.etqMng = !u.etqMng; return redraw(); }
+  if (d.act === "etqCriar") { const nome = String(($("#etqnome") || {}).value || u.etqNome || "").trim().toUpperCase().slice(0, 24); if (!nome) { toast("Dê um nome à etiqueta."); return; } if (etiquetas().some(e => e.nome === nome)) { toast("Já existe uma etiqueta com esse nome."); return; }
+    const pad = ETQ_PAD.find(e => e.nome === nome); S.cfg = S.cfg || {};
+    let id; if (pad) { S.cfg.etqOff = (S.cfg.etqOff || []).filter(x => x !== pad.id); id = pad.id; } else { id = uid(); S.cfg.etiquetas = [...(S.cfg.etiquetas || []), {id, nome, cor: u.etqCor || ETQ_CORES[5], criadoPor: ui.me}]; }
+    if (ui.modal === "newPeca") u.etqs = [...new Set([...(u.etqs || []), id])]; else if (p && canEtq(p)) p.etiquetas = [...new Set([...(p.etiquetas || []), id])];
+    u.etqNova = false; u.etqNome = ""; save(); toast(`Etiqueta ${nome} criada.`); return redraw(); }
+});
+/* caixas de texto crescem com o conteúdo */
+const FS_OK = window.CSS && CSS.supports && CSS.supports("field-sizing", "content");
+function autoGrow(el){ if (FS_OK || !el || el.tagName !== "TEXTAREA") return; el.style.height = "auto"; el.style.height = (el.scrollHeight + 2) + "px"; }
+let agRaf = 0;
+function autoGrowAll(){ if (FS_OK) return; cancelAnimationFrame(agRaf); agRaf = requestAnimationFrame(() => document.querySelectorAll("textarea").forEach(autoGrow)); }
+document.addEventListener("input", ev => autoGrow(ev.target));
+if (!FS_OK) new MutationObserver(autoGrowAll).observe(document.documentElement, {childList:true, subtree:true});
+window.addEventListener("resize", autoGrowAll);
 document.addEventListener("click", async ev => {
   const t = ev.target.closest("[data-obsec],[data-obpsec],[data-view],[data-go],[data-cf],[data-sf],[data-tf],[data-open],[data-act],[data-idx],[data-newday],[data-newcap],[data-dayall],[data-hub],[data-htab],[data-eqtab],[data-ntab],[data-week],[data-copy],[data-pub],[data-cap],[data-unit],[data-step],[data-login],[data-editp],[data-dashst],[data-acc],[data-accopy],[data-notif],[data-mv],[data-rmf],[data-pubday],[data-rel],[data-relf],[data-catf],[data-linkself],[data-selp],[data-selcol]");
   if (!t) return;
@@ -2899,7 +2970,8 @@ document.addEventListener("input", ev => {
   if (t.dataset.obp && obPub) { obPub.respostas = obPub.respostas || {}; obPub.respostas[t.dataset.obp] = t.value; obPend[t.dataset.obp] = t.value; t.closest(".obq").classList.toggle("ok", !!t.value.trim()); if (!(obNome() || (ui.pnome || "").trim())) { const el = $("#obsaved"); if (el) el.textContent = "Escreva seu nome no topo para salvar"; return; } clearTimeout(obT); obT = setTimeout(() => obSave(false), 1200); return; }
   if (t.dataset.cri && ui.tmp.cri) { setPath(ui.tmp.cri, t.dataset.cri, t.value); const m = t.dataset.cri.match(/^cores\.(\d+)\.hex$/); if (m) { const el = document.getElementById("rgb" + m[1]); if (el) el.textContent = validHex(t.value) ? hexRgb(t.value) : "RGB automático"; } return; }
   if (t.id === "f-corpo") { const el = $("#wcount"); if (el) { const n = t.value.trim().split(/\s+/).filter(Boolean).length; el.textContent = `${n} ${n === 1 ? "palavra" : "palavras"}`; } }
-  if (t.id === "np-tit") { ui.tmp.tit = t.value; return; }
+  if (t.id && t.id.startsWith("np-") && t.closest && t.closest("#npForm")) { (ui.tmp.f = ui.tmp.f || {})[t.id.slice(3)] = t.type === "checkbox" ? t.checked : t.value; if (t.id === "etqnome") return; return; }
+  if (t.id === "etqnome") { ui.tmp.etqNome = t.value; return; }
   if (t.id === "drvlink") { ui.tmp.drvLink = t.value; return; }
   if (t.id === "pnome") { ui.pnome = t.value; try { localStorage.setItem("alra-portal-nome", t.value.trim()); } catch(e) {} if (mode === "briefing" && Object.keys(obPend).length) { clearTimeout(obT); obT = setTimeout(() => obSave(false), 1200); } return; }
   const map = {restxt:"resText", backtxt:"backText", regtxt:"regText", adjtxt:"adjText", aatxt:"aaText", dnote:"dnote", cmtxt:"cm", ntftxt:"ntfText"};
@@ -2920,6 +2992,7 @@ document.addEventListener("change", async ev => {
   if (t.id === "calMode") { ui.calMode = t.value; try { localStorage.setItem("alra-calmode", t.value); } catch(e) {} ["month","capMonth","pubMonth"].forEach(k => ui[k + "W"] = null); render(); return; }
   if (t.id === "fCli") { ui.cf = t.value; render(); return; }
   if (t.id === "fFmt") { ui.tf = t.value; render(); return; }
+  if (t.id === "fEtq") { ui.ef = t.value; render(); return; }
   if (t.id === "fPes") { ui.pf = t.value; render(); return; }
   if (t.id === "pubView") { ui.pubView = t.value; render(); return; }
   if (t.id === "capView") { ui.capView = t.value; render(); return; }
@@ -2934,16 +3007,15 @@ document.addEventListener("change", async ev => {
   if (t.name === "regtipo") { ui.tmp.regTipo = t.value; return; }
   if (t.name === "aadec") { ui.tmp.dec = t.value; fillOverlay(); return; }
   if (t.name === "cfcor" && ui.tmp.cd) { ui.tmp.cd.cor = t.value; fillOverlay(); return; }
-  if (t.id === "np-cli") { ui.tmp.cid = t.value; ui.tmp.data = ($("#np-data") || {}).value; ui.tmp.tit = ($("#np-tit") || {}).value || ui.tmp.tit; ui.tmp.tipo = null; fillOverlay(); return; }
-  if (t.id === "np-tipo") { ui.tmp.tipo = t.value; ui.tmp.data = ($("#np-data") || {}).value; ui.tmp.tit = ($("#np-tit") || {}).value || ui.tmp.tit; fillOverlay(); return; }
-  if (t.id === "np-prod") { ui.tmp.prod = t.value; return; }
-  if (["np-ideia","np-hl","np-leg","np-ref","np-dprod"].includes(t.id)) { ui.tmp[{"np-ideia":"ideia","np-hl":"hl","np-leg":"leg","np-ref":"ref","np-dprod":"dprod"}[t.id]] = t.value; return; }
-  if (t.id === "np-sol") { ui.tmp.sol = t.value; return; }
-  if (t.name === "npcat") { ui.tmp.cat = t.value; ui.tmp.data = ($("#np-data") || {}).value; ui.tmp.tit = ($("#np-tit") || {}).value || ui.tmp.tit; ui.tmp.ideia = ($("#np-ideia") || {}).value || ui.tmp.ideia; fillOverlay(); return; }
-  if (t.id === "np-tipo") { ui.tmp.tipo = t.value; return; }
   if (t.dataset.sela !== undefined) { t.checked ? ui.sel.add(t.dataset.sela) : ui.sel.delete(t.dataset.sela); ui.tmp.bulkDel = false; render(); return; }
-  if (t.id === "np-resp") { ui.tmp.resp = t.value; return; }
-  if (t.id === "np-data") { ui.tmp.data = t.value; return; }
+  if (t.closest && t.closest("#npForm")) { const u = ui.tmp, f = u.f = u.f || {};
+    if (t.name === "npcat") { u.cat = t.value; fillOverlay(); return; }
+    if (t.id === "np-cli") { u.cid = t.value; u.tipo = null; u.redesM = null; ["plan","prod","traf","resp"].forEach(k => delete f[k]); fillOverlay(); return; }
+    if (t.id === "np-tipo") { u.tipo = t.value; u.fmts = []; delete f.prod; fillOverlay(); return; }
+    if (t.id === "np-card") { f.card = t.checked; fillOverlay(); return; }
+    if (t.dataset.npredes !== undefined) { const def = metaRedes(cli(u.cid !== undefined ? u.cid : (($("#np-cli") || {}).value || ""))); u.redesM = u.redesM || (def.length ? def : ["Instagram","Facebook"]); u.redesM = t.checked ? [...new Set([...u.redesM, t.value])] : u.redesM.filter(x => x !== t.value); return; }
+    if (t.dataset.npfmt !== undefined) { u.fmts = u.fmts || []; u.fmts = t.checked ? [...new Set([...u.fmts, t.value])] : u.fmts.filter(x => x !== t.value); return; }
+    if (t.id && t.id.startsWith("np-")) { f[t.id.slice(3)] = t.value; if (t.dataset.npads === undefined) return; } }
   if (t.dataset.npads !== undefined) { const u = ui.tmp; u.ads = u.ads || ["Meta Ads"]; u.ads = t.checked ? [...new Set([...u.ads, t.value])] : u.ads.filter(x => x !== t.value); return; }
   if (t.dataset.criPick !== undefined && ui.tmp.cri) { const i = +t.dataset.criPick; ui.tmp.cri.cores[i].hex = t.value.toUpperCase(); render(); return; }
   if (p && t.dataset.card !== undefined) { const b = p.briefing = p.briefing || {}; b.card = t.checked; if (t.checked && !(p.resp || {}).prod) { p.resp = p.resp || {}; p.resp.prod = defaultProd(cli(p.clienteId), "feed"); } save(); fillOverlay(); return; }
@@ -3012,20 +3084,20 @@ document.addEventListener("submit", async ev => {
     if (id === "setPwdForm") { await sb.auth.refreshSession().catch(() => {}); location.replace("/"); return; }
     ui.modal = null; ui.tmp = {}; toast("Senha salva"); render(); return;
   }
-  if (id === "npForm") { const u = ui.tmp, cat = u.cat || "conteudo", c = cli(cat === "simples" ? "" : (($("#np-cli") || {}).value || "")), data = $("#np-data").value; if (!data) { toast("Escolha a data."); return; }
-    let tp, redes, briefing = {formatos:[]}, resp = {plan:((c.squad || {}).planejamento || []).includes(ui.me) || isHead() ? ui.me : (((c.squad || {}).planejamento || [])[0] || ui.me), prod:null};
-    if (cat === "interna" || cat === "simples") { const tit = ($("#np-tit").value || "").trim(); if (!tit) { toast(cat === "simples" ? "Dê um título ao cartão." : "Descreva a tarefa."); return; } tp = "tarefa"; redes = []; briefing.headline = tit; resp.prod = $("#np-resp").value || ui.me; resp.plan = ui.me; }
-    else if (cat === "trafego") { tp = "anuncio"; redes = (u.ads || ["Meta Ads"]); if (!redes.length) { toast("Marque ao menos uma plataforma."); return; } resp.prod = defaultProd(c, "feed"); resp.traf = (ativos().find(m => m.unidade === (c.unidade || (ME() || {}).unidade) && (m.papeis || []).includes("trafego")) || {}).id || null; }
-    else { tp = $("#np-tipo").value; const gen = GENERICOS.includes(tp); if (gen) { const tit = ($("#np-tit").value || "").trim(); if (!tit) { toast("Descreva o que precisa ser feito."); return; } briefing.headline = tit; }
-      redes = gen ? [] : ["feed","stories"].includes(tp) ? (metaRedes(c).length ? metaRedes(c) : ["Instagram","Facebook"]) : [CANAIS[tp].net];
-      resp.prod = CANAIS[tp].texto ? null : $("#np-prod") ? ($("#np-prod").value || null) : defaultProd(c, tp); }
+  if (id === "npForm") { const u = ui.tmp, cat = CATS[u.cat] ? u.cat : "conteudo", v = k => ((($("#np-" + k) || {}).value) || "").trim(), c = cli(v("cli")), data = v("data"); if (!data) { toast("Escolha a data."); return; }
+    let tp, redes, briefing = {formatos:[]}, resp = {plan: v("plan") || ui.me, prod:null};
+    if (cat === "interna") { const tit = v("tit"); if (!tit) { toast("Dê um título à pauta."); return; } tp = "tarefa"; redes = []; briefing.headline = tit; resp.prod = v("resp") || ui.me; resp.plan = ui.me; }
+    else if (cat === "trafego") { tp = "anuncio"; redes = (u.ads || ["Meta Ads"]); if (!redes.length) { toast("Marque ao menos uma plataforma."); return; } resp.prod = v("prod") || null; resp.traf = v("traf") || null; briefing.formatos = u.fmts || []; }
+    else { tp = v("tipo"); if (!CANAIS[tp]) { toast("Escolha a rede ou o formato."); return; } const gen = GENERICOS.includes(tp); if (gen) { const tit = v("tit"); if (!tit) { toast("Descreva o que precisa ser feito."); return; } briefing.headline = tit; }
+      redes = gen ? [] : ["feed","stories"].includes(tp) ? (u.redesM || (metaRedes(c).length ? metaRedes(c) : ["Instagram","Facebook"])) : [CANAIS[tp].net];
+      if (!gen && !redes.length) { toast("Marque Instagram, Facebook ou os dois."); return; }
+      if (CANAIS[tp].texto) { briefing.card = !!(($("#np-card") || {}).checked); resp.prod = briefing.card ? (v("prod") || null) : null; } else { resp.prod = v("prod") || null; briefing.formatos = u.fmts || []; } }
     const np = {id:uid(), clienteId:c.id, data, tipo:tp, redes, status:"pauta", resp, briefing, versao:0, midias:[], hist:[entry("pauta")], coments:[], ajusteCom:null, criadoEm:nowIso(), criadoPor:ui.me, v3:true};
-    if (cat === "simples") np.simples = true;
-    if (!c.id) { np.unidade = (ME() || {}).unidade || ""; const sol = (($("#np-sol") || {}).value || "").trim(); if (sol) np.solicitante = sol; }
-    { const v = id => (($("#" + id) || {}).value || "").trim(); if (v("np-ideia")) briefing.ideia = v("np-ideia"); if (v("np-hl") && !briefing.headline) briefing.headline = v("np-hl"); if (v("np-leg")) briefing.legenda = v("np-leg"); if (v("np-ref")) briefing.referencias = v("np-ref"); if (v("np-dprod")) np.dataProducao = v("np-dprod"); }
-    if (resp.prod && resp.prod !== ui.me && cat !== "interna" && GENERICOS.includes(tp)) notify([resp.prod], `Demanda para você: ${briefing.headline}${c.id ? " (" + c.nome + ")" : ""}`, np);
-    if (cat === "interna" && resp.prod !== ui.me) notify([resp.prod], `Tarefa para você: ${briefing.headline} (${c.nome})`, np);
-    S.pecas.push(np); save(); ui.modal = null; ui.tmp = {edit: true}; ui.openId = np.id; ui.idx = 0; ui.month = firstOfMonth(pd(data)); render(); return; }
+    if (!c.id) { np.unidade = (ME() || {}).unidade || ""; if (v("sol")) np.solicitante = v("sol"); }
+    { const map = {ideia:"ideia", obj:"objetivo", pub:"publico", sub:"sub", corpo:"corpo", leg:"legenda", ref:"referencias", refig:"refIg", cardtx:"cardTexto"}; Object.entries(map).forEach(([k, bk]) => { if (v(k)) briefing[bk] = v(k); }); if (v("hl") && !briefing.headline) briefing.headline = v("hl"); if (v("dprod")) np.dataProducao = v("dprod"); if (v("drive")) np.drive = v("drive"); }
+    const etqs = (u.etqs || []).filter(etqOf); if (etqs.length) np.etiquetas = etqs;
+    if (resp.prod && resp.prod !== ui.me && (cat === "interna" || GENERICOS.includes(tp))) notify([resp.prod], `${cat === "interna" ? "Pauta" : "Demanda"} para você: ${briefing.headline}${c.id ? " (" + c.nome + ")" : ""}`, np);
+    S.pecas.push(np); save(); ui.modal = null; ui.tmp = {}; ui.openId = np.id; ui.idx = 0; ui.month = firstOfMonth(pd(data)); toast("Pauta criada."); render(); return; }
   if (id === "genForm") {
     const g = ui.tmp.gen, from = pd(g.from); if (!from) return; const to = endOfMonth(from); let n = 0;
     g.cids.forEach(cid => { const c = S.clientes.find(x => x.id === cid); if (!c) return; const have = new Set(S.pecas.concat(S.arquivo || []).filter(p => p.clienteId === c.id).map(p => p.data + "|" + p.tipo));
