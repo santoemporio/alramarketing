@@ -322,6 +322,7 @@ button.ccard:hover{border-color:var(--line2)}
 textarea,.inp{width:100%;border:1px solid var(--line2);border-radius:10px;padding:8px 11px;background:var(--raised);line-height:1.5}
 textarea{resize:vertical;field-sizing:content;min-height:3.4em;overflow-y:hidden}
 .clilink{border:0;background:none;padding:0;font:inherit;color:inherit;cursor:pointer;border-radius:6px}.clilink:hover span:nth-child(2),.clilink:focus-visible span:nth-child(2){text-decoration:underline;color:var(--accent-fg)}.clilink .arr{font-size:11px;color:var(--accent-fg);margin-left:2px}.clinks{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;font-size:12px;color:var(--muted)}.clinks .linkbtn{font-size:12px}
+.lock{font-size:10px}
 .etqs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:3px}.etq{--c:#667085;display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;padding:1px 7px;border-radius:5px;background:color-mix(in srgb,var(--c) 15%,transparent);color:var(--c);border:1px solid color-mix(in srgb,var(--c) 35%,transparent);line-height:1.6}
 button.etq{cursor:pointer;font-size:11px;padding:3px 9px;opacity:.55}button.etq[aria-pressed=true]{opacity:1;background:var(--c);color:#fff}button.etq:disabled{cursor:default}
 .etq .rm{margin-left:2px;font-weight:900;cursor:pointer}.etqbox{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.etqnew{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px}.etqnew .sw{width:20px;height:20px;border-radius:50%;border:2px solid transparent;cursor:pointer}.etqnew .sw[aria-pressed=true]{border-color:var(--ink)}
@@ -1007,17 +1008,26 @@ function owner(p){
     default: return null;
   }
 }
+/* Pauta privada: só a Diretoria, quem criou e quem está designado nela veem e editam.
+   Pauta pública de cliente: todo o time que atende o cliente (squad) vê e edita em qualquer etapa. */
+const squadDe = c => Object.values((c && c.squad) || {}).flat();
+const inSquad = p => !!p.clienteId && squadDe(cli(p.clienteId)).includes(ui.me);
+const privOk = p => { if (!p.privado) return true; const r = p.resp || {}; return isDir() || isDirReal() || p.criadoPor === ui.me || [r.plan, r.prod, r.traf, r.dir].includes(ui.me); };
+const canPriv = p => isDir() || isDirReal() || p.criadoPor === ui.me || (p.resp || {}).plan === ui.me || (!p.privado && headOfUnit(unitOf(p)));
+const canEditP = p => !isClient() && privOk(p) && (canPlan(p) || canProduce(p) || (!p.privado && inSquad(p)));
 function canSee(p){
   const u = unitOf(p);
   if (!unitScope().includes(u)) return false;
+  if (!privOk(p)) return false;
   if (headOfUnit(u)) return true;
   const r = p.resp || {};
-  if (r.plan === ui.me || r.prod === ui.me || p.criadoPor === ui.me) return true;
+  if (r.plan === ui.me || r.prod === ui.me || r.traf === ui.me || p.criadoPor === ui.me) return true;
+  if (!p.privado && inSquad(p)) return true;
   return !!p.clienteId && ((cli(p.clienteId).squad || {}).social || []).includes(ui.me) && ["aprovado","publicado"].includes(p.status);
 }
 const myTurn = p => owner(p) === ui.me && (p.status !== "aprovado" || diffDays(pd(p.data), TODAY) <= 1);
-const canPlan = p => headOfUnit(unitOf(p)) || (p.resp || {}).plan === ui.me;
-const canProduce = p => headOfUnit(unitOf(p)) || (p.resp || {}).prod === ui.me;
+const canPlan = p => privOk(p) && (headOfUnit(unitOf(p)) || (p.resp || {}).plan === ui.me);
+const canProduce = p => privOk(p) && (headOfUnit(unitOf(p)) || (p.resp || {}).prod === ui.me);
 const canPublish = p => { const f = fluxoOf(p); if (headOfUnit(unitOf(p))) return true; if (f === "trafego") return trafOf(p) === ui.me || has("trafego"); if (f === "pontual") return atendimentoDe(cli(p.clienteId)).includes(ui.me) || (p.resp || {}).plan === ui.me; if (f === "relatorio") return atendimentoDe(cli(p.clienteId)).includes(ui.me); return semCli(p) ? [(p.resp || {}).plan, (p.resp || {}).prod].includes(ui.me) : ((cli(p.clienteId).squad || {}).social || []).includes(ui.me); };
 function visibleClients(){ return S.clientes.filter(c => inScope(c) && (headOfUnit(c.unidade) || Object.values(c.squad || {}).flat().includes(ui.me) || S.pecas.some(p => p.clienteId === c.id && canSee(p)))); }
 const canEditClient = c => !!c && (headOfUnit(c.unidade) || ((c.squad || {}).planejamento || []).includes(ui.me));
@@ -1082,7 +1092,10 @@ const ETQ_CORES = ["#d92d20","#dc6803","#ca8a04","#16a34a","#0891b2","#1570ef","
 const etiquetas = () => [...ETQ_PAD.filter(e => !((S.cfg || {}).etqOff || []).includes(e.id)), ...(((S.cfg || {}).etiquetas) || [])];
 const etqOf = id => etiquetas().find(e => e.id === id);
 const etqChips = p => { const l = (p.etiquetas || []).map(etqOf).filter(Boolean); return l.length ? `<span class="etqs">${l.map(e => `<span class="etq" style="--c:${esc(e.cor)}">${esc(e.nome)}</span>`).join("")}</span>` : ""; };
-const canEtq = p => !isClient() && (canPlan(p) || canProduce(p) || timeAtLeast("B"));
+const canEtq = p => !isClient() && privOk(p) && (canEditP(p) || timeAtLeast("B"));
+function visField(p){
+  return `<div class="field full"><label for="f-priv">Visibilidade</label><select class="inp" id="f-priv" ${canPriv(p) ? "" : "disabled"}><option value="" ${p.privado ? "" : "selected"}>Pública${p.clienteId ? " · todo o time do cliente vê e edita" : ""}</option><option value="1" ${p.privado ? "selected" : ""}>Privada · só Diretoria, quem criou e os responsáveis</option></select></div>`;
+}
 function etqField(sel, can, attr){
   const u = ui.tmp, mng = can && timeAtLeast("B");
   return `<div class="field full"><span class="lb">Etiquetas</span><div class="etqbox">${etiquetas().map(e => `<button type="button" class="etq" style="--c:${esc(e.cor)}" ${attr}="${esc(e.id)}" aria-pressed="${sel.includes(e.id)}" ${can ? "" : "disabled"}>${esc(e.nome)}${u.etqMng && mng ? `<span class="rm" data-etqdel="${esc(e.id)}" title="Excluir etiqueta" aria-label="Excluir etiqueta ${esc(e.nome)}">×</span>` : ""}</button>`).join("") || `<span class="muted" style="font-size:12px">Nenhuma etiqueta.</span>`}
@@ -1974,7 +1987,7 @@ function kcHTML(p){
 function kcBtn(p){
   const c = cli(p.clienteId), o = owner(p);
   const sm = ui.selMode, can = canPlan(p), on = ui.sel.has(p.id);
-  return `<button type="button" class="kc${myTurn(p) ? " mine" : ""}${isTask(p) ? " task" : ""}${sm ? " selmode" : ""}${on ? " picked" : ""}" ${sm ? (can ? `data-selp="${esc(p.id)}" aria-pressed="${on}"` : `disabled title="Só o planejamento desta pauta pode arquivar ou excluir"`) : `data-open="${esc(p.id)}" draggable="true"`}>${sm ? `<span class="ck${on ? " on" : ""}" aria-hidden="true">${on ? "✓" : ""}</span>` : ""}${isTask(p) ? `<span class="th tk">✓</span>` : isText(p) && !(p.midias || []).length ? `<span class="th tx">Aa</span>` : `<span class="th">${thumb(p)}</span>`}<span style="min-width:0">${etqChips(p)}<span class="t">${esc(titleOf(p))}</span><span class="m">${p.simples ? `<span>Cartão</span>` : cliTag(c)}</span><span class="m"><span>${canal(p).k}</span><span class="tnum">${esc(fmtShort(p.data))}</span>${isTask(p) && p.status === "publicado" ? `<span>Concluída</span>` : janela(p) || paradaTag(p)}${stLabel(p) !== (STATUS[p.status] || {}).label && !isTask(p) ? `<span class="stx">${esc(stLabel(p))}</span>` : ""}${o && o !== "cliente" ? av(o, 18) : ""}</span></span></button>`;
+  return `<button type="button" class="kc${myTurn(p) ? " mine" : ""}${isTask(p) ? " task" : ""}${sm ? " selmode" : ""}${on ? " picked" : ""}" ${sm ? (can ? `data-selp="${esc(p.id)}" aria-pressed="${on}"` : `disabled title="Só o planejamento desta pauta pode arquivar ou excluir"`) : `data-open="${esc(p.id)}" draggable="true"`}>${sm ? `<span class="ck${on ? " on" : ""}" aria-hidden="true">${on ? "✓" : ""}</span>` : ""}${isTask(p) ? `<span class="th tk">✓</span>` : isText(p) && !(p.midias || []).length ? `<span class="th tx">Aa</span>` : `<span class="th">${thumb(p)}</span>`}<span style="min-width:0">${etqChips(p)}<span class="t">${p.privado ? `<span class="lock" title="Pauta privada" aria-label="Privada">🔒</span> ` : ""}${esc(titleOf(p))}</span><span class="m">${p.simples ? `<span>Cartão</span>` : cliTag(c)}</span><span class="m"><span>${canal(p).k}</span><span class="tnum">${esc(fmtShort(p.data))}</span>${isTask(p) && p.status === "publicado" ? `<span>Concluída</span>` : janela(p) || paradaTag(p)}${stLabel(p) !== (STATUS[p.status] || {}).label && !isTask(p) ? `<span class="stx">${esc(stLabel(p))}</span>` : ""}${o && o !== "cliente" ? av(o, 18) : ""}</span></span></button>`;
 }
 function readyToSend(p){
   const b = p.briefing || {}, c = cli(p.clienteId);
@@ -2195,8 +2208,8 @@ function unidadesHTML(){
 function drawerHTML(p){
   const c = cli(p.clienteId), t = canal(p), ms = p.midias || [], b = p.briefing || {}, u = ui.tmp;
   if (ui.idx >= ms.length) ui.idx = 0;
-  const canEd = canPlan(p) || canProduce(p), ed = !!u.edit && canEd;
-  const edT = ed && canPlan(p) && ["pauta","producao","revisao"].includes(p.status), edB = ed && canPlan(p) && ["pauta","producao","revisao","ajuste"].includes(p.status), dis = edB ? "" : "disabled";
+  const canEd = canEditP(p), ed = !!u.edit && canEd;
+  const edT = ed, edB = ed, dis = edB ? "" : "disabled";
   const edFiles = (headOfUnit(unitOf(p)) && ["pauta","producao","revisao","ajuste"].includes(p.status)) || (canProduce(p) && ["producao","ajuste","pauta","revisao"].includes(p.status) && !(p.status === "ajuste" && p.ajusteCom === "planejamento"));
   const unitPpl = ativos().filter(m => m.unidade === c.unidade);
   const opt = (list, sel) => `<option value="">Definir…</option>` + list.map(m => `<option value="${esc(m.id)}" ${sel === m.id ? "selected" : ""}>${esc(m.nome)}</option>`).join("");
@@ -2223,8 +2236,9 @@ function drawerHTML(p){
       ${actionsHTML(p, c, false)}
       <section class="psec"><h3>Propriedades</h3><div class="form props">
         <div class="field full"><span class="lb">Cliente</span><div style="min-height:30px;display:flex;align-items:center">${p.simples ? `<span class="muted" style="font-size:12.5px">Sem cliente</span>` : cliLink(c)}</div>${p.simples ? "" : cliAtalhos(c)}</div>
-        <div class="field"><label for="f-data">Data de fim</label><input class="inp" type="date" id="f-data" data-top="data" value="${esc(p.data)}" ${(canPlan(p) || canProduce(p)) && p.status !== "publicado" ? "" : "disabled"}></div>
+        <div class="field"><label for="f-data">Data de fim</label><input class="inp" type="date" id="f-data" data-top="data" value="${esc(p.data)}" ${canEditP(p) ? "" : "disabled"}></div>
         <div class="field"><label for="f-rc">Responsável</label><select class="inp" id="f-rc" data-top="prod" ${ed ? "" : "disabled"}>${opt(tppl, (p.resp || {}).prod)}</select></div>
+        ${visField(p)}
         ${etqField(p.etiquetas || [], canEtq(p), "data-etq")}
         ${driveField}
       </div></section>
@@ -2234,7 +2248,7 @@ function drawerHTML(p){
   const si = ORDER.indexOf(p.status), txt = isText(p), art = needsArt(p);
   const planners = unitPpl.filter(m => (m.papeis || []).includes("planejamento") || (m.papeis || []).includes("head"));
   const producers = unitPpl.filter(m => (m.papeis || []).includes("design") || (m.papeis || []).includes("audiovisual"));
-  const strip = ms.length ? `<div class="strip">${ms.map((m, i) => `<div class="sb"><button type="button" class="t" data-idx="${i}" aria-current="${i === ui.idx}" aria-label="Arquivo ${i + 1}">${mediaHTML(p, i)}</button>${edFiles ? `<div class="ops"><button type="button" data-mv="${i}" data-d="-1" aria-label="Mover para a esquerda" ${i === 0 ? "disabled" : ""}>‹</button><button type="button" data-rmf="${i}" aria-label="Remover arquivo">×</button><button type="button" data-mv="${i}" data-d="1" aria-label="Mover para a direita" ${i === ms.length - 1 ? "disabled" : ""}>›</button></div>` : ""}</div>`).join("")}</div>` : "";
+  const strip = ms.length ? `<div class="strip">${ms.map((m, i) => `<div class="sb"><button type="button" class="t" data-idx="${i}" aria-current="${i === ui.idx}" aria-label="Arquivo ${i + 1}">${mediaHTML(p, i)}</button>${edFiles || ed ? `<div class="ops"><button type="button" data-mv="${i}" data-d="-1" aria-label="Mover para a esquerda" ${i === 0 ? "disabled" : ""}>‹</button><button type="button" data-rmf="${i}" aria-label="Remover arquivo">×</button><button type="button" data-mv="${i}" data-d="1" aria-label="Mover para a direita" ${i === ms.length - 1 ? "disabled" : ""}>›</button></div>` : ""}</div>`).join("")}</div>` : "";
   let left;
   if (txt) {
     const words = String(b.corpo || "").trim().split(/\s+/).filter(Boolean).length;
@@ -2267,7 +2281,7 @@ function drawerHTML(p){
   const midias = !art ? "" : `<section class="psec"><h3>Mídias</h3><div class="viewer pgv">${ms.length ? `<div class="stagebox"><div class="frame" style="aspect-ratio:${t.ratio}">${mediaHTML(p, ui.idx, "play")}</div>${ms.length > 1 ? `<button type="button" class="navb p" data-act="prev" aria-label="Anterior">‹</button><button type="button" class="navb n" data-act="next" aria-label="Próxima">›</button>` : ""}</div>${strip}`
     : `<div class="frame blank" style="aspect-ratio:${t.ratio};max-width:340px">${p.drive ? "Arquivos no Drive" : p.status === "pauta" ? "A arte entra aqui quando a produção anexar." : "Nenhum arquivo anexado ainda."}</div>`}
     <div class="spec">${esc(t.label)} · ${esc((p.redes || []).join(" + ") || t.net)}${p.versao ? ` · versão ${p.versao}` : ""}</div>${p.drive ? `<a class="btn sm" href="${esc(p.drive)}" target="_blank" rel="noopener">Abrir no Drive</a>` : ""}
-    ${edFiles && ed ? `<label class="btn sm" for="upfile2" style="cursor:pointer"><input type="file" id="upfile2" multiple accept="image/png,image/jpeg,image/webp,image/gif,video/mp4,video/webm" hidden>+ Adicionar arquivos</label><span class="hint">Use × embaixo de cada miniatura para remover e ‹ › para reordenar.</span>${u.progress ? `<span class="hint" style="color:var(--accent-fg);font-weight:700">${esc(u.progress)}</span>` : ""}` : ""}</div></section>`;
+    ${ed ? `<label class="btn sm" for="upfile2" style="cursor:pointer"><input type="file" id="upfile2" multiple accept="image/png,image/jpeg,image/webp,image/gif,video/mp4,video/webm" hidden>+ Adicionar arquivos</label><span class="hint">Use × embaixo de cada miniatura para remover e ‹ › para reordenar.</span>${u.progress ? `<span class="hint" style="color:var(--accent-fg);font-weight:700">${esc(u.progress)}</span>` : ""}` : ""}</div></section>`;
   const refs = pubLine ? `<section class="psec"><h3>Referências</h3><div class="form"><div class="field full"><label for="f-ref">Referências</label><textarea id="f-ref" data-b="referencias" rows="2" placeholder="Pinterest, Behance, sites…" ${dis}>${esc(b.referencias)}</textarea></div>
         <div class="field full"><label for="f-refig">Link de referência do Instagram</label><div class="row" style="flex-wrap:nowrap"><input class="inp" id="f-refig" data-b="refIg" value="${esc(b.refIg)}" placeholder="https://www.instagram.com/p/…" ${dis}>${/^https?:\/\//.test(b.refIg || "") ? `<a class="btn sm" href="${esc(b.refIg)}" target="_blank" rel="noopener">Abrir</a>` : ""}</div></div></div></section>` : "";
   const pdDef = (() => { const x = Object.assign({}, p, {dataProducao: ""}); return prodDate(x); })();
@@ -2285,13 +2299,14 @@ function drawerHTML(p){
       <section class="psec"><h3>Propriedades</h3><div class="form props">
         <div class="field full"><span class="lb">Cliente</span><div style="min-height:30px;display:flex;align-items:center">${cliLink(c)}${p.solicitante ? `<span class="muted" style="font-size:12px;margin-left:6px">· para ${esc(p.solicitante)}</span>` : ""}</div>${cliAtalhos(c)}</div>
         <div class="field full"><span class="lb">${canal(p).grupo === "avulsa" ? "Formato" : "Rede"}</span><div class="row" style="min-height:30px">${redesField}</div></div>
-        <div class="field"><label for="f-data">${canal(p).grupo === "avulsa" ? "Prazo de entrega" : "Data de postagem"}</label><input class="inp" type="date" id="f-data" data-top="data" value="${esc(p.data)}" ${canPlan(p) && p.status !== "publicado" ? "" : "disabled"}></div>
-        <div class="field"><label for="f-dprod">Data de produção</label><input class="inp" type="date" id="f-dprod" data-top="dataProducao" value="${esc(p.dataProducao || "")}" ${p.dataProducao ? "" : "data-empty"} ${canPlan(p) && p.status !== "publicado" ? "" : "disabled"}><span class="hint">${p.dataProducao ? "Definida na pauta." : isEscopo(p) ? `Vazia: ${esc(fmtShort(pdDef))}, pela antecedência do cliente.` : "Vazia: vale a data da pauta."}</span></div>
-        ${fluxoOf(p) === "trafego" ? `<div class="field full"><label for="f-rt">Tráfego (configura e acompanha)</label><select class="inp" id="f-rt" data-top="traf" ${edT || (canPlan(p) && p.status !== "publicado") ? "" : "disabled"}>${opt(unitPpl.filter(m => (m.papeis || []).includes("trafego") || (m.papeis || []).includes("head")), trafOf(p))}</select></div>` : ""}
+        <div class="field"><label for="f-data">${canal(p).grupo === "avulsa" ? "Prazo de entrega" : "Data de postagem"}</label><input class="inp" type="date" id="f-data" data-top="data" value="${esc(p.data)}" ${canEditP(p) ? "" : "disabled"}></div>
+        <div class="field"><label for="f-dprod">Data de produção</label><input class="inp" type="date" id="f-dprod" data-top="dataProducao" value="${esc(p.dataProducao || "")}" ${p.dataProducao ? "" : "data-empty"} ${canEditP(p) ? "" : "disabled"}><span class="hint">${p.dataProducao ? "Definida na pauta." : isEscopo(p) ? `Vazia: ${esc(fmtShort(pdDef))}, pela antecedência do cliente.` : "Vazia: vale a data da pauta."}</span></div>
+        ${fluxoOf(p) === "trafego" ? `<div class="field full"><label for="f-rt">Tráfego (configura e acompanha)</label><select class="inp" id="f-rt" data-top="traf" ${edT || canEditP(p) ? "" : "disabled"}>${opt(unitPpl.filter(m => (m.papeis || []).includes("trafego") || (m.papeis || []).includes("head")), trafOf(p))}</select></div>` : ""}
         ${isRel(p) ? `<div class="field"><label for="f-rcol">Coleta</label><select class="inp" id="f-rcol" data-top="prod" ${edT ? "" : "disabled"}>${opt(unitPpl, (p.resp || {}).prod)}</select></div><div class="field"><label for="f-rp">Análise</label><select class="inp" id="f-rp" data-top="plan" ${edT ? "" : "disabled"}>${opt(unitPpl.filter(m => (m.papeis || []).some(r => ["head","diretoria","planejamento"].includes(r))), (p.resp || {}).plan)}</select></div><div class="field full"><label for="f-rdir">Revisão da Diretoria</label><select class="inp" id="f-rdir" data-top="dir" ${edT ? "" : "disabled"}>${opt(unitPpl.filter(m => (m.papeis || []).includes("diretoria")), diretorOf(p))}</select></div>` : `
         <div class="field"><label for="f-rp">Planejamento</label><select class="inp" id="f-rp" data-top="plan" ${edT ? "" : "disabled"}>${opt(planners, (p.resp || {}).plan)}</select></div>`}
         ${isRel(p) ? "" : art ? `<div class="field"><label for="f-rc">${txt ? "Design do card" : "Produção"}</label><select class="inp" id="f-rc" data-top="prod" ${edT ? "" : "disabled"}>${opt(producers, (p.resp || {}).prod)}</select></div>` : `<div class="field"></div>`}
         ${isRel(p) ? "" : `<div class="field full"><span class="lb">Formatos de entrega</span><div class="seg">${txt ? `<label><input type="checkbox" data-card ${b.card ? "checked" : ""} ${dis}> Card estático</label>${b.card ? "" : `<span class="hint" style="align-self:center">Marque se o conteúdo leva banner ou card.</span>`}` : (canal(p).grupo === "avulsa" ? FORMATOS_GEN : FORMATOS).map(f => `<label><input type="checkbox" data-fmt value="${esc(f)}" ${(b.formatos || []).includes(f) ? "checked" : ""} ${dis}> ${esc(f)}</label>`).join("")}</div></div>`}
+        ${visField(p)}
         ${etqField(p.etiquetas || [], canEtq(p), "data-etq")}
         ${driveField}
       </div></section>
@@ -2486,6 +2501,7 @@ function newPecaHTML(){
         ${art ? `<div class="field"><label for="np-prod">${texto ? "Design do card" : "Produção"}</label>${sel("prod", producers, val("prod", prodDef), "Definir depois")}</div>` : `<div class="field"></div>`}
         ${cat === "trafego" ? `<div class="field full"><label for="np-traf">Tráfego (configura e acompanha)</label>${sel("traf", trafs, val("traf", trafDef), "Definir depois")}</div>` : ""}
         <div class="field full"><span class="lb">Formatos de entrega</span><div class="seg">${texto ? `<label><input type="checkbox" id="np-card" ${card ? "checked" : ""}> Card estático</label>` : (generico ? FORMATOS_GEN : FORMATOS).map(x => `<label><input type="checkbox" data-npfmt value="${esc(x)}" ${fmts.includes(x) ? "checked" : ""}> ${esc(x)}</label>`).join("")}</div></div>`}
+        <div class="field full"><label for="np-priv">Visibilidade</label><select class="inp" id="np-priv"><option value="" ${val("priv") ? "" : "selected"}>Pública${sem ? "" : " · todo o time do cliente vê e edita"}</option><option value="1" ${val("priv") ? "selected" : ""}>Privada · só Diretoria, quem criou e os responsáveis</option></select></div>
         ${etqField(u.etqs || [], true, "data-npetq")}
         <div class="field full"><label for="np-drive">Link do Drive ${opc}</label>${inp("drive", "https://drive.google.com/…")}</div>
       </div></section>
@@ -3043,6 +3059,7 @@ document.addEventListener("change", async ev => {
     else if (k === "data") { if (t.value && t.value !== p.data) { p.hist.push(entry("data", {texto:`${fmtD(p.data)} → ${fmtD(t.value)}`})); p.data = t.value; } }
     save(); render(); return;
   }
+  if (p && t.id === "f-priv") { if (!canPriv(p)) return; const on = t.value === "1"; if (on) p.privado = true; else delete p.privado; p.hist = [...(p.hist || []), entry("moveu", {texto: on ? "Pauta marcada como privada" : "Pauta marcada como pública"})]; save(); toast(on ? "Pauta privada: só a Diretoria, quem criou e os responsáveis veem." : "Pauta pública: o time do cliente vê e edita."); fillOverlay(); return; }
   if (p && t.dataset.redes !== undefined) { p.redes = t.checked ? [...new Set([...(p.redes || []), t.value])] : (p.redes || []).filter(x => x !== t.value); save(); return; }
   if (p && t.dataset.fmt !== undefined) { const b = p.briefing = p.briefing || {}; b.formatos = t.checked ? [...new Set([...(b.formatos || []), t.value])] : (b.formatos || []).filter(x => x !== t.value); save(); return; }
   if (p && t.dataset.pod !== undefined) { p.briefing = p.briefing || {}; p.briefing.pautaPodcast = t.checked; save(); fillOverlay(); return; }
@@ -3099,7 +3116,7 @@ document.addEventListener("submit", async ev => {
     const np = {id:uid(), clienteId:c.id, data, tipo:tp, redes, status:"pauta", resp, briefing, versao:0, midias:[], hist:[entry("pauta")], coments:[], ajusteCom:null, criadoEm:nowIso(), criadoPor:ui.me, v3:true};
     if (!c.id) { np.unidade = (ME() || {}).unidade || ""; if (v("sol")) np.solicitante = v("sol"); }
     { const map = {ideia:"ideia", obj:"objetivo", pub:"publico", sub:"sub", corpo:"corpo", leg:"legenda", ref:"referencias", refig:"refIg", cardtx:"cardTexto"}; Object.entries(map).forEach(([k, bk]) => { if (v(k)) briefing[bk] = v(k); }); if (v("hl") && !briefing.headline) briefing.headline = v("hl"); if (v("dprod")) np.dataProducao = v("dprod"); if (v("drive")) np.drive = v("drive"); }
-    const etqs = (u.etqs || []).filter(etqOf); if (etqs.length) np.etiquetas = etqs;
+    const etqs = (u.etqs || []).filter(etqOf); if (etqs.length) np.etiquetas = etqs; if (v("priv") === "1") np.privado = true;
     if (resp.prod && resp.prod !== ui.me && (cat === "interna" || GENERICOS.includes(tp))) notify([resp.prod], `${cat === "interna" ? "Pauta" : "Demanda"} para você: ${briefing.headline}${c.id ? " (" + c.nome + ")" : ""}`, np);
     S.pecas.push(np); save(); ui.modal = null; ui.tmp = {}; ui.openId = np.id; ui.idx = 0; ui.month = firstOfMonth(pd(data)); toast("Pauta criada."); render(); return; }
   if (id === "genForm") {
