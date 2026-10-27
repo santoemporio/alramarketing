@@ -2030,7 +2030,7 @@ function pecasHTML(){
 
   if (ui.sf === "minha") ps = mine; else if (STATUS[ui.sf]) ps = ps.filter(p => p.status === ui.sf);
   const nArq = (S.arquivo || []).filter(p => { const u = unitOf(p); return unitScope().includes(u) && (headOfUnit(u) || (p.resp || {}).plan === ui.me || (p.resp || {}).prod === ui.me || p.criadoPor === ui.me); }).length;
-  const head = `<div class="spread"><div><div class="eyebrow">${isHead() ? "Visão de Head · todas as pautas da unidade" : "Pautas atribuídas a você"}</div><h1>${mine.length ? `<em>${mine.length}</em> ${mine.length === 1 ? "pauta pede" : "pautas pedem"} sua ação` : "Nada pendente com você"}</h1></div><div class="row">${isHead() ? `<button type="button" class="btn" data-act="relGen" title="Cria um relatório de resultados do mês para cada cliente">Gerar relatórios do mês</button>` : ""}${(canPlanAny() || isHead()) ? `<button type="button" class="btn primary" data-act="newPeca">+ Nova pauta</button>` : ""}</div></div>`;
+  const head = `<div class="spread"><div><div class="eyebrow">${isHead() ? "Visão de Head · todas as pautas da unidade" : "Pautas atribuídas a você"}</div><h1>${mine.length ? `<em>${mine.length}</em> ${mine.length === 1 ? "pauta pede" : "pautas pedem"} sua ação` : "Nada pendente com você"}</h1></div><div class="row">${isHead() ? `<button type="button" class="btn" data-act="relGen" title="Cria um relatório de resultados do mês para cada cliente">Gerar relatórios do mês</button>` : ""}${(canPlanAny() || isHead()) ? `<button type="button" class="btn primary" data-act="newPeca">+ Nova pauta</button>` : !isClient() ? `<button type="button" class="btn primary" data-act="newPeca" title="Crie uma task (to-do) para você ou para alguém do time">+ Nova task</button>` : ""}</div></div>`;
   if (!vc.length && !S.pecas.some(canSee)) return head + noClients();
   if (!S.pecas.some(canSee) && ui.sf !== "arquivo") return head + (nArq ? `<div><button type="button" class="chip" data-sf="arquivo">Arquivadas (${nArq})</button></div>` : "") + `<div class="empty"><h2>Nenhuma pauta ativa</h2><p>${canPlanAny() ? "Gere as pautas do mês no calendário ou crie uma pauta avulsa aqui, com ou sem cliente: conteúdo, tráfego ou tarefa interna." : "Quando o planejamento enviar uma pauta para você, ela aparece aqui."}</p>${canPlanAny() ? `<button type="button" class="btn primary" data-go="calendario">Ir para o calendário</button>` : ""}</div>`;
   return head + `<div class="row"><button type="button" class="chip" data-sf="minha" aria-pressed="${ui.sf === "minha"}">Minha vez (${mine.length})</button><button type="button" class="chip" data-sf="todas" aria-pressed="${ui.sf === "todas"}">Todas</button>${STATUS[ui.sf] ? `<button type="button" class="chip" aria-pressed="true" data-sf="todas">${esc(STATUS[ui.sf].label)} ×</button>` : ""}${nArq ? `<button type="button" class="chip" data-sf="arquivo" aria-pressed="${ui.sf === "arquivo"}">Arquivadas (${nArq})</button>` : ""}</div>
@@ -2493,8 +2493,11 @@ function approveAllHTML(){
 
 /* ================= modais ================= */
 function canaisDoCliente(c){ const s = scopeItems(c).map(x => x.tipo); return s.length ? [...new Set(s)] : Object.keys(CANAIS).filter(k => !["anuncio","tarefa"].includes(k)); }
+/* Quem não planeja (Time C, exceto clientes) cria só tasks (tipo Pauta / to-do) pelo Kanban. */
+const soTask = () => !isClient() && !(canPlanAny() || isHead());
 function newPecaHTML(){
-  const vc = visibleClients().filter(canEditClient), u = ui.tmp;
+  const vc = soTask() ? visibleClients() : visibleClients().filter(canEditClient), u = ui.tmp;
+  if (soTask()) u.cat = "interna";
   if (!u.f) u.f = {}; const f = u.f; if (u.data && !f.data) f.data = u.data; if (u.tit && f.tit === undefined) f.tit = u.tit;
   const val = (k, d) => f[k] !== undefined ? f[k] : (d === undefined ? "" : d);
   const cid = u.cid !== undefined ? u.cid : ui.cf === "_sem" ? "" : (ui.cf !== "todos" ? ui.cf : (vc[0] || {}).id || ""), c = cli(cid), cat = CATS[u.cat] ? u.cat : "conteudo", sem = !cid;
@@ -2535,7 +2538,7 @@ function newPecaHTML(){
   const redeField = cat === "conteudo" ? `<div class="field full"><label for="np-tipo">Rede de divulgação ou formato</label><select class="inp" id="np-tipo"><optgroup label="Redes e canais">${redesTodas.map(k => `<option value="${k}" ${tipoSel === k ? "selected" : ""}>${lbl(k)}${CANAIS[k].texto ? " (texto)" : ""}${escopo.includes(k) ? " · no escopo" : ""}</option>`).join("")}</optgroup><optgroup label="Demandas pontuais">${GENERICOS.map(k => `<option value="${k}" ${tipoSel === k ? "selected" : ""}>${CANAIS[k].label}</option>`).join("")}</optgroup></select>
         ${["feed","stories"].includes(tipoSel) ? `<div class="seg" style="margin-top:6px">${["Instagram","Facebook"].map(r => `<label><input type="checkbox" data-npredes value="${r}" ${(u.redesM || (metaRedes(c).length ? metaRedes(c) : ["Instagram","Facebook"])).includes(r) ? "checked" : ""}> ${r}</label>`).join("")}</div>` : ""}</div>`
     : cat === "trafego" ? `<div class="field full"><span class="lb">Plataforma do anúncio</span><div class="seg">${REDES_ADS.map(r => `<label><input type="checkbox" data-npads value="${r}" ${(u.ads || ["Meta Ads"]).includes(r) ? "checked" : ""}> ${r}</label>`).join("")}</div></div>` : "";
-  return `<aside class="drawer pg edit" role="dialog" aria-modal="true" aria-label="Nova pauta"><div class="d-top"><button type="button" class="x" data-act="close" aria-label="Fechar">×</button><div class="ttl"><b>Nova pauta</b><span>${esc(CATS[cat])} · preencha o que já souber; o resto pode ser completado na pauta.</span></div><button type="submit" form="npForm" class="btn sm primary">Criar pauta</button></div>
+  return `<aside class="drawer pg edit" role="dialog" aria-modal="true" aria-label="Nova pauta"><div class="d-top"><button type="button" class="x" data-act="close" aria-label="Fechar">×</button><div class="ttl"><b>${soTask() ? "Nova task" : "Nova pauta"}</b><span>${soTask() ? "Task (to-do)" : esc(CATS[cat])} · preencha o que já souber; o resto pode ser completado na pauta.</span></div><button type="submit" form="npForm" class="btn sm primary">${soTask() ? "Criar task" : "Criar pauta"}</button></div>
     <form class="d-body pgb" id="npForm" novalidate><div class="pgw"><div class="pgmain">
       <section class="psec"><h3>Conteúdo</h3><div class="form">${conteudo}</div></section>
       ${cat === "interna" || texto ? "" : `<section class="psec"><h3>${cat === "trafego" ? "Texto do anúncio" : "Legenda"}</h3>${ta("leg", 4)}</section>`}
@@ -2544,7 +2547,7 @@ function newPecaHTML(){
       <p class="muted" style="font-size:12.5px">${cat === "interna" ? "A pauta não vai para o cliente: anda em A fazer, Fazendo e Concluída." : sem ? "Pauta sem cliente: não passa pela aprovação do cliente. Depois da revisão, o planejamento aprova direto." : "A pauta segue o fluxo do tipo escolhido: produção, revisão, validação do Head e aprovação do cliente."}</p>
     </div><div class="pgside">
       <section class="psec"><h3>Propriedades</h3><div class="form props">
-        <div class="field full"><span class="lb">Tipo de pauta</span><div class="seg">${Object.entries(CATS).map(([k, l]) => `<label><input type="radio" name="npcat" value="${k}" ${cat === k ? "checked" : ""}> ${l}</label>`).join("")}</div></div>
+        ${soTask() ? "" : `<div class="field full"><span class="lb">Tipo de pauta</span><div class="seg">${Object.entries(CATS).map(([k, l]) => `<label><input type="radio" name="npcat" value="${k}" ${cat === k ? "checked" : ""}> ${l}</label>`).join("")}</div></div>`}
         <div class="field full"><label for="np-cli">Cliente</label><select class="inp" id="np-cli"><option value="" ${sem ? "selected" : ""}>Sem cliente · demanda avulsa</option>${vc.map(x => `<option value="${esc(x.id)}" ${cid === x.id ? "selected" : ""}>${esc(x.nome)}</option>`).join("")}</select></div>
         ${redeField}
         <div class="field"><label for="np-data">${cat === "interna" ? "Data de fim" : generico && cat === "conteudo" ? "Prazo de entrega" : cat === "trafego" ? "Data de início" : "Data de postagem"}</label><input class="inp" type="date" id="np-data" value="${esc(val("data", ymd(addDays(TODAY, 3))))}"></div>
@@ -2559,7 +2562,7 @@ function newPecaHTML(){
         ${etqField(u.etqs || [], true, "data-npetq")}
         <div class="field full"><label for="np-drive">Link do Drive ${opc}</label>${inp("drive", "https://drive.google.com/…")}</div>
       </div></section>
-      <div class="actions"><button type="submit" class="btn primary">Criar pauta</button><button type="button" class="btn ghost" data-act="close">Cancelar</button></div>
+      <div class="actions"><button type="submit" class="btn primary">${soTask() ? "Criar task" : "Criar pauta"}</button><button type="button" class="btn ghost" data-act="close">Cancelar</button></div>
     </div></div></form></aside>`;
 }
 function genHTML(){
@@ -3177,7 +3180,7 @@ document.addEventListener("submit", async ev => {
     if (id === "setPwdForm") { await sb.auth.refreshSession().catch(() => {}); location.replace("/"); return; }
     ui.modal = null; ui.tmp = {}; toast("Senha salva"); render(); return;
   }
-  if (id === "npForm") { const u = ui.tmp, cat = CATS[u.cat] ? u.cat : "conteudo", v = k => ((($("#np-" + k) || {}).value) || "").trim(), c = cli(v("cli")), data = v("data"); if (!data) { toast("Escolha a data."); return; }
+  if (id === "npForm") { const u = ui.tmp, cat = soTask() ? "interna" : CATS[u.cat] ? u.cat : "conteudo", v = k => ((($("#np-" + k) || {}).value) || "").trim(), c = cli(v("cli")), data = v("data"); if (!data) { toast("Escolha a data."); return; }
     let tp, redes, briefing = {formatos:[]}, resp = {plan: v("plan") || ui.me, prod:null};
     if (cat === "interna") { const tit = v("tit"); if (!tit) { toast("Dê um título à pauta."); return; } tp = "tarefa"; redes = []; briefing.headline = tit; resp.prod = v("resp") || ui.me; resp.plan = ui.me; }
     else if (cat === "trafego") { tp = "anuncio"; redes = (u.ads || ["Meta Ads"]); if (!redes.length) { toast("Marque ao menos uma plataforma."); return; } resp.prod = v("prod") || null; resp.traf = v("traf") || null; briefing.formatos = u.fmts || []; }
