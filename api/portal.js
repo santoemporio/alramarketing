@@ -55,14 +55,14 @@ module.exports = async (req, res) => {
       p.hist = p.hist || [];
       if (body.action === "approve") {
         p.status = "aprovado"; p.hist.push({ acao: "aprovou", em: now(), por: "cliente", nome });
-        put(p); (sq.social || []).forEach(id => writes.push(notif(id, `Aprovada, pronta para publicar: ${titleOf(p)} (${c.nome})`, p, c)));
+        put(p); { const quem = p.tipo === "anuncio" ? ((p.resp || {}).traf || (sq.trafego || [])[0] || (sq.social || [])[0]) : ((sq.social || [])[0] || (p.resp || {}).plan); if (quem) writes.push(notif(quem, p.tipo === "anuncio" ? `Criativo aprovado: configure a campanha ${titleOf(p)} (${c.nome})` : `Aprovada, pronta para publicar: ${titleOf(p)} (${c.nome})`, p, c)); }
       } else {
         const texto = clean(body.texto, 4000), tipo = ["arte", "legenda", "ambos", "texto"].includes(body.tipo) ? body.tipo : "arte";
         if (!texto) return res.status(400).json({ error: "Conte o que precisa mudar." });
         const needsArt = p.tipo !== "tarefa" && (!TEXT.includes(p.tipo) || !!(p.briefing || {}).card);
         p.status = "ajuste"; p.ajusteCom = (!needsArt || tipo === "legenda" || tipo === "texto") ? "planejamento" : "criacao";
         p.hist.push({ acao: "ajuste", em: now(), por: "cliente", nome, texto, tipo });
-        put(p); [...new Set([(p.resp || {}).plan, (p.resp || {}).prod].filter(Boolean))].forEach(id => writes.push(notif(id, `Ajuste pedido pelo cliente: ${titleOf(p)} (${c.nome})`, p, c)));
+        put(p); { const quem = p.ajusteCom === "planejamento" ? (p.resp || {}).plan : ((p.resp || {}).prod || (p.resp || {}).plan); if (quem) writes.push(notif(quem, `Ajuste pedido pelo cliente: ${titleOf(p)} (${c.nome})`, p, c)); }
       }
       await db.setDocs(writes);
       return res.status(200).json({ ok: true });
@@ -81,7 +81,7 @@ module.exports = async (req, res) => {
           p.status = "aprovado"; p.hist = p.hist || []; p.hist.push({ acao: "aprovou_tudo", em: now(), por: "cliente", nome, ...(texto ? { texto } : {}) });
           put(p); n++;
         }
-        if (n) (sq.social || []).forEach(id => writes.push(notif(id, `${c.nome} aprovou o planejamento: ${n} ${n === 1 ? "peça pronta" : "peças prontas"} para publicar`, null, c)));
+        if (n) (sq.social || []).slice(0, 1).forEach(id => writes.push(notif(id, `${c.nome} aprovou o planejamento: ${n} ${n === 1 ? "peça pronta" : "peças prontas"} para publicar`, null, c)));
       } else (sq.planejamento || []).forEach(id => writes.push(notif(id, `${c.nome} comentou o planejamento: ${texto.slice(0, 80)}`, null, c)));
       writes.push({ col: "feedbacks", id: uid(), data: { clienteId: c.id, k: clean(body.k, 20), periodo: clean(body.periodo, 60), decisao: dec, texto, nome, em: now() } });
       await db.setDocs(writes);

@@ -323,6 +323,7 @@ textarea,.inp{width:100%;border:1px solid var(--line2);border-radius:10px;paddin
 textarea{resize:vertical;field-sizing:content;min-height:3.4em;overflow-y:hidden}
 .clilink{border:0;background:none;padding:0;font:inherit;color:inherit;cursor:pointer;border-radius:6px}.clilink:hover span:nth-child(2),.clilink:focus-visible span:nth-child(2){text-decoration:underline;color:var(--accent-fg)}.clilink .arr{font-size:11px;color:var(--accent-fg);margin-left:2px}.clinks{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;font-size:12px;color:var(--muted)}.clinks .linkbtn{font-size:12px}
 .lock{font-size:10px}
+.privck{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:var(--muted);cursor:pointer;user-select:none}.privck input{accent-color:var(--accent);width:15px;height:15px}.privck:has(input:checked){color:var(--ink)}
 .mlink{display:flex;flex-direction:column;align-items:flex-start;gap:6px;width:100%;max-width:520px}
 .rte{border:1px solid var(--line);border-radius:10px;background:var(--raised);overflow:hidden}.rte.off{border-color:transparent;background:none}.rte:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
 .rtebar{display:flex;gap:2px;padding:4px;border-bottom:1px solid var(--line);background:var(--surface)}.rtebar button{width:30px;height:28px;border:0;border-radius:6px;background:none;cursor:pointer;font-size:14px;color:var(--ink)}.rtebar button:hover,.rtebar button:focus-visible{background:var(--raised)}
@@ -979,7 +980,7 @@ const semCli = p => !p.clienteId;
 const unitOf = p => p.clienteId ? cli(p.clienteId).unidade : (p.unidade || (ME() || {}).unidade || "");
 const cfMatch = p => ui.cf === "todos" || (ui.cf === "_sem" ? !p.clienteId : p.clienteId === ui.cf);
 const unidade = id => S.unidades.find(u => u.id === id) || {nome:"—"};
-const mName = id => { if (id === "cliente") return "Cliente"; const p = person(id); return !p ? "—" : p.excluido ? `${p.nome} (EXCLUÍDO)` : p.nome; };
+const mName = id => { if (id === "cliente") return "Cliente"; if (id === "sistema") return "Sistema (automático)"; const p = person(id); return !p ? "—" : p.excluido ? `${p.nome} (EXCLUÍDO)` : p.nome; };
 const ativos = () => S.pessoas.filter(p => !p.excluido);
 const fromName = n => n.de === "sistema" ? "Sistema Alra" : n.de === "cliente" ? cli(n.clienteId).nome : mName(n.de);
 function initials(n){ return String(n || "?").trim().split(/\s+/).map(x => x[0]).slice(0,2).join("").toUpperCase(); }
@@ -1134,8 +1135,8 @@ function rteHTML(id, attr, path, html, dis, ph, min){
 }
 const rtText = el => el.innerText.replace(/\n+$/, "");
 function setRt(obj, path, el){
-  const html = cleanFmt(el.innerHTML), txt = rtText(el), m = path.match(/^cards\.(\d+)\.sub$/);
-  if (m) { const c = (obj.cards = obj.cards || [])[+m[1]]; if (c) { c.sub = txt; c.subFmt = html; } return; }
+  const html = cleanFmt(el.innerHTML), txt = rtText(el), m = path.match(/^cards\.(\d+)\.(sub|hl)$/);
+  if (m) { const c = (obj.cards = obj.cards || [])[+m[1]]; if (c) { c[m[2]] = txt; c[m[2] + "Fmt"] = html; if (m[2] === "hl" && +m[1] === 0) obj.headline = txt; } return; }
   obj[path] = txt; obj[path + "Fmt"] = html;
 }
 /* carrossel por cards: cada card tem headline e sub-headline. Só vale para pautas que já usam a lista de cards (as antigas mantêm o formato anterior). */
@@ -1143,7 +1144,7 @@ const carrOn = b => !!b && (b.formatos || []).includes("Carrossel") && Array.isA
 function cardsHTML(cards, dis, pre){
   const n = cards.length;
   return `<div class="field full"><div class="spread"><span class="lb">Cards do carrossel <span class="hint">· ${n} ${n === 1 ? "card" : "cards"} para criar</span></span></div><div class="ccards">${cards.map((c, i) => `<div class="ccard"><div class="spread"><b>Card ${i + 1}${i === 0 ? " · capa" : ""}</b>${dis || n < 2 ? "" : `<button type="button" class="linkbtn" style="color:var(--danger)" data-act="${pre}CardDel" data-i="${i}" aria-label="Remover card ${i + 1}">Remover</button>`}</div>
-      <label class="lb" for="${pre}ch${i}">Headline</label><input class="inp" id="${pre}ch${i}" data-${pre}ch="${i}" value="${esc(c.hl || "")}" ${dis ? "disabled" : ""}>
+      <span class="lb">Headline</span>${rteHTML(pre + "ch" + i, pre === "np" ? "data-rtn" : "data-rt", `cards.${i}.hl`, fmtOf(c, "hl"), dis, "Headline deste card", "2.4em")}
       <span class="lb">Sub-headline <span class="hint">· texto de apoio</span></span>${rteHTML(pre + "cs" + i, pre === "np" ? "data-rtn" : "data-rt", `cards.${i}.sub`, fmtOf(c, "sub"), dis, "Texto de apoio deste card", "2.4em")}</div>`).join("")}</div>
     ${dis ? "" : `<button type="button" class="btn sm" data-act="${pre}CardAdd">+ Adicionar card</button>`}</div>`;
 }
@@ -1156,8 +1157,24 @@ function mlinkHTML(p){
   return `<div class="mlink">${url ? `<a class="btn sm primary" href="${esc(url)}" target="_blank" rel="noopener">↗ Abrir ${m ? (ms.length > 1 ? `a criação ${i + 1}` : "a criação") : "a criação"} no Drive</a>` : ""}
     ${can ? `<div class="row" style="flex-wrap:nowrap;gap:6px;width:100%"><input class="inp" id="f-mlink" data-mlink="${i}" value="${esc(cur || "")}" placeholder="Cole o link da criação no Drive${m && ms.length > 1 ? ` (arquivo ${i + 1})` : ""}" aria-label="Link da criação no Drive"></div><span class="hint">${m ? (ms.length > 1 ? "Cada arquivo tem o próprio link: troque de miniatura para editar o link dela." : "Link do arquivo aberto ou da pasta desta criação.") : "Link da criação (arte, vídeo, foto ou material) no Drive."}</span>` : ""}</div>`;
 }
+/* duplicar card: copia conteúdo, rede, responsáveis e arquivos; a cópia começa em Pauta, sem histórico de aprovação */
+const canDup = p => !isClient() && privOk(p) && !isRel(p) && (canPlan(p) || canEditP(p) || p.criadoPor === ui.me);
+function duplicarPeca(x){
+  const n = JSON.parse(JSON.stringify(x)), b = n.briefing = n.briefing || {};
+  n.id = uid(); n.status = "pauta"; n.versao = 0; n.coments = []; n.ajusteCom = null; n.retorno = false; n.criadoEm = nowIso(); n.criadoPor = ui.me; n.copiaDe = x.id;
+  ["validadoHead","encerrada","subetapa","arquivadaEm","arquivadaPor","escopo"].forEach(k => delete n[k]);
+  if (b.headline) { b.headline += " (cópia)"; if (b.headlineFmt) b.headlineFmt += " (cópia)"; }
+  n.hist = [entry("pauta", {texto: `Cópia de "${titleOf(x)}"`})];
+  S.pecas.push(n); save(); return n;
+}
+/* trocar o cliente de uma pauta já criada */
+function clienteField(p, c){
+  const can = canPlan(p) && !p.simples && !isRel(p), vc = allClients().slice().sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+  const sel = can && ui.tmp.troCli ? `<div class="row" style="flex-wrap:nowrap;gap:6px;margin-top:6px"><select class="inp" id="f-cli"><option value="">Sem cliente · demanda avulsa</option>${vc.map(x => `<option value="${esc(x.id)}" ${p.clienteId === x.id ? "selected" : ""}>${esc(x.nome)}</option>`).join("")}</select></div><span class="hint">A pauta passa para o cliente escolhido; responsáveis e conteúdo continuam.</span>` : "";
+  return `<div class="field full"><span class="lb">Cliente</span><div style="min-height:30px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">${p.simples ? `<span class="muted" style="font-size:12.5px">Sem cliente</span>` : cliLink(c)}${p.solicitante ? `<span class="muted" style="font-size:12px">· para ${esc(p.solicitante)}</span>` : ""}${can ? `<button type="button" class="linkbtn" style="font-size:12px" data-act="troCli">${ui.tmp.troCli ? "Cancelar" : "Trocar cliente"}</button>` : ""}</div>${sel}${p.simples ? "" : cliAtalhos(c)}</div>`;
+}
 function visField(p){
-  return `<div class="field full"><label for="f-priv">Visibilidade</label><select class="inp" id="f-priv" ${canPriv(p) ? "" : "disabled"}><option value="" ${p.privado ? "" : "selected"}>Pública${p.clienteId ? " · todo o time do cliente vê e edita" : ""}</option><option value="1" ${p.privado ? "selected" : ""}>Privada · só Diretoria, quem criou e os responsáveis</option></select></div>`;
+  return `<div class="field full"><label class="privck" title="Privada: só a Diretoria, quem criou e os responsáveis veem e editam"><input type="checkbox" id="f-priv" ${p.privado ? "checked" : ""} ${canPriv(p) ? "" : "disabled"}> 🔒 Privado</label></div>`;
 }
 function etqField(sel, can, attr){
   const u = ui.tmp, mng = can && timeAtLeast("B");
@@ -1395,21 +1412,33 @@ function atendimentoDe(c){
   const sq = ((c.squad || {}).atendimento || []);
   return sq.length ? sq : ativos().filter(m => m.unidade === c.unidade && (m.papeis || []).includes("atendimento")).map(m => m.id);
 }
+/* Notificações relevantes: só avisa quem passa a ser o responsável pela etapa (e nunca quem fez a mudança).
+   Pautado: avisa quem produz (design, audiovisual ou, em pautas só de texto, o planejamento). */
+function produtorDe(p){
+  const r = p.resp || {}; if (r.prod) return r.prod;
+  if (!needsArt(p)) return r.plan;
+  const c = cli(p.clienteId), vid = isVideoP(p) || canal(p).video, sq = ((c.squad || {}).producao || []).map(person).filter(m => m && !m.excluido);
+  const m = sq.find(x => (x.papeis || []).includes(vid ? "audiovisual" : "design")) || sq[0];
+  return m ? m.id : r.plan;
+}
 function stageNotify(p, st){
-  const c = cli(p.clienteId), r = p.resp || {}, t = `${titleOf(p)} (${c.nome})`;
+  const c = cli(p.clienteId), t = `${titleOf(p)}${c.id ? " (" + c.nome + ")" : ""}`, f = fluxoOf(p);
   let ids = [], msg = "";
-  if (isTask(p)) { if (st === "publicado") { ids = [r.plan]; msg = `Tarefa concluída: ${t}`; } else if (st === "producao") { ids = [r.plan]; msg = `Tarefa iniciada: ${t}`; } }
-  else if (st === "producao") { ids = [r.prod]; msg = `Em produção com você: ${t}`; }
-  else if (st === "revisao") { ids = [r.plan]; msg = `Para revisar: ${t}`; }
-  else if (st === "cliente") { ids = atendimentoDe(c); msg = `Com o cliente para aprovação: ${t}`; }
-  else if (st === "ajuste") { ids = [r.plan, r.prod]; msg = `Ajuste pedido pelo cliente: ${t}`; }
-  else if (st === "aprovado") { ids = (c.squad || {}).social || []; msg = `Aprovada, pronta para publicar: ${t}`; }
-  const f = fluxoOf(p);
-  if (f === "trafego" && st === "aprovado") { ids = [trafOf(p)]; msg = `Criativo aprovado: configure a campanha ${t}`; }
-  if (f === "trafego" && st === "publicado") { ids = [r.plan, ...atendimentoDe(c)]; msg = `Campanha no ar: ${t}`; }
-  if (f === "pontual" && st === "aprovado") { ids = atendimentoDe(c); msg = `Aprovada, pronta para entregar: ${t}`; }
-  if (f === "relatorio") { ids = st === "producao" ? [r.plan] : st === "revisao" ? [diretorOf(p)] : st === "aprovado" ? atendimentoDe(c) : []; msg = `${stLabel(p)}: ${t}`; }
-  if (st === "revisao" && f !== "relatorio" && precisaHead(p)) { ids = ids.concat(ativos().filter(m => m.unidade === unitOf(p) && (m.papeis || []).includes("head")).map(m => m.id)); msg = `Para revisar e validar: ${t}`; }
+  if (st === "pautado") { ids = [produtorDe(p)]; msg = `Pautado para você: ${t}`; }
+  else {
+    const o = owner(p);
+    if (o && o !== "cliente") {
+      ids = [o];
+      msg = isTask(p) ? `Task com você: ${t}`
+        : st === "producao" ? `Em produção com você: ${t}`
+        : st === "revisao" ? `Para revisar: ${t}`
+        : st === "ajuste" ? `Ajuste com você: ${t}`
+        : st === "aprovado" ? (f === "trafego" ? `Criativo aprovado: configure a campanha ${t}` : f === "pontual" ? `Aprovada, pronta para entregar: ${t}` : `Aprovada, pronta para publicar: ${t}`)
+        : st === "pauta" ? `Pauta com você: ${t}`
+        : `${stLabel(p)}: ${t}`;
+    }
+    if (st === "revisao" && f !== "relatorio" && precisaHead(p) && !p.validadoHead && !(person(o) && (person(o).papeis || []).includes("head"))) { const hs = ativos().filter(m => m.unidade === unitOf(p) && (m.papeis || []).includes("head")).map(m => m.id); ids = ids.concat(hs); msg = `Para revisar e validar: ${t}`; }
+  }
   if (ids.length) notify(ids, msg, p);
 }
 const precisaHead = p => !!p.clienteId && !isRel(p) && !isTask(p);
@@ -1757,7 +1786,7 @@ function render(){
     <div class="brandrow"><div class="brand"><div style="min-width:0">${LOGO_FULL(26)}<span style="margin-top:4px">${esc(isDir() && ui.unidade === "todas" && S.unidades.length > 1 ? "Todas as unidades" : unidade(isDir() && ui.unidade !== "todas" ? ui.unidade : m.unidade).nome)}</span></div></div>
       <button type="button" class="bell" data-act="notifs" aria-label="Notificações${unread ? ", " + unread + " não lidas" : ""}">${svgi("bell")}${unread ? `<i>${unread > 99 ? "99+" : unread}</i>` : ""}</button></div>
     ${isDir() && S.unidades.length > 1 ? `<select class="unit" id="unitSel" aria-label="Unidade"><option value="todas" ${ui.unidade === "todas" ? "selected" : ""}>Todas as unidades</option>${S.unidades.map(u => `<option value="${u.id}" ${ui.unidade === u.id ? "selected" : ""}>${esc(u.nome)}</option>`).join("")}</select>` : ""}
-    <nav class="navl" aria-label="Módulos"><span class="navsec">Trabalho</span>${nav.map(([k,l]) => (k === "clientes" ? `<span class="navsec">Gestão</span>` : "") + `<button type="button" data-view="${k}" title="${esc(l)}" ${ui.view === k || (k === "clientes" && ui.view === "hub") ? 'aria-current="page"' : ""}>${ico(k)}<span class="nl">${l}</span>${k === "inicio" && mine ? `<span class="ncnt">${mine}</span>` : ""}${k === "dashboards" && unreadRel ? `<span class="ncnt">${unreadRel}</span>` : ""}</button>`).join("")}</nav>
+    <nav class="navl" aria-label="Módulos"><span class="navsec">Trabalho</span>${nav.map(([k,l]) => (k === "clientes" ? `<span class="navsec">Gestão</span>` : "") + `<button type="button" data-view="${k}" title="${esc(l)}" ${ui.view === k || (k === "clientes" && ui.view === "hub") ? 'aria-current="page"' : ""}>${ico(k)}<span class="nl">${l}</span>${k === "dashboards" && unreadRel ? `<span class="ncnt">${unreadRel}</span>` : ""}</button>`).join("")}</nav>
     <div class="mebox"><button type="button" class="navtog" data-act="navMin" aria-label="${ui.navMin ? "Expandir menu" : "Recolher menu"}" title="${ui.navMin ? "Expandir menu" : "Recolher menu"}"><b aria-hidden="true">${ui.navMin ? "»" : "«"}</b><span class="nl">Recolher menu</span></button><button type="button" class="mebtn" data-act="profile" title="Meu perfil">${av(m.id, 32)}<span style="min-width:0" class="nl"><b>${esc(m.nome)}</b><span>${esc(TIMES[timeOf(m)])}</span></span></button>
       <button type="button" class="linkbtn" style="align-self:flex-start;color:var(--muted)" data-act="logout"><span class="nl">Sair (${esc(authUser ? authUser.email : "")})</span></button></div>
   </aside><main class="main">${mode === "demo" ? demoBar() : ""}${(V[ui.view] || inicioHTML)()}</main></div>`;
@@ -2043,9 +2072,9 @@ function pecasHTML(){
     <div class="spread">${filtersHTML(vc)}${ui.sf === "arquivo" ? "" : bulkBar()}</div>${ui.sf === "arquivo" ? archiveHTML() : boardHTML(ps)}<p class="muted" style="font-size:12px">Arraste os cartões entre as colunas para mudar a etapa sem abrir. A barra magenta marca as pautas que estão com você. No "···" de cada cartão: excluir (vai para o arquivo) ou selecionar vários.</p>`;
 }
 function kcHTML(p){
-  const sm = ui.selMode, can = canPlan(p);
-  if (sm || !can) return kcBtn(p);
-  return `<div class="kcw">${kcBtn(p)}<button type="button" class="kmore" data-act="kMenu" data-pid="${esc(p.id)}" aria-label="Mais ações" aria-expanded="${ui.kmenu === p.id}">···</button>${ui.kmenu === p.id ? `<div class="kmenu" role="menu"><button type="button" role="menuitem" data-act="archAsk" data-pid="${esc(p.id)}">Excluir (vai para o arquivo)</button><button type="button" role="menuitem" data-act="selStart" data-pid="${esc(p.id)}">Selecionar cartões</button></div>` : ""}</div>`;
+  const sm = ui.selMode, can = canPlan(p), dup = canDup(p);
+  if (sm || !(can || dup)) return kcBtn(p);
+  return `<div class="kcw">${kcBtn(p)}<button type="button" class="kmore" data-act="kMenu" data-pid="${esc(p.id)}" aria-label="Mais ações" aria-expanded="${ui.kmenu === p.id}">···</button>${ui.kmenu === p.id ? `<div class="kmenu" role="menu">${dup ? `<button type="button" role="menuitem" data-act="dupPeca" data-pid="${esc(p.id)}">Duplicar card</button>` : ""}${can ? `<button type="button" role="menuitem" data-act="archAsk" data-pid="${esc(p.id)}">Excluir (vai para o arquivo)</button><button type="button" role="menuitem" data-act="selStart" data-pid="${esc(p.id)}">Selecionar cartões</button>` : ""}</div>` : ""}</div>`;
 }
 function kcBtn(p){
   const c = cli(p.clienteId), o = owner(p);
@@ -2277,6 +2306,7 @@ function drawerHTML(p){
   const histSec = `<div class="sec"><h3>Histórico</h3><ul class="hist">${[...(p.hist || [])].reverse().map((h, i) => `<li class="${i === 0 ? "hl" : ""}"><div><div class="a">${esc(ACOES[h.acao] || h.acao)}${h.versao ? ` (v${h.versao})` : ""}</div><div class="s">${esc(h.por === "cliente" && h.nome ? "Cliente · " + h.nome : mName(h.por))} · ${esc(fmtStamp(h.em))}</div>${h.texto ? `<div class="q">${esc(h.texto)}</div>` : ""}</div></li>`).join("")}</ul></div>`;
   const delRow = `${canPlan(p) ? (u.del ? `<div class="row"><span style="font-size:12.5px">Excluir esta pauta? Ela vai para o arquivo e pode ser restaurada.</span><button type="button" class="btn sm danger" data-act="archiveOne">Excluir</button><button type="button" class="btn sm ghost" data-act="toggleDel">Cancelar</button></div>` : `<div class="row"><button type="button" class="linkbtn" style="color:var(--danger)" data-act="toggleDel">Excluir pauta</button></div>`) : ""}`;
   const chat = comentsSec + histSec + delRow;
+  const dupBtn = canDup(p) ? `<div class="row"><button type="button" class="linkbtn" data-act="dupPeca">Duplicar card</button></div>` : "";
   const driveField = `<div class="field full"><label for="f-drive">Link do Drive <span class="hint">· imagens, vídeos e arquivos abertos da criação</span></label><div class="row" style="flex-wrap:nowrap"><input class="inp" id="f-drive" value="${esc(p.drive || "")}" placeholder="https://drive.google.com/…" ${ed ? "" : "disabled"}>${c.drive ? `<a class="btn sm" href="${esc(c.drive)}" target="_blank" rel="noopener" title="Pasta do cliente no Drive da Alra">${svgi("drive")} Pasta do cliente</a>` : ""}</div></div>`;
 
   if (isTask(p)) {
@@ -2292,14 +2322,14 @@ function drawerHTML(p){
       ${tstep}
       ${actionsHTML(p, c, false)}
       <section class="psec"><h3>Propriedades</h3><div class="form props">
-        <div class="field full"><span class="lb">Cliente</span><div style="min-height:30px;display:flex;align-items:center">${p.simples ? `<span class="muted" style="font-size:12.5px">Sem cliente</span>` : cliLink(c)}</div>${p.simples ? "" : cliAtalhos(c)}</div>
+        ${clienteField(p, c)}
         <div class="field"><label for="f-data">Data de fim</label><input class="inp" type="date" id="f-data" data-top="data" value="${esc(p.data)}" ${canEditP(p) ? "" : "disabled"}></div>
         <div class="field"><label for="f-rc">Responsável</label><select class="inp" id="f-rc" data-top="prod" ${ed ? "" : "disabled"}>${opt(tppl, (p.resp || {}).prod)}</select></div>
         ${visField(p)}
         ${etqField(p.etiquetas || [], canEtq(p), "data-etq")}
         ${driveField}
       </div></section>
-      ${delRow}
+      ${dupBtn}${delRow}
     </div></div></div></aside>`;
   }
   const si = ORDER.indexOf(p.status), txt = isText(p), art = needsArt(p);
@@ -2330,7 +2360,7 @@ function drawerHTML(p){
     : `<div class="form"><div class="field full"><label for="f-ideia">Ideia <span class="hint">· por que este material existe</span></label>${rteHTML("f-ideia", "data-rt", "ideia", fmtOf(b, "ideia"), !!dis, "", "3.2em")}</div>
         <div class="field"><label for="f-obj">Objetivo</label><select class="inp" id="f-obj" data-b="objetivo" ${dis}><option value="">Definir…</option>${OBJETIVOS.map(o => `<option ${b.objetivo === o ? "selected" : ""}>${o}</option>`).join("")}</select></div>
         <div class="field"><label for="f-pub">Público</label><input class="inp" id="f-pub" data-b="publico" value="${esc(b.publico)}" ${dis}></div>
-        ${carrOn(b) ? cardsHTML(b.cards, !!dis, "") : `<div class="field full"><label for="f-hl">Headline</label><input class="inp" id="f-hl" data-b="headline" value="${esc(b.headline)}" ${dis}></div>
+        ${carrOn(b) ? cardsHTML(b.cards, !!dis, "") : `<div class="field full"><label for="f-hl">Headline</label>${rteHTML("f-hl", "data-rt", "headline", fmtOf(b, "headline"), !!dis, "", "2.4em")}</div>
         <div class="field full"><label for="f-sub">Sub-headline${(b.formatos || []).includes("Carrossel") ? ` <span class="hint">· uma linha por lâmina no carrossel</span>` : ""}</label>${rteHTML("f-sub", "data-rt", "sub", fmtOf(b, "sub"), !!dis, "", "3.2em")}</div>`}
         ${c.regras && c.regras.linkPodcast ? `<div class="field full"><div class="seg"><label><input type="checkbox" data-pod ${b.pautaPodcast ? "checked" : ""} ${dis}> Pauta vem do podcast</label></div>${b.pautaPodcast ? `<span class="hint">A legenda ou o texto precisa ter o link do YouTube antes de ir ao cliente.</span>` : ""}</div>` : ""}</div>`;
   const cardBrief = txt && b.card ? `<div class="form" style="margin-top:12px"><div class="field full"><label for="f-ideia">Ideia do card</label>${rteHTML("f-ideia", "data-rt", "ideia", fmtOf(b, "ideia"), !!dis, "", "3.2em")}</div><div class="field full"><label for="f-cardhl">Texto do card <span class="hint">· frase que vai na arte</span></label><input class="inp" id="f-cardhl" data-b="cardTexto" value="${esc(b.cardTexto)}" ${dis}></div></div>` : "";
@@ -2354,7 +2384,7 @@ function drawerHTML(p){
       ${stepper}
       ${actionsHTML(p, c, edFiles)}
       <section class="psec"><h3>Propriedades</h3><div class="form props">
-        <div class="field full"><span class="lb">Cliente</span><div style="min-height:30px;display:flex;align-items:center">${cliLink(c)}${p.solicitante ? `<span class="muted" style="font-size:12px;margin-left:6px">· para ${esc(p.solicitante)}</span>` : ""}</div>${cliAtalhos(c)}</div>
+        ${clienteField(p, c)}
         <div class="field full"><span class="lb">${canal(p).grupo === "avulsa" ? "Formato" : "Rede"}</span><div class="row" style="min-height:30px">${redesField}</div></div>
         <div class="field"><label for="f-data">${canal(p).grupo === "avulsa" ? "Prazo de entrega" : "Data de postagem"}</label><input class="inp" type="date" id="f-data" data-top="data" value="${esc(p.data)}" ${canEditP(p) ? "" : "disabled"}></div>
         <div class="field"><label for="f-dprod">Data de produção</label><input class="inp" type="date" id="f-dprod" data-top="dataProducao" value="${esc(p.dataProducao || "")}" ${p.dataProducao ? "" : "data-empty"} ${canEditP(p) ? "" : "disabled"}><span class="hint">${p.dataProducao ? "Definida na pauta." : isEscopo(p) ? `Vazia: ${esc(fmtShort(pdDef))}, pela antecedência do cliente.` : "Vazia: vale a data da pauta."}</span></div>
@@ -2367,7 +2397,7 @@ function drawerHTML(p){
         ${etqField(p.etiquetas || [], canEtq(p), "data-etq")}
         ${driveField}
       </div></section>
-      ${delRow}
+      ${dupBtn}${delRow}
     </div></div></div></aside>`;
 }
 function actionsHTML(p, c, edFiles){
@@ -2539,7 +2569,7 @@ function newPecaHTML(){
   else conteudo = `<div class="field full"><label for="np-ideia">Ideia <span class="hint">· por que este material existe</span></label>${rtn("ideia", "", "3.2em")}</div>
       <div class="field"><label for="np-obj">Objetivo</label><select class="inp" id="np-obj"><option value="">Definir…</option>${OBJETIVOS.map(o => `<option ${val("obj") === o ? "selected" : ""}>${o}</option>`).join("")}</select></div>
       <div class="field"><label for="np-pub">Público</label>${inp("pub")}</div>
-      ${(u.fmts || []).includes("Carrossel") ? cardsHTML(u.cards || (u.cards = [{hl:"", sub:""}, {hl:"", sub:""}]), false, "np") : `<div class="field full"><label for="np-hl">Headline</label>${inp("hl")}</div>
+      ${(u.fmts || []).includes("Carrossel") ? cardsHTML(u.cards || (u.cards = [{hl:"", sub:""}, {hl:"", sub:""}]), false, "np") : `<div class="field full"><label for="np-hl">Headline</label>${rtn("hl", "", "2.4em")}</div>
       <div class="field full"><label for="np-sub">Sub-headline</label>${rtn("sub", "", "3.2em")}</div>`}`;
   const fmts = u.fmts || [];
   const redeField = cat === "conteudo" ? `<div class="field full"><label for="np-tipo">Rede de divulgação ou formato</label><select class="inp" id="np-tipo"><optgroup label="Redes e canais">${redesTodas.map(k => `<option value="${k}" ${tipoSel === k ? "selected" : ""}>${lbl(k)}${CANAIS[k].texto ? " (texto)" : ""}${escopo.includes(k) ? " · no escopo" : ""}</option>`).join("")}</optgroup><optgroup label="Demandas pontuais">${GENERICOS.map(k => `<option value="${k}" ${tipoSel === k ? "selected" : ""}>${CANAIS[k].label}</option>`).join("")}</optgroup></select>
@@ -2565,7 +2595,7 @@ function newPecaHTML(){
         ${art ? `<div class="field"><label for="np-prod">${texto ? "Design do card" : "Produção"}</label>${sel("prod", producers, val("prod", prodDef), "Definir depois")}</div>` : `<div class="field"></div>`}
         ${cat === "trafego" ? `<div class="field full"><label for="np-traf">Tráfego (configura e acompanha)</label>${sel("traf", trafs, val("traf", trafDef), "Definir depois")}</div>` : ""}
         <div class="field full"><span class="lb">Formatos de entrega</span><div class="seg">${texto ? `<label><input type="checkbox" id="np-card" ${card ? "checked" : ""}> Card estático</label>` : (generico ? FORMATOS_GEN : FORMATOS).map(x => `<label><input type="checkbox" data-npfmt value="${esc(x)}" ${fmts.includes(x) ? "checked" : ""}> ${esc(x)}</label>`).join("")}</div></div>`}
-        <div class="field full"><label for="np-priv">Visibilidade</label><select class="inp" id="np-priv"><option value="" ${val("priv") ? "" : "selected"}>Pública${sem ? "" : " · todo o time do cliente vê e edita"}</option><option value="1" ${val("priv") ? "selected" : ""}>Privada · só Diretoria, quem criou e os responsáveis</option></select></div>
+        <div class="field full"><label class="privck" title="Privada: só a Diretoria, quem criou e os responsáveis veem e editam"><input type="checkbox" id="np-priv" ${val("priv") === true ? "checked" : ""}> 🔒 Privado</label></div>
         ${etqField(u.etqs || [], true, "data-npetq")}
         <div class="field full"><label for="np-drive">Link do Drive ${opc}</label>${inp("drive", "https://drive.google.com/…")}</div>
       </div></section>
@@ -2947,7 +2977,9 @@ document.addEventListener("click", async ev => {
     case "epToday": ui.epWeek = weekStart(TODAY); render(); break;
     case "epAll": ui.epPeople = []; render(); break;
     case "epMe": ui.epPeople = [ui.me]; render(); break;
+    case "troCli": ui.tmp.troCli = !ui.tmp.troCli; fillOverlay(); break;
     case "kMenu": ui.kmenu = ui.kmenu === d.pid ? null : d.pid; render(); break;
+    case "dupPeca": { const x = S.pecas.find(y => y.id === (d.pid || ui.openId)); ui.kmenu = null; if (!x || !canDup(x)) break; const n = duplicarPeca(x); toast("Card duplicado: a cópia está em Pauta."); if (ui.openId) { ui.openId = n.id; ui.idx = 0; ui.tmp = {}; } render(); break; }
     case "archAsk": { const x = S.pecas.find(y => y.id === d.pid); ui.kmenu = null; if (!x) break; ui.tmp = {confirm: {titulo: "Excluir pauta?", texto: `"${titleOf(x)}" vai para o arquivo (Kanban → Arquivadas) e pode ser restaurada.`, ok: "Excluir", ids: [x.id]}}; ui.modal = "confirm"; fillOverlay(); break; }
     case "confirmGo": { const cf = u.confirm || {}; const n = archivePecas(cf.ids || []); ui.modal = null; ui.tmp = {}; toast(n ? "Pauta excluída: está em Arquivadas." : "Só o planejamento desta pauta pode excluir."); render(); break; }
     case "backupNow": { if (mode !== "db") break; ui.tmp.bkBusy = true; render(); (async () => { try { const {data:{session}} = await sb.auth.getSession(); const r = await fetch("/api/cron-backup", {method:"POST", headers:{authorization:"Bearer " + ((session || {}).access_token || "")}}); const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "Não foi possível fazer o backup."); toast(`Backup feito: ${j.docs} registros salvos.`); } catch(e) { toast(e.message); } ui.tmp.bkBusy = false; render(); })(); break; }
@@ -3070,7 +3102,7 @@ document.addEventListener("input", ev => {
   if (t.id === "f-corpo" && t.value !== undefined) { const el = $("#wcount"); if (el) { const n = t.value.trim().split(/\s+/).filter(Boolean).length; el.textContent = `${n} ${n === 1 ? "palavra" : "palavras"}`; } }
   if (t.id === "cliQ") { ui.cq = t.value; const q = normTxt(t.value); let n = 0; document.querySelectorAll("#cliGrid [data-nome]").forEach(el => { const ok = !q || el.dataset.nome.includes(q); el.hidden = !ok; if (ok) n++; }); const el = $("#cliQn"); if (el) el.textContent = `${n} de ${document.querySelectorAll("#cliGrid [data-nome]").length}`; return; }
   if (t.dataset && t.dataset.rt !== undefined) { const p = S.pecas.find(x => x.id === ui.openId); if (p) { p.briefing = p.briefing || {}; setRt(p.briefing, t.dataset.rt, t); if (t.dataset.rt === "corpo") { const el = $("#wcount"); if (el) { const n = String(p.briefing.corpo || "").trim().split(/\s+/).filter(Boolean).length; el.textContent = `${n} ${n === 1 ? "palavra" : "palavras"}`; } } save(); } return; }
-  if (t.dataset && t.dataset.rtn !== undefined) { const u = ui.tmp, f = u.f = u.f || {}, m = t.dataset.rtn.match(/^cards\.(\d+)\.sub$/); if (m) { const c = (u.cards || [])[+m[1]]; if (c) { c.sub = rtText(t); c.subFmt = cleanFmt(t.innerHTML); } } else { f[t.dataset.rtn] = rtText(t); f[t.dataset.rtn + "Fmt"] = cleanFmt(t.innerHTML); } return; }
+  if (t.dataset && t.dataset.rtn !== undefined) { const u = ui.tmp, f = u.f = u.f || {}, m = t.dataset.rtn.match(/^cards\.(\d+)\.(sub|hl)$/); if (m) { const c = (u.cards || [])[+m[1]]; if (c) { c[m[2]] = rtText(t); c[m[2] + "Fmt"] = cleanFmt(t.innerHTML); } } else { f[t.dataset.rtn] = rtText(t); f[t.dataset.rtn + "Fmt"] = cleanFmt(t.innerHTML); } return; }
   if (t.dataset && t.dataset.ch !== undefined) { const p = S.pecas.find(x => x.id === ui.openId); if (p && p.briefing && p.briefing.cards) { const i = +t.dataset.ch; p.briefing.cards[i].hl = t.value; if (i === 0) p.briefing.headline = t.value; save(); } return; }
   if (t.dataset && t.dataset.npch !== undefined) { const c = (ui.tmp.cards || [])[+t.dataset.npch]; if (c) c.hl = t.value; return; }
   if (t.id && t.id.startsWith("np-") && t.closest && t.closest("#npForm")) { (ui.tmp.f = ui.tmp.f || {})[t.id.slice(3)] = t.type === "checkbox" ? t.checked : t.value; if (t.id === "etqnome") return; return; }
@@ -3116,6 +3148,7 @@ document.addEventListener("change", async ev => {
     if (t.id === "np-cli") { u.cid = t.value; u.tipo = null; u.redesM = null; ["plan","prod","traf","resp"].forEach(k => delete f[k]); fillOverlay(); return; }
     if (t.id === "np-tipo") { u.tipo = t.value; u.fmts = []; delete f.prod; fillOverlay(); return; }
     if (t.id === "np-card") { f.card = t.checked; fillOverlay(); return; }
+    if (t.id === "np-priv") { f.priv = t.checked; return; }
     if (t.dataset.npredes !== undefined) { const def = metaRedes(cli(u.cid !== undefined ? u.cid : (($("#np-cli") || {}).value || ""))); u.redesM = u.redesM || (def.length ? def : ["Instagram","Facebook"]); u.redesM = t.checked ? [...new Set([...u.redesM, t.value])] : u.redesM.filter(x => x !== t.value); return; }
     if (t.dataset.npfmt !== undefined) { u.fmts = u.fmts || []; u.fmts = t.checked ? [...new Set([...u.fmts, t.value])] : u.fmts.filter(x => x !== t.value); if (t.value === "Carrossel") fillOverlay(); return; }
     if (t.id && t.id.startsWith("np-")) { f[t.id.slice(3)] = t.value; if (t.dataset.npads === undefined) return; } }
@@ -3143,7 +3176,8 @@ document.addEventListener("change", async ev => {
     save(); render(); return;
   }
   if (p && t.dataset.mlink !== undefined) { const i = +t.dataset.mlink, v = t.value.trim(); if (v && !safeUrl(v)) { toast("Cole um link começando com https://"); return; } if (i >= 0 && (p.midias || [])[i]) { if (v) p.midias[i].link = v; else delete p.midias[i].link; } else { if (v) p.criacaoLink = v; else delete p.criacaoLink; } save(); toast(v ? "Link da criação salvo." : "Link removido."); fillOverlay(); return; }
-  if (p && t.id === "f-priv") { if (!canPriv(p)) return; const on = t.value === "1"; if (on) p.privado = true; else delete p.privado; p.hist = [...(p.hist || []), entry("moveu", {texto: on ? "Pauta marcada como privada" : "Pauta marcada como pública"})]; save(); toast(on ? "Pauta privada: só a Diretoria, quem criou e os responsáveis veem." : "Pauta pública: o time do cliente vê e edita."); fillOverlay(); return; }
+  if (p && t.id === "f-cli") { if (!canPlan(p)) return; const de = cli(p.clienteId), para = cli(t.value); if (de.id === para.id) return; p.clienteId = para.id; if (!para.id) p.unidade = p.unidade || unitOf(Object.assign({}, p, {clienteId: de.id})) || (ME() || {}).unidade; else delete p.unidade; delete p.validadoHead; p.hist = [...(p.hist || []), entry("moveu", {texto:`Cliente: ${de.id ? de.nome : "sem cliente"} → ${para.id ? para.nome : "sem cliente"}`})]; save(); ui.tmp.troCli = false; toast(`Pauta agora é de ${para.id ? para.nome : "nenhum cliente"}.`); fillOverlay(); return; }
+  if (p && t.id === "f-priv") { if (!canPriv(p)) return; const on = !!t.checked; if (on) p.privado = true; else delete p.privado; p.hist = [...(p.hist || []), entry("moveu", {texto: on ? "Pauta marcada como privada" : "Pauta marcada como pública"})]; save(); toast(on ? "Pauta privada: só a Diretoria, quem criou e os responsáveis veem." : "Pauta pública: o time do cliente vê e edita."); fillOverlay(); return; }
   if (p && t.dataset.redes !== undefined) { p.redes = t.checked ? [...new Set([...(p.redes || []), t.value])] : (p.redes || []).filter(x => x !== t.value); save(); return; }
   if (p && t.dataset.fmt !== undefined) { const b = p.briefing = p.briefing || {}; b.formatos = t.checked ? [...new Set([...(b.formatos || []), t.value])] : (b.formatos || []).filter(x => x !== t.value); if (t.value === "Carrossel") { if (t.checked && !Array.isArray(b.cards)) b.cards = [{hl:b.headline || "", sub:"", subFmt:""}, {hl:"", sub:"", subFmt:""}]; save(); fillOverlay(); return; } save(); return; }
   if (p && t.dataset.pod !== undefined) { p.briefing = p.briefing || {}; p.briefing.pautaPodcast = t.checked; save(); fillOverlay(); return; }
@@ -3200,9 +3234,9 @@ document.addEventListener("submit", async ev => {
     const np = {id:uid(), clienteId:c.id, data, tipo:tp, redes, status:"pauta", resp, briefing, versao:0, midias:[], hist:[entry("pauta")], coments:[], ajusteCom:null, criadoEm:nowIso(), criadoPor:ui.me, v3:true};
     if (!c.id) { np.unidade = (ME() || {}).unidade || ""; if (v("sol")) np.solicitante = v("sol"); }
     { const map = {ideia:"ideia", obj:"objetivo", pub:"publico", sub:"sub", corpo:"corpo", leg:"legenda", ref:"referencias", refig:"refIg", cardtx:"cardTexto"}; Object.entries(map).forEach(([k, bk]) => { if (v(k)) briefing[bk] = v(k); }); if (v("hl") && !briefing.headline) briefing.headline = v("hl"); if (v("dprod")) np.dataProducao = v("dprod"); if (v("drive")) np.drive = v("drive"); }
-    { const f = u.f || {}; ["ideia","sub","corpo"].forEach(k => { const el = document.querySelector(`[data-rtn="${k}"]`); if (!el) return; const txt = rtText(el).trim(); if (txt) { briefing[k] = txt; briefing[k + "Fmt"] = cleanFmt(el.innerHTML); } else { delete briefing[k]; } }); }
-    if ((briefing.formatos || []).includes("Carrossel") && u.cards) { briefing.cards = u.cards.map(c => ({hl:(c.hl || "").trim(), sub:c.sub || "", subFmt:c.subFmt || ""})); if (!briefing.headline && briefing.cards[0].hl) briefing.headline = briefing.cards[0].hl; }
-    const etqs = (u.etqs || []).filter(etqOf); if (etqs.length) np.etiquetas = etqs; if (v("priv") === "1") np.privado = true;
+    { const f = u.f || {}; ["ideia","hl","sub","corpo"].forEach(k => { const el = document.querySelector(`[data-rtn="${k}"]`); if (!el) return; const txt = rtText(el).trim(), bk = k === "hl" ? "headline" : k; if (txt) { if (bk === "headline" && briefing.headline) return; briefing[bk] = txt; briefing[bk + "Fmt"] = cleanFmt(el.innerHTML); } }); }
+    if ((briefing.formatos || []).includes("Carrossel") && u.cards) { briefing.cards = u.cards.map(c => ({hl:(c.hl || "").trim(), hlFmt:c.hlFmt || "", sub:c.sub || "", subFmt:c.subFmt || ""})); if (!briefing.headline && briefing.cards[0].hl) briefing.headline = briefing.cards[0].hl; }
+    const etqs = (u.etqs || []).filter(etqOf); if (etqs.length) np.etiquetas = etqs; if (($("#np-priv") || {}).checked) np.privado = true;
     if (resp.prod && resp.prod !== ui.me && (cat === "interna" || GENERICOS.includes(tp))) notify([resp.prod], `${cat === "interna" ? "Pauta" : "Demanda"} para você: ${briefing.headline}${c.id ? " (" + c.nome + ")" : ""}`, np);
     S.pecas.push(np); save(); ui.modal = null; ui.tmp = {}; ui.openId = np.id; ui.idx = 0; ui.month = firstOfMonth(pd(data)); toast("Pauta criada."); render(); return; }
   if (id === "genForm") {
