@@ -323,6 +323,7 @@ textarea,.inp{width:100%;border:1px solid var(--line2);border-radius:10px;paddin
 textarea{resize:vertical;field-sizing:content;min-height:3.4em;overflow-y:hidden}
 .clilink{border:0;background:none;padding:0;font:inherit;color:inherit;cursor:pointer;border-radius:6px}.clilink:hover span:nth-child(2),.clilink:focus-visible span:nth-child(2){text-decoration:underline;color:var(--accent-fg)}.clilink .arr{font-size:11px;color:var(--accent-fg);margin-left:2px}.clinks{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;font-size:12px;color:var(--muted)}.clinks .linkbtn{font-size:12px}
 .lock{font-size:10px}
+.mlink{display:flex;flex-direction:column;align-items:flex-start;gap:6px;width:100%;max-width:520px}
 .rte{border:1px solid var(--line);border-radius:10px;background:var(--raised);overflow:hidden}.rte.off{border-color:transparent;background:none}.rte:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
 .rtebar{display:flex;gap:2px;padding:4px;border-bottom:1px solid var(--line);background:var(--surface)}.rtebar button{width:30px;height:28px;border:0;border-radius:6px;background:none;cursor:pointer;font-size:14px;color:var(--ink)}.rtebar button:hover,.rtebar button:focus-visible{background:var(--raised)}
 .rted{padding:9px 12px;font-size:14px;line-height:1.65;outline:none;white-space:pre-wrap;word-break:break-word}.rte.off .rted{padding:4px 3px}.rted:empty:before{content:attr(data-ph);color:var(--muted)}
@@ -921,7 +922,7 @@ function notifyIncoming(){
 
 /* ================= migração de versões anteriores ================= */
 const fr = (on, freq) => ({on, dias:[], freq: freq || "semanal"});
-const blankEscopo = () => ({meta:{instagram:false, facebook:false, feed:fr(true), stories:fr(false)}, tiktok:{on:false, video:fr(true)}, youtube:{on:false, video:fr(false), shorts:fr(false)}, linkedin:{on:false, post:fr(false), artigo:fr(false), newsletter:fr(false, "quinzenal")}, blog:{on:false, post:fr(true)}, captacao:{on:false, freq:"mensal", obs:""}});
+const blankEscopo = () => ({meta:{instagram:false, facebook:false, feed:fr(true), stories:fr(false)}, tiktok:{on:false, video:fr(true)}, youtube:{on:false, video:fr(false), shorts:fr(false)}, linkedin:{on:false, post:fr(false), artigo:fr(false), newsletter:fr(false, "quinzenal")}, blog:{on:false, post:fr(true)}, captacao:{on:false, freq:"mensal", obs:""}, trafego:{on:false, obs:""}});
 function fillEscopo(e){
   const b = blankEscopo(), out = Object.assign({}, b, e || {});
   Object.keys(b).forEach(k => { out[k] = Object.assign({}, b[k], (e || {})[k] || {}); });
@@ -1075,6 +1076,7 @@ function scopeSummary(c){
   if (e.youtube.on) { if (e.youtube.video.on) lines.push(["YouTube", "Vídeo na íntegra · " + dtxt(e.youtube.video)]); if (e.youtube.shorts.on) lines.push(["YouTube", "Shorts · " + dtxt(e.youtube.shorts)]); }
   if (e.linkedin.on) [["post","Post"],["artigo","Artigo"],["newsletter","Newsletter"]].forEach(([k, l]) => { if (e.linkedin[k].on) lines.push(["LinkedIn", l + " · " + dtxt(e.linkedin[k])]); });
   if (e.blog.on) lines.push(["Blog", "Posts · " + dtxt(e.blog.post)]);
+  if (e.trafego.on) lines.push(["Tráfego pago", "Gestão de tráfego" + (e.trafego.obs ? " · " + e.trafego.obs : "")]);
   if (e.captacao.on) lines.push(["Captação", (CAPFREQ[e.captacao.freq] || "Incluída") + (e.captacao.obs ? " · " + e.captacao.obs : "")]);
   return lines;
 }
@@ -1138,6 +1140,15 @@ function cardsHTML(cards, dis, pre){
       <label class="lb" for="${pre}ch${i}">Headline</label><input class="inp" id="${pre}ch${i}" data-${pre}ch="${i}" value="${esc(c.hl || "")}" ${dis ? "disabled" : ""}>
       <span class="lb">Sub-headline <span class="hint">· texto de apoio</span></span>${rteHTML(pre + "cs" + i, pre === "np" ? "data-rtn" : "data-rt", `cards.${i}.sub`, fmtOf(c, "sub"), dis, "Texto de apoio deste card", "2.4em")}</div>`).join("")}</div>
     ${dis ? "" : `<button type="button" class="btn sm" data-act="${pre}CardAdd">+ Adicionar card</button>`}</div>`;
+}
+/* link do arquivo aberto (Drive) de cada criação anexada, logo abaixo da imagem */
+const safeUrl = u => /^https?:\/\//i.test(String(u || "").trim()) ? String(u).trim() : "";
+function mlinkHTML(p){
+  const ms = p.midias || [], i = ms.length ? Math.min(ui.idx || 0, ms.length - 1) : -1, m = i >= 0 ? ms[i] : null, can = canEditP(p);
+  const cur = m ? m.link : p.criacaoLink, url = safeUrl(cur);
+  if (!can && !url) return "";
+  return `<div class="mlink">${url ? `<a class="btn sm primary" href="${esc(url)}" target="_blank" rel="noopener">↗ Abrir ${m ? (ms.length > 1 ? `a criação ${i + 1}` : "a criação") : "a criação"} no Drive</a>` : ""}
+    ${can ? `<div class="row" style="flex-wrap:nowrap;gap:6px;width:100%"><input class="inp" id="f-mlink" data-mlink="${i}" value="${esc(cur || "")}" placeholder="Cole o link da criação no Drive${m && ms.length > 1 ? ` (arquivo ${i + 1})` : ""}" aria-label="Link da criação no Drive"></div><span class="hint">${m ? (ms.length > 1 ? "Cada arquivo tem o próprio link: troque de miniatura para editar o link dela." : "Link do arquivo aberto ou da pasta desta criação.") : "Link da criação (arte, vídeo, foto ou material) no Drive."}</span>` : ""}</div>`;
 }
 function visField(p){
   return `<div class="field full"><label for="f-priv">Visibilidade</label><select class="inp" id="f-priv" ${canPriv(p) ? "" : "disabled"}><option value="" ${p.privado ? "" : "selected"}>Pública${p.clienteId ? " · todo o time do cliente vê e edita" : ""}</option><option value="1" ${p.privado ? "selected" : ""}>Privada · só Diretoria, quem criou e os responsáveis</option></select></div>`;
@@ -2319,7 +2330,7 @@ function drawerHTML(p){
   const legenda = txt ? "" : `<section class="psec"><h3>${p.tipo === "anuncio" ? "Texto do anúncio" : "Legenda"}</h3><textarea id="f-leg" data-b="legenda" rows="7" ${dis}>${esc(b.legenda)}</textarea><div class="cap-foot"><span class="tnum ${capLen > 2200 ? "over" : ""}" id="capcount">${capLen.toLocaleString("pt-BR")} / 2.200 caracteres</span>${b.legenda ? `<button type="button" class="linkbtn" data-copy="${esc(p.id)}">Copiar</button>` : ""}</div></section>`;
   const midias = !art ? "" : `<section class="psec"><h3>Mídias</h3><div class="viewer pgv">${ms.length ? `<div class="stagebox"><div class="frame" style="aspect-ratio:${t.ratio}">${mediaHTML(p, ui.idx, "play")}</div>${ms.length > 1 ? `<button type="button" class="navb p" data-act="prev" aria-label="Anterior">‹</button><button type="button" class="navb n" data-act="next" aria-label="Próxima">›</button>` : ""}</div>${strip}`
     : `<div class="frame blank" style="aspect-ratio:${t.ratio};max-width:340px">${p.drive ? "Arquivos no Drive" : p.status === "pauta" ? "A arte entra aqui quando a produção anexar." : "Nenhum arquivo anexado ainda."}</div>`}
-    <div class="spec">${esc(t.label)} · ${esc((p.redes || []).join(" + ") || t.net)}${p.versao ? ` · versão ${p.versao}` : ""}</div>${p.drive ? `<a class="btn sm" href="${esc(p.drive)}" target="_blank" rel="noopener">Abrir no Drive</a>` : ""}
+    <div class="spec">${esc(t.label)} · ${esc((p.redes || []).join(" + ") || t.net)}${p.versao ? ` · versão ${p.versao}` : ""}</div>${mlinkHTML(p)}${p.drive ? `<a class="btn sm" href="${esc(p.drive)}" target="_blank" rel="noopener">Pasta da pauta no Drive</a>` : ""}
     ${ed ? `<label class="btn sm" for="upfile2" style="cursor:pointer"><input type="file" id="upfile2" multiple accept="image/png,image/jpeg,image/webp,image/gif,video/mp4,video/webm" hidden>+ Adicionar arquivos</label><span class="hint">Use × embaixo de cada miniatura para remover e ‹ › para reordenar.</span>${u.progress ? `<span class="hint" style="color:var(--accent-fg);font-weight:700">${esc(u.progress)}</span>` : ""}` : ""}</div></section>`;
   const refs = pubLine ? `<section class="psec"><h3>Referências</h3><div class="form"><div class="field full"><label for="f-ref">Referências</label><textarea id="f-ref" data-b="referencias" rows="2" placeholder="Pinterest, Behance, sites…" ${dis}>${esc(b.referencias)}</textarea></div>
         <div class="field full"><label for="f-refig">Link de referência do Instagram</label><div class="row" style="flex-wrap:nowrap"><input class="inp" id="f-refig" data-b="refIg" value="${esc(b.refIg)}" placeholder="https://www.instagram.com/p/…" ${dis}>${/^https?:\/\//.test(b.refIg || "") ? `<a class="btn sm" href="${esc(b.refIg)}" target="_blank" rel="noopener">Abrir</a>` : ""}</div></div></div></section>` : "";
@@ -2600,6 +2611,7 @@ function clientFormHTML(){
       ${e.linkedin.on ? `<div class="npanel"><b>LinkedIn</b>${freqRow("linkedin.post", "Post", e.linkedin.post, true)}${freqRow("linkedin.artigo", "Artigo", e.linkedin.artigo, true)}${freqRow("linkedin.newsletter", "Newsletter", e.linkedin.newsletter, true)}</div>` : ""}
       ${e.blog.on ? `<div class="npanel"><b>Blog</b>${freqRow("blog.post", "Posts", e.blog.post, false)}</div>` : ""}
       <div class="npanel"><label style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;cursor:pointer"><input type="checkbox" data-sc="captacao.on" ${e.captacao.on ? "checked" : ""} style="accent-color:var(--accent)"> Captação incluída no escopo</label>${e.captacao.on ? `<div class="form"><div class="field"><label for="cf-capf">Frequência</label><select class="inp" id="cf-capf" data-sc="captacao.freq">${Object.entries(CAPFREQ).map(([k, l]) => `<option value="${k}" ${e.captacao.freq === k ? "selected" : ""}>${l}</option>`).join("")}</select></div><div class="field"><label for="cf-capo">Observação</label><input class="inp" type="text" id="cf-capo" data-sc="captacao.obs" value="${esc(e.captacao.obs || "")}" placeholder="Ex.: 1 diária por mês, 4 horas"></div></div>` : ""}</div>
+      <div class="npanel"><label style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;cursor:pointer"><input type="checkbox" data-sc="trafego.on" ${e.trafego.on ? "checked" : ""} style="accent-color:var(--accent)"> Gestão de tráfego pago no escopo</label>${e.trafego.on ? `<div class="form"><div class="field full"><label for="cf-trafo">Plataformas e observações</label><input class="inp" type="text" id="cf-trafo" data-sc="trafego.obs" value="${esc(e.trafego.obs || "")}" placeholder="Ex.: Meta Ads, verba mensal definida com o cliente"></div></div>` : ""}</div>
       <div class="eyebrow">4 · Equipe do cliente</div>
       <div class="form"><div class="field full"><span class="lb">Planejamento</span>${box("planejamento", ppl(p => p.includes("planejamento") || (p.includes("head") && !p.includes("diretoria"))))}</div>
         <div class="field full"><span class="lb">Produção (design e audiovisual)</span>${box("producao", ppl(p => p.includes("design") || p.includes("audiovisual")))}</div>
@@ -3118,6 +3130,7 @@ document.addEventListener("change", async ev => {
     else if (k === "data") { if (t.value && t.value !== p.data) { p.hist.push(entry("data", {texto:`${fmtD(p.data)} → ${fmtD(t.value)}`})); p.data = t.value; } }
     save(); render(); return;
   }
+  if (p && t.dataset.mlink !== undefined) { const i = +t.dataset.mlink, v = t.value.trim(); if (v && !safeUrl(v)) { toast("Cole um link começando com https://"); return; } if (i >= 0 && (p.midias || [])[i]) { if (v) p.midias[i].link = v; else delete p.midias[i].link; } else { if (v) p.criacaoLink = v; else delete p.criacaoLink; } save(); toast(v ? "Link da criação salvo." : "Link removido."); fillOverlay(); return; }
   if (p && t.id === "f-priv") { if (!canPriv(p)) return; const on = t.value === "1"; if (on) p.privado = true; else delete p.privado; p.hist = [...(p.hist || []), entry("moveu", {texto: on ? "Pauta marcada como privada" : "Pauta marcada como pública"})]; save(); toast(on ? "Pauta privada: só a Diretoria, quem criou e os responsáveis veem." : "Pauta pública: o time do cliente vê e edita."); fillOverlay(); return; }
   if (p && t.dataset.redes !== undefined) { p.redes = t.checked ? [...new Set([...(p.redes || []), t.value])] : (p.redes || []).filter(x => x !== t.value); save(); return; }
   if (p && t.dataset.fmt !== undefined) { const b = p.briefing = p.briefing || {}; b.formatos = t.checked ? [...new Set([...(b.formatos || []), t.value])] : (b.formatos || []).filter(x => x !== t.value); if (t.value === "Carrossel") { if (t.checked && !Array.isArray(b.cards)) b.cards = [{hl:b.headline || "", sub:"", subFmt:""}, {hl:"", sub:"", subFmt:""}]; save(); fillOverlay(); return; } save(); return; }
