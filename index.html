@@ -17,7 +17,7 @@
   --ok:#0F7A55; --ok-soft:#DDF3E7; --apv:#0E6E78; --apv-soft:#E2F3F5; --warn:#9A5300; --warn-soft:#FFF2E0;
   --info:#3150B8; --info-soft:#EDF1FD; --plan:#6747B5; --plan-soft:#F1EDFB; --done:#5E5764; --done-soft:#F0EDF1;
   --danger:#C2283A; --danger-soft:#FDEBED;
-  --s-pauta:#7E62C9; --s-producao:#A39BA9; --s-revisao:#4A68CF; --s-cliente:#FF0092; --s-ajuste:#D98200; --s-aprovado:#1A93A0; --s-publicado:#13996A;
+  --s-pauta:#7E62C9; --s-pautado:#B05FD6; --s-producao:#A39BA9; --s-revisao:#4A68CF; --s-cliente:#FF0092; --s-ajuste:#D98200; --s-aprovado:#1A93A0; --s-publicado:#13996A;
   --shadow:0 1px 2px rgba(36,28,41,.04),0 6px 20px rgba(36,28,41,.05); --shadow-lg:0 24px 60px rgba(36,28,41,.16); --scrim:rgba(36,28,41,.32);
   --f:"Montserrat",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 }
@@ -193,7 +193,7 @@ table.tb{width:100%;border-collapse:collapse;font-size:13px}
 .banner{border:1px solid var(--accent);background:var(--accent-soft);border-radius:14px;padding:14px 16px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
 
 /* kanban */
-.board{display:grid;grid-template-columns:repeat(7,minmax(138px,1fr));gap:7px;overflow-x:auto;padding-bottom:8px;align-items:start}
+.board{display:grid;grid-template-columns:repeat(8,minmax(132px,1fr));gap:7px;overflow-x:auto;padding-bottom:8px;align-items:start}
 .col{background:var(--surface);border-radius:14px;padding:8px;display:flex;flex-direction:column;gap:8px;min-width:0;min-height:160px;border:2px solid transparent}
 .col.dropover{border-color:var(--accent);background:var(--accent-soft)}
 .col-h{display:flex;align-items:center;justify-content:space-between;gap:4px 8px;padding:2px 4px 4px;flex-wrap:wrap}
@@ -312,7 +312,7 @@ button.ccard:hover{border-color:var(--line2)}
 .stepbar div{height:5px;border-radius:99px;background:var(--line)}
 .stepbar div.on{background:var(--accent)} .stepbar div.past{background:color-mix(in srgb,var(--accent) 30%,var(--line))}
 .stepl{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;font-size:9.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:4px}
-.stepl span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.stepl span.on{color:var(--accent-fg)}
+.stepl span,.stepl .stepgo{line-height:1.25;word-break:break-word;hyphens:auto}.stepl span.on{color:var(--accent-fg)}
 .form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 14px}
 @media (max-width:560px){.form{grid-template-columns:minmax(0,1fr)}}
 .field{display:flex;flex-direction:column;gap:5px;min-width:0}
@@ -323,6 +323,12 @@ textarea,.inp{width:100%;border:1px solid var(--line2);border-radius:10px;paddin
 textarea{resize:vertical;field-sizing:content;min-height:3.4em;overflow-y:hidden}
 .clilink{border:0;background:none;padding:0;font:inherit;color:inherit;cursor:pointer;border-radius:6px}.clilink:hover span:nth-child(2),.clilink:focus-visible span:nth-child(2){text-decoration:underline;color:var(--accent-fg)}.clilink .arr{font-size:11px;color:var(--accent-fg);margin-left:2px}.clinks{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;font-size:12px;color:var(--muted)}.clinks .linkbtn{font-size:12px}
 .lock{font-size:10px}
+.rte{border:1px solid var(--line);border-radius:10px;background:var(--raised);overflow:hidden}.rte.off{border-color:transparent;background:none}.rte:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
+.rtebar{display:flex;gap:2px;padding:4px;border-bottom:1px solid var(--line);background:var(--surface)}.rtebar button{width:30px;height:28px;border:0;border-radius:6px;background:none;cursor:pointer;font-size:14px;color:var(--ink)}.rtebar button:hover,.rtebar button:focus-visible{background:var(--raised)}
+.rted{padding:9px 12px;font-size:14px;line-height:1.65;outline:none;white-space:pre-wrap;word-break:break-word}.rte.off .rted{padding:4px 3px}.rted:empty:before{content:attr(data-ph);color:var(--muted)}
+.ccards{display:grid;gap:10px}.ccard{border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;gap:6px;background:var(--surface)}
+.doctxt b{font-weight:800}
+.stepgo{border:0;background:none;padding:0;font:inherit;color:inherit;text-transform:inherit;letter-spacing:inherit;cursor:pointer;text-align:left}.stepw .stepl{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;text-transform:none;letter-spacing:0;font-size:11px}.stepw .stepl>*{padding:3px 8px;border-radius:99px;border:1px solid var(--line);background:var(--raised);line-height:1.3}.stepw .stepl .on{background:var(--accent);border-color:var(--accent);color:#fff}.stepw .stepgo:hover,.stepw .stepgo:focus-visible{border-color:var(--accent);text-decoration:none}.stepgo:hover,.stepgo:focus-visible{color:var(--accent-fg);text-decoration:underline}.stepl span,.stepl .stepgo{line-height:1.25;word-break:break-word;hyphens:auto}
 .etqs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:3px}.etq{--c:#667085;display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;padding:1px 7px;border-radius:5px;background:color-mix(in srgb,var(--c) 15%,transparent);color:var(--c);border:1px solid color-mix(in srgb,var(--c) 35%,transparent);line-height:1.6}
 button.etq{cursor:pointer;font-size:11px;padding:3px 9px;opacity:.55}button.etq[aria-pressed=true]{opacity:1;background:var(--c);color:#fff}button.etq:disabled{cursor:default}
 .etq .rm{margin-left:2px;font-weight:900;cursor:pointer}.etqbox{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.etqnew{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px}.etqnew .sw{width:20px;height:20px;border-radius:50%;border:2px solid transparent;cursor:pointer}.etqnew .sw[aria-pressed=true]{border-color:var(--ink)}
@@ -625,11 +631,11 @@ const GRUPOS = {meta:"Instagram e Facebook", stories:"Stories", ads:"Anúncios",
 const FORMATOS_GEN = ["Arte digital","Impresso","Vídeo","Fotos","Apresentação","Documento","Outro"];
 const FORMATOS = ["Post estático","Carrossel","Reels","Stories","Vídeo","Capa","Banner site","Banner newsletter"];
 const STATUS = {
-  pauta:{label:"Pauta", tone:"plan"}, producao:{label:"Em produção", tone:"prod"}, revisao:{label:"Em revisão", tone:"info"},
+  pauta:{label:"Pauta", tone:"plan"}, pautado:{label:"Pautado", tone:"plan"}, producao:{label:"Em produção", tone:"prod"}, revisao:{label:"Em revisão", tone:"info"},
   cliente:{label:"Com o cliente", tone:"accent"}, ajuste:{label:"Ajuste", tone:"warn"},
   aprovado:{label:"Aprovado", tone:"apv"}, publicado:{label:"Publicado", tone:"ok"}
 };
-const ORDER = ["pauta","producao","revisao","cliente","ajuste","aprovado","publicado"];
+const ORDER = ["pauta","pautado","producao","revisao","cliente","ajuste","aprovado","publicado"];
 const CLIENT_ST = ["cliente","ajuste","aprovado","publicado"];
 const OBJETIVOS = ["Venda","Remarketing","Branding","Reconhecimento","Autoridade","Engajamento","Institucional"];
 const PAPEIS = {diretoria:"Diretoria da rede", head:"Head", planejamento:"Planejamento", design:"Design", audiovisual:"Audiovisual", social:"Social media", trafego:"Tráfego", atendimento:"Atendimento"};
@@ -639,7 +645,7 @@ const FREQ = {semanal:"Toda semana", quinzenal:"A cada 15 dias", mensal:"1× por
 const EQUIP = ["Câmera","Lentes","Tripé","Gimbal","Microfone","Iluminação","Rebatedor","Celular","Drone","Baterias extras","Cartões de memória"];
 const CAPFREQ = {semanal:"Semanal", quinzenal:"Quinzenal", mensal:"Mensal", demanda:"Sob demanda"};
 const ACOES = {
-  pauta:"Pauta criada", producao:"Enviada para produção", arquivos:"Arquivos anexados", entrega:"Enviada para revisão", nova_versao:"Nova versão enviada para revisão",
+  pauta:"Pauta criada", pautado:"Pautado: briefing completo, pronto para a criação", producao:"Enviada para produção", arquivos:"Arquivos anexados", entrega:"Enviada para revisão", nova_versao:"Nova versão enviada para revisão",
   devolveu:"Devolvida para a produção", enviou_cliente:"Enviada ao cliente", aprovou:"Aprovada pelo cliente", aprovou_interno:"Aprovada internamente (pauta sem cliente)", no_ar:"Campanha no ar", encerrou:"Campanha encerrada", entregou:"Entregue", captado:"Material captado: foi para a edição", validou:"Validada pelo Head", apresentou:"Apresentado ao cliente", aprovou_tudo:"Aprovada em \"aprovar todo o planejamento\"",
   ajuste:"Cliente pediu ajuste", registrou:"Aprovação registrada pela equipe", publicou:"Publicada", concluiu:"Tarefa concluída", iniciou:"Tarefa iniciada", reabriu:"Tarefa reaberta", ajuste_ok:"Ajuste concluído, de volta à revisão", data:"Data alterada", moveu:"Etapa alterada no quadro", notificou:"Notificação enviada"
 };
@@ -994,14 +1000,14 @@ function unitScope(){ if (isDir()) return ui.unidade === "todas" ? S.unidades.ma
 const inScope = c => unitScope().includes(c.unidade);
 function owner(p){
   const r = p.resp || {}, f = fluxoOf(p);
-  if (isTask(p)) return ["pauta","producao"].includes(p.status) ? (r.prod || r.plan) : null;
-  if (f === "relatorio") return {pauta: r.prod || r.plan, producao: r.plan, revisao: diretorOf(p), aprovado: (atendimentoDe(cli(p.clienteId))[0] || r.plan)}[p.status] || null;
+  if (isTask(p)) return ["pauta","pautado","producao"].includes(p.status) ? (r.prod || r.plan) : null;
+  if (f === "relatorio") return {pauta: r.prod || r.plan, pautado: r.prod || r.plan, producao: r.plan, revisao: diretorOf(p), aprovado: (atendimentoDe(cli(p.clienteId))[0] || r.plan)}[p.status] || null;
   if (f === "trafego" && p.status === "aprovado") return trafOf(p);
   if (f === "trafego" && p.status === "publicado") return p.encerrada ? null : trafOf(p);
   if (f === "pontual" && p.status === "aprovado") return atendimentoDe(cli(p.clienteId))[0] || r.plan;
   switch (p.status) {
     case "pauta": case "revisao": return r.plan;
-    case "producao": return r.prod;
+    case "pautado": case "producao": return r.prod;
     case "cliente": return "cliente";
     case "ajuste": return p.ajusteCom === "planejamento" ? r.plan : r.prod;
     case "aprovado": return ((cli(p.clienteId).squad || {}).social || [])[0] || r.plan;
@@ -1093,6 +1099,46 @@ const etiquetas = () => [...ETQ_PAD.filter(e => !((S.cfg || {}).etqOff || []).in
 const etqOf = id => etiquetas().find(e => e.id === id);
 const etqChips = p => { const l = (p.etiquetas || []).map(etqOf).filter(Boolean); return l.length ? `<span class="etqs">${l.map(e => `<span class="etq" style="--c:${esc(e.cor)}">${esc(e.nome)}</span>`).join("")}</span>` : ""; };
 const canEtq = p => !isClient() && privOk(p) && (canEditP(p) || timeAtLeast("B"));
+function stepperHTML(p){
+  const ord = isTask(p) ? ["pauta","pautado","producao","publicado"] : etapasDe(p), sj = ord.indexOf(p.status), can = canMove(p);
+  const lb = k => isTask(p) ? (TASK_ST[k] || STATUS[k].label) : semCli(p) && k === "publicado" ? "Entregue" : STATUS[k].label;
+  return `<div class="stepw"><div class="stepbar" style="grid-template-columns:repeat(${ord.length},1fr)">${ord.map((k, i) => `<div class="${i === sj ? "on" : i < sj && k !== "ajuste" ? "past" : ""}"></div>`).join("")}</div><div class="stepl" style="grid-template-columns:repeat(${ord.length},1fr)">${ord.map((k, i) => can && i !== sj ? `<button type="button" class="stepgo" data-mvst="${k}" title="Mover para ${esc(lb(k))}">${esc(lb(k))}</button>` : `<span class="${i === sj ? "on" : ""}">${esc(lb(k))}</span>`).join("")}</div>${can ? `<span class="hint" style="display:block;margin-top:4px">Clique numa etapa para mover a pauta.</span>` : ""}</div>`;
+}
+/* ================= texto com formatação (negrito, itálico, sublinhado, tachado) =================
+   O texto puro continua no campo original (ex.: briefing.corpo); a versão formatada fica em <campo>Fmt (HTML limpo). */
+function cleanFmt(html){
+  const root = new DOMParser().parseFromString(`<div>${html || ""}</div>`, "text/html").body.firstChild;
+  const T = {B:"b", STRONG:"b", I:"i", EM:"i", U:"u", S:"s", STRIKE:"s", DEL:"s", DIV:"div", P:"div", LI:"div"};
+  const walk = n => [...n.childNodes].map(c => {
+    if (c.nodeType === 3) return esc(c.textContent);
+    if (c.nodeType !== 1) return "";
+    if (c.tagName === "BR") return "<br>";
+    let inner = walk(c);
+    if (c.tagName === "SPAN" && c.style) { const st = c.style; if (/line-through/.test(st.textDecoration || st.textDecorationLine || "")) inner = `<s>${inner}</s>`; if (/underline/.test(st.textDecoration || st.textDecorationLine || "")) inner = `<u>${inner}</u>`; if (st.fontStyle === "italic") inner = `<i>${inner}</i>`; if (+st.fontWeight >= 600 || st.fontWeight === "bold") inner = `<b>${inner}</b>`; return inner; }
+    return T[c.tagName] ? `<${T[c.tagName]}>${inner}</${T[c.tagName]}>` : inner;
+  }).join("");
+  return walk(root);
+}
+const plainHTML = t => esc(t || "").replace(/\n/g, "<br>");
+const fmtOf = (o, k) => o && o[k + "Fmt"] ? cleanFmt(o[k + "Fmt"]) : plainHTML((o || {})[k]);
+function rteHTML(id, attr, path, html, dis, ph, min){
+  return `<div class="rte${dis ? " off" : ""}">${dis ? "" : `<div class="rtebar" role="toolbar" aria-label="Formatação do texto"><button type="button" data-rtc="bold" title="Negrito (Ctrl+B)" aria-label="Negrito"><b>B</b></button><button type="button" data-rtc="italic" title="Itálico (Ctrl+I)" aria-label="Itálico"><i>I</i></button><button type="button" data-rtc="underline" title="Sublinhado (Ctrl+U)" aria-label="Sublinhado"><u>U</u></button><button type="button" data-rtc="strikeThrough" title="Tachado" aria-label="Tachado"><s>S</s></button></div>`}<div class="rted" id="${id}" ${attr}="${esc(path)}" ${dis ? "" : `contenteditable="true" role="textbox" aria-multiline="true"`} data-ph="${esc(ph || "")}" style="min-height:${min || "3.2em"}">${html}</div></div>`;
+}
+const rtText = el => el.innerText.replace(/\n+$/, "");
+function setRt(obj, path, el){
+  const html = cleanFmt(el.innerHTML), txt = rtText(el), m = path.match(/^cards\.(\d+)\.sub$/);
+  if (m) { const c = (obj.cards = obj.cards || [])[+m[1]]; if (c) { c.sub = txt; c.subFmt = html; } return; }
+  obj[path] = txt; obj[path + "Fmt"] = html;
+}
+/* carrossel por cards: cada card tem headline e sub-headline. Só vale para pautas que já usam a lista de cards (as antigas mantêm o formato anterior). */
+const carrOn = b => !!b && (b.formatos || []).includes("Carrossel") && Array.isArray(b.cards);
+function cardsHTML(cards, dis, pre){
+  const n = cards.length;
+  return `<div class="field full"><div class="spread"><span class="lb">Cards do carrossel <span class="hint">· ${n} ${n === 1 ? "card" : "cards"} para criar</span></span></div><div class="ccards">${cards.map((c, i) => `<div class="ccard"><div class="spread"><b>Card ${i + 1}${i === 0 ? " · capa" : ""}</b>${dis || n < 2 ? "" : `<button type="button" class="linkbtn" style="color:var(--danger)" data-act="${pre}CardDel" data-i="${i}" aria-label="Remover card ${i + 1}">Remover</button>`}</div>
+      <label class="lb" for="${pre}ch${i}">Headline</label><input class="inp" id="${pre}ch${i}" data-${pre}ch="${i}" value="${esc(c.hl || "")}" ${dis ? "disabled" : ""}>
+      <span class="lb">Sub-headline <span class="hint">· texto de apoio</span></span>${rteHTML(pre + "cs" + i, pre === "np" ? "data-rtn" : "data-rt", `cards.${i}.sub`, fmtOf(c, "sub"), dis, "Texto de apoio deste card", "2.4em")}</div>`).join("")}</div>
+    ${dis ? "" : `<button type="button" class="btn sm" data-act="${pre}CardAdd">+ Adicionar card</button>`}</div>`;
+}
 function visField(p){
   return `<div class="field full"><label for="f-priv">Visibilidade</label><select class="inp" id="f-priv" ${canPriv(p) ? "" : "disabled"}><option value="" ${p.privado ? "" : "selected"}>Pública${p.clienteId ? " · todo o time do cliente vê e edita" : ""}</option><option value="1" ${p.privado ? "selected" : ""}>Privada · só Diretoria, quem criou e os responsáveis</option></select></div>`;
 }
@@ -1132,7 +1178,7 @@ const diretorOf = p => (p.resp || {}).dir || (ativos().find(m => m.unidade === u
 const isText = p => !!(CANAIS[p.tipo] || {}).texto;
 const needsArt = p => !isTask(p) && (!isText(p) || !!(p.briefing || {}).card);
 const catOf = p => isTask(p) ? "interna" : p.tipo === "anuncio" ? "trafego" : "conteudo";
-const TASK_ST = {pauta:"A fazer", producao:"Fazendo", publicado:"Concluída"};
+const TASK_ST = {pauta:"A fazer", pautado:"Pautado", producao:"Fazendo", publicado:"Concluída"};
 function stLabel(p){
   const f = fluxoOf(p), s = p.status;
   if (f === "tarefa") return TASK_ST[s] || (STATUS[s] || STATUS.pauta).label;
@@ -1224,7 +1270,7 @@ function buildDaily(u, day){
     secoes:[
       {titulo:"O que avançou ontem", itens: advanced.length ? advanced.map(([n, l]) => ({t:`${n} ${l}`})).concat(ev.filter(x => ["enviou_cliente","aprovou","aprovou_tudo","publicou","ajuste"].includes(x.h.acao)).slice(-8).map(x => ({t:`${cli(x.p.clienteId).nome} · ${titleOf(x.p)}`, sub:ACOES[x.h.acao] || x.h.acao, pecaId:x.p.id}))) : [{t:"Nenhuma movimentação registrada ontem."}]},
       {titulo:"Pendente agora", itens:[
-        {t:`${ps.filter(p => p.status === "pauta" && !isTask(p)).length} pautas aguardando briefing`}, {t:`${ps.filter(p => p.status === "producao" && !isTask(p)).length} em produção`}, {t:`${ps.filter(p => p.status === "revisao").length} em revisão`},
+        {t:`${ps.filter(p => p.status === "pauta" && !isTask(p)).length} pautas aguardando briefing`}, {t:`${ps.filter(p => p.status === "pautado" && !isTask(p)).length} pautadas, prontas para a criação`}, {t:`${ps.filter(p => p.status === "producao" && !isTask(p)).length} em produção`}, {t:`${ps.filter(p => p.status === "revisao").length} em revisão`},
         {t:`${ps.filter(p => p.status === "cliente").length} com o cliente`}, {t:`${ps.filter(p => p.status === "ajuste").length} em ajuste`}, {t:`${pubHoje.length} aprovadas para publicar até hoje`}, {t:`${ps.filter(p => isTask(p) && p.status !== "publicado").length} tarefas internas abertas`}]},
       {titulo:"Travado", itens: late.slice(0, 10).map(p => Object.assign(linePeca(p), {alerta:true})).concat(stuck.slice(0, 6).map(p => Object.assign(linePeca(p), {sub:`Sem movimento há ${diffDays(TODAY, new Date(lastMove(p)))} dias · ${stLabel(p)}`}))).concat(tasksLate.slice(0, 5).map(p => Object.assign(linePeca(p), {sub:`Tarefa com prazo vencido · ${mName((p.resp || {}).prod)}`, alerta:true})))},
       {titulo:"Por cliente", itens: porCli}
@@ -1306,7 +1352,7 @@ function janela(p){
   if (p.status === "aprovado") return "";
   if (isTask(p)) { const n = diffDays(pd(p.data), TODAY); return n < 0 ? `<span class="flag">Atrasada</span>` : n === 0 ? `<span class="flag soon">Vence hoje</span>` : ""; }
   const c = cli(p.clienteId), dl = deadlineOf(c, periodKey(c, pd(p.data)));
-  const prazo = ["pauta","producao"].includes(p.status) ? addDays(dl, -2) : p.status === "revisao" ? dl : pd(p.data);
+  const prazo = ["pauta","pautado","producao"].includes(p.status) ? addDays(dl, -2) : p.status === "revisao" ? dl : pd(p.data);
   const n = diffDays(prazo, TODAY);
   if (n < 0) return `<span class="flag">Atrasada</span>`;
   if (n === 0) return `<span class="flag soon">Vence hoje</span>`;
@@ -1588,7 +1634,7 @@ function notify(ids, texto, p, cid){
 function setStatus(p, st, ent, extra){
   const changed = p.status !== st;
   Object.assign(p, extra || {}); p.status = st; if (ent) p.hist.push(ent);
-  if (["pauta","producao","ajuste"].includes(st)) delete p.validadoHead;
+  if (["pauta","pautado","producao","ajuste"].includes(st)) delete p.validadoHead;
   if (st === "producao" && fluxoOf(p) === "video" && !p.subetapa) p.subetapa = "captacao";
   if (st === "cliente") { const c = cli(p.clienteId), id = pacoteId(c.id, periodKey(c, pd(p.data))); if (!S.pacotes.find(x => x.id === id)) S.pacotes.push({id, clienteId:c.id, enviadoEm: nowIso()}); }
   if (changed) stageNotify(p, st);
@@ -1758,7 +1804,7 @@ function resumoDiaHTML(){
 function inicioHTML(){
   const m = ME(), T = myTime(), all = S.pecas.filter(canSee), base = T === "C" ? all.filter(involved) : all;
   const queue = sortP(all.filter(myTurn)), first = m.nome.split(" ")[0], vc = visibleClients(), tk = ymd(TODAY);
-  const andamento = base.filter(p => !["pauta","publicado"].includes(p.status)), late = base.filter(isLate), comCli = base.filter(p => p.status === "cliente"), ajuste = base.filter(p => p.status === "ajuste"), hoje = base.filter(p => p.data === tk && p.status !== "publicado" && !isTask(p));
+  const andamento = base.filter(p => !["pauta","pautado","publicado"].includes(p.status)), late = base.filter(isLate), comCli = base.filter(p => p.status === "cliente"), ajuste = base.filter(p => p.status === "ajuste"), hoje = base.filter(p => p.data === tk && p.status !== "publicado" && !isTask(p));
   const k = (n, l, cls, a) => `<button type="button" class="kpi ${cls}" ${a}><b>${n}</b><span>${l}</span></button>`;
   const caps = S.captacoes.filter(x => (x.resp === ui.me || (T !== "C" && headOfUnit(cli(x.clienteId).unidade))) && !["Realizada","Cancelada"].includes(x.status) && diffDays(pd(x.data), TODAY) >= 0 && diffDays(pd(x.data), TODAY) <= 7).sort((a, b) => (a.data + a.inicio).localeCompare(b.data + b.inicio));
   const un = isDir() && ui.unidade === "todas" && S.unidades.length > 1 ? "todas as unidades" : S.unidades.length === 1 ? S.unidades[0].nome : unidade(isDir() && ui.unidade !== "todas" ? ui.unidade : m.unidade).nome;
@@ -1996,35 +2042,29 @@ function readyToSend(p){
   if (c.regras && c.regras.linkPodcast && b.pautaPodcast && !/youtu\.?be/i.test((b.legenda || "") + " " + (b.corpo || ""))) return "Esta pauta vem do podcast: inclua o link do YouTube.";
   return "";
 }
+/* Movimentação livre: quem tem acesso à pauta move para qualquer etapa (quadro ou etapas da pauta).
+   Únicas travas: ir para "Com o cliente" pede validação do Head e conteúdo pronto; pauta sem cliente, relatório e to-do não vão ao cliente. */
+const canMove = p => !isClient() && privOk(p) && (canEditP(p) || canPlan(p) || canProduce(p) || owner(p) === ui.me || canPublish(p));
+const etapasDe = p => ORDER.filter(k => !((semCli(p) || isRel(p) || isTask(p)) && ["cliente","ajuste"].includes(k)));
 function moveTo(p, st){
-  if (p.status === st) return;
-  const b = p.briefing || {}, from = p.status;
-  if (isRel(p)) { if (["cliente","ajuste"].includes(st)) return toast("O relatório não passa pela aprovação do cliente: é apresentado."); if (!canPlan(p) && owner(p) !== ui.me) return toast("Só quem está com o relatório pode movê-lo."); setStatus(p, st, entry("moveu", {texto:`${stLabel(Object.assign({}, p, {status:from}))} → ${stLabel(Object.assign({}, p, {status:st}))}`})); toast(`${titleOf(p)} → ${stLabel(p)}`); return render(); }
-  if (st === "cliente" && aguardaHead(p)) return toast("A pauta precisa da validação de um Head antes de ir ao cliente.");
-  if (st === "cliente") headValida(p);
-  if (isTask(p)) {
-    if (!["pauta","producao","publicado"].includes(st)) return toast("Tarefas internas vão de A fazer para Fazendo e Concluída.");
-    if (!canPlan(p) && !canProduce(p)) return toast("Só o responsável pela tarefa pode movê-la.");
-    setStatus(p, st, entry(st === "publicado" ? "concluiu" : st === "producao" ? "iniciou" : "reabriu"));
-    toast(`${titleOf(p)} → ${stLabel(p)}`); return render();
+  if (p.status === st || !STATUS[st]) return;
+  const from = p.status, lbl = k => stLabel(Object.assign({}, p, {status:k}));
+  if (!canMove(p)) return toast("Você não tem acesso a esta pauta.");
+  if (!etapasDe(p).includes(st)) return toast(isRel(p) ? "O relatório não passa pela aprovação do cliente: é apresentado." : isTask(p) ? "Pautas to-do não vão para o cliente." : "Pauta sem cliente não vai para aprovação do cliente.");
+  if (st === "cliente") {
+    if (precisaHead(p) && !p.validadoHead && !isHead()) return toast("A pauta precisa da validação de um Head antes de ir ao cliente.");
+    const e = readyToSend(p); if (e) return toast(e);
+    headValida(p); setStatus(p, "cliente", entry("enviou_cliente"), {ajusteCom:null});
   }
-  if (st === "producao") {
-    if (!needsArt(p)) return toast("Esta pauta é só texto: quando o texto estiver pronto, arraste para Em revisão.");
-    if (!canPlan(p)) return toast("Só o planejamento desta pauta pode enviar para produção.");
-    const e = prodBlock(p); if (e) return toast(e);
-    const back = from === "revisao"; setStatus(p, "producao", entry(back ? "devolveu" : "producao", back ? {texto:"Devolvida pelo quadro"} : null), {retorno: back});
-  }
-  else if (st === "revisao") {
-    if (needsArt(p) && from !== "ajuste" || (from === "ajuste" && p.ajusteCom !== "planejamento")) { if (!canProduce(p)) return toast("Só quem produz esta pauta pode enviar para revisão."); if (!(p.midias || []).length && !p.drive) return toast("Anexe os arquivos ou o link do Drive antes."); sendToReview(p); }
-    else { if (!canPlan(p)) return toast("Só o planejamento pode enviar para revisão."); if (isText(p) && !String(b.corpo || "").trim()) return toast("Escreva o texto completo antes."); setStatus(p, "revisao", entry(from === "ajuste" ? "ajuste_ok" : "entrega"), {retorno:false}); }
-  }
-  else if (st === "cliente" && semCli(p)) return toast("Pauta sem cliente não vai para aprovação: arraste de Em revisão direto para Aprovado.");
-  else if (st === "aprovado" && semCli(p)) { if (!canPlan(p)) return toast("Só o planejamento pode aprovar."); if (from !== "revisao") return toast("A pauta passa pela revisão antes de ser aprovada."); setStatus(p, "aprovado", entry("aprovou_interno")); }
-  else if (st === "cliente") { if (!canPlan(p)) return toast("Só o planejamento desta pauta pode enviar ao cliente."); if (from !== "revisao") return toast("A pauta passa pela revisão antes de ir ao cliente."); const e = readyToSend(p); if (e) return toast(e); setStatus(p, "cliente", entry("enviou_cliente"), {ajusteCom:null}); }
-  else if (st === "aprovado") { if (!canPlan(p)) return toast("Só o planejamento pode registrar a aprovação."); if (from !== "cliente") return toast("A pauta precisa estar com o cliente para ser aprovada."); setStatus(p, "aprovado", entry("registrou", {texto:"Aprovação registrada pelo quadro."})); }
-  else if (st === "ajuste") { if (!canPlan(p)) return toast("Só o planejamento pode registrar ajuste."); if (!["cliente","aprovado"].includes(from)) return toast("Ajuste é o pedido do cliente: a pauta precisa estar com o cliente."); ui.openId = p.id; ui.idx = 0; ui.tmp = {reg:"aj"}; fillOverlay(); return toast("Registre o que o cliente pediu."); }
-  else if (st === "publicado") { const f = fluxoOf(p); if (!canPublish(p)) return toast(f === "trafego" ? "Só o tráfego desta campanha pode marcar como no ar." : f === "pontual" ? "Só o atendimento pode marcar como entregue." : "Só o social media desta pauta pode marcar como publicada."); if (from !== "aprovado") return toast("Só pautas aprovadas avançam para a última etapa."); setStatus(p, "publicado", entry(f === "trafego" ? "no_ar" : f === "pontual" || f === "interna" ? "entregou" : "publicou")); }
-  else if (st === "pauta") { if (!canPlan(p)) return toast("Só o planejamento pode voltar a pauta para o início."); setStatus(p, "pauta", entry("moveu", {texto:`${STATUS[from].label} → Pauta`})); }
+  else if (st === "ajuste" && ["cliente","aprovado"].includes(from) && canPlan(p)) { ui.openId = p.id; ui.idx = 0; ui.tmp = {reg:"aj"}; fillOverlay(); return toast("Registre o que o cliente pediu."); }
+  else if (isTask(p)) setStatus(p, st, entry(st === "publicado" ? "concluiu" : st === "producao" ? "iniciou" : from === "publicado" ? "reabriu" : "moveu", {texto:`${lbl(from)} → ${lbl(st)}`}));
+  else if (st === "pautado") setStatus(p, "pautado", entry("pautado", {texto:`${lbl(from)} → Pautado`}));
+  else if (st === "producao") { const back = ORDER.indexOf(from) > ORDER.indexOf("producao"); setStatus(p, "producao", entry(back ? "devolveu" : "producao", {texto:`${lbl(from)} → ${lbl("producao")}`}), {retorno: back}); }
+  else if (st === "revisao" && ["producao","ajuste"].includes(from) && needsArt(p) && (p.midias || []).length) sendToReview(p);
+  else if (st === "aprovado" && from === "cliente") setStatus(p, "aprovado", entry("registrou", {texto:"Aprovação registrada pelo quadro."}));
+  else if (st === "aprovado" && semCli(p)) setStatus(p, "aprovado", entry("aprovou_interno"));
+  else if (st === "publicado") { const f = fluxoOf(p); setStatus(p, "publicado", entry(f === "trafego" ? "no_ar" : f === "pontual" || f === "interna" ? "entregou" : f === "relatorio" ? "apresentou" : "publicou")); }
+  else setStatus(p, st, entry("moveu", {texto:`${lbl(from)} → ${lbl(st)}`}), st === "ajuste" ? {ajusteCom: p.ajusteCom || "producao"} : null);
   toast(`${titleOf(p)} → ${stLabel(p)}`); render();
 }
 function sendToReview(p){ const v = (p.versao || 0) + 1; p.versao = v; const note = (ui.tmp.dnote || "").trim(); setStatus(p, "revisao", entry(v > 1 ? "nova_versao" : "entrega", note ? {versao:v, texto:note} : {versao:v}), {retorno:false}); }
@@ -2040,7 +2080,7 @@ function aprovacoesHTML(){
   const rows = [];
   vc.filter(c => ui.cf === "todos" || ui.cf === c.id).forEach(c => {
     const keys = new Set();
-    S.pecas.filter(p => p.clienteId === c.id && p.status !== "pauta" && pd(p.data) >= addDays(TODAY, -35)).forEach(p => keys.add(periodKey(c, pd(p.data))));
+    S.pecas.filter(p => p.clienteId === c.id && !["pauta","pautado"].includes(p.status) && pd(p.data) >= addDays(TODAY, -35)).forEach(p => keys.add(periodKey(c, pd(p.data))));
     [...keys].sort().forEach(k => { const [a, b] = periodRange(c, k), ps = S.pecas.filter(p => p.clienteId === c.id && pd(p.data) >= a && pd(p.data) <= b); if (ps.some(p => p.status !== "publicado")) rows.push({c, k, ps, meta:S.pacotes.find(x => x.id === pacoteId(c.id, k)) || {}}); });
   });
   if (!rows.length) return head + `<div class="empty"><h2>Nenhum pacote em andamento</h2><p>Um pacote aparece aqui assim que a primeira peça do período sai da pauta.</p></div>`;
@@ -2210,7 +2250,7 @@ function drawerHTML(p){
   if (ui.idx >= ms.length) ui.idx = 0;
   const canEd = canEditP(p), ed = !!u.edit && canEd;
   const edT = ed, edB = ed, dis = edB ? "" : "disabled";
-  const edFiles = (headOfUnit(unitOf(p)) && ["pauta","producao","revisao","ajuste"].includes(p.status)) || (canProduce(p) && ["producao","ajuste","pauta","revisao"].includes(p.status) && !(p.status === "ajuste" && p.ajusteCom === "planejamento"));
+  const edFiles = (headOfUnit(unitOf(p)) && ["pauta","pautado","producao","revisao","ajuste"].includes(p.status)) || (canProduce(p) && ["producao","ajuste","pauta","pautado","revisao"].includes(p.status) && !(p.status === "ajuste" && p.ajusteCom === "planejamento"));
   const unitPpl = ativos().filter(m => m.unidade === c.unidade);
   const opt = (list, sel) => `<option value="">Definir…</option>` + list.map(m => `<option value="${esc(m.id)}" ${sel === m.id ? "selected" : ""}>${esc(m.nome)}</option>`).join("");
   const top = `<div class="d-top"><button type="button" class="x" data-act="close" aria-label="Fechar">×</button><div class="ttl"><b>${esc(titleOf(p))}</b><span>${p.simples ? "Cartão simples" : cliLink(c)}${p.solicitante ? ` · para ${esc(p.solicitante)}` : ""} · ${esc(fmtD(p.data))}${p.simples ? "" : " · " + esc(isTask(p) ? "Pauta" : t.label)}</span></div>${pillP(p)}${canEd ? `<button type="button" class="btn sm${ed ? " primary" : ""}" data-act="pgEdit">${ed ? "Concluir edição" : "Editar"}</button>` : ""}</div>`;
@@ -2222,13 +2262,12 @@ function drawerHTML(p){
   const driveField = `<div class="field full"><label for="f-drive">Link do Drive <span class="hint">· imagens, vídeos e arquivos abertos da criação</span></label><div class="row" style="flex-wrap:nowrap"><input class="inp" id="f-drive" value="${esc(p.drive || "")}" placeholder="https://drive.google.com/…" ${ed ? "" : "disabled"}>${c.drive ? `<a class="btn sm" href="${esc(c.drive)}" target="_blank" rel="noopener" title="Pasta do cliente no Drive da Alra">${svgi("drive")} Pasta do cliente</a>` : ""}</div></div>`;
 
   if (isTask(p)) {
-    const tst = [["pauta","A fazer"],["producao","Fazendo"],["publicado","Concluída"]], tj = tst.findIndex(x => x[0] === p.status);
-    const tstep = `<div><div class="stepbar" style="grid-template-columns:repeat(3,1fr)">${tst.map((x, i) => `<div class="${i === tj ? "on" : i < tj ? "past" : ""}"></div>`).join("")}</div><div class="stepl" style="grid-template-columns:repeat(3,1fr)">${tst.map((x, i) => `<span class="${i === tj ? "on" : ""}">${x[1]}</span>`).join("")}</div></div>`;
+    const tstep = stepperHTML(p);
     const tppl = semCli(p) ? ativos().filter(m => unitScope().includes(m.unidade)) : unitPpl;
     return `<aside class="drawer pg ${ed ? "edit" : "view"}" role="dialog" aria-modal="true" aria-label="${esc(titleOf(p))}">${top}
     <div class="d-body pgb"><div class="pgw"><div class="pgmain">
       <section class="psec"><h3>Conteúdo</h3><div class="form"><div class="field full"><label for="f-hl">Título da pauta</label><input class="inp" id="f-hl" data-b="headline" value="${esc(b.headline)}" ${ed ? "" : "disabled"}></div>
-        <div class="field full"><label for="f-ideia">Descrição e checklist</label><textarea id="f-ideia" data-b="ideia" rows="4" placeholder="O que precisa ser feito, links, passos…" ${ed ? "" : "disabled"}>${esc(b.ideia)}</textarea></div></div></section>
+        <div class="field full"><label for="f-ideia">Descrição e checklist</label>${rteHTML("f-ideia", "data-rt", "ideia", fmtOf(b, "ideia"), !ed, "O que precisa ser feito, links, passos…", "6em")}</div></div></section>
       <section class="psec">${comentsSec}</section>
       <section class="psec">${histSec}</section>
     </div><div class="pgside">
@@ -2246,7 +2285,7 @@ function drawerHTML(p){
     </div></div></div></aside>`;
   }
   const si = ORDER.indexOf(p.status), txt = isText(p), art = needsArt(p);
-  const planners = unitPpl.filter(m => (m.papeis || []).includes("planejamento") || (m.papeis || []).includes("head"));
+  const planners = unitPpl.filter(m => (m.papeis || []).some(r => ["planejamento","head","diretoria"].includes(r)) || m.id === (p.resp || {}).plan);
   const producers = unitPpl.filter(m => (m.papeis || []).includes("design") || (m.papeis || []).includes("audiovisual"));
   const strip = ms.length ? `<div class="strip">${ms.map((m, i) => `<div class="sb"><button type="button" class="t" data-idx="${i}" aria-current="${i === ui.idx}" aria-label="Arquivo ${i + 1}">${mediaHTML(p, i)}</button>${edFiles || ed ? `<div class="ops"><button type="button" data-mv="${i}" data-d="-1" aria-label="Mover para a esquerda" ${i === 0 ? "disabled" : ""}>‹</button><button type="button" data-rmf="${i}" aria-label="Remover arquivo">×</button><button type="button" data-mv="${i}" data-d="1" aria-label="Mover para a direita" ${i === ms.length - 1 ? "disabled" : ""}>›</button></div>` : ""}</div>`).join("")}</div>` : "";
   let left;
@@ -2256,7 +2295,7 @@ function drawerHTML(p){
       <div class="txted"><div class="eyebrow">Texto do conteúdo · ${esc(t.label)}</div>
       <div class="field"><label for="f-hl">Título</label><input class="inp" id="f-hl" data-b="headline" value="${esc(b.headline)}" ${dis}></div>
       <div class="field"><label for="f-sub">Subtítulo</label><input class="inp" id="f-sub" data-b="sub" value="${esc(b.sub)}" ${dis}></div>
-      <div class="field"><label for="f-corpo">Texto completo</label><textarea id="f-corpo" data-b="corpo" rows="18" placeholder="Escreva aqui o ${esc(t.label.toLowerCase())}…" ${dis}>${esc(b.corpo)}</textarea><span class="hint tnum" id="wcount">${words} ${words === 1 ? "palavra" : "palavras"}</span></div></div></div>`;
+      <div class="field"><label for="f-corpo">Texto completo</label>${rteHTML("f-corpo", "data-rt", "corpo", fmtOf(b, "corpo"), !!dis, `Escreva aqui o ${t.label.toLowerCase()}…`, "360px")}<span class="hint tnum" id="wcount">${words} ${words === 1 ? "palavra" : "palavras"}</span></div></div></div>`;
   } else left = `<div class="viewer">${ms.length ? `<div class="stagebox"><div class="frame" style="aspect-ratio:${t.ratio}">${mediaHTML(p, ui.idx, "play")}</div>${ms.length > 1 ? `<button type="button" class="navb p" data-act="prev" aria-label="Anterior">‹</button><button type="button" class="navb n" data-act="next" aria-label="Próxima">›</button>` : ""}</div>${strip}`
     : `<div class="frame blank" style="aspect-ratio:${t.ratio};max-width:380px">${p.drive ? "Arquivos no Drive" : p.status === "pauta" ? "A arte entra aqui quando a produção anexar." : "Nenhum arquivo anexado ainda."}</div>`}
     <div class="spec">${esc(t.label)} · ${esc((p.redes || []).join(" + ") || t.net)}${p.versao ? ` · versão ${p.versao}` : ""}</div>${p.drive ? `<a class="btn sm" href="${esc(p.drive)}" target="_blank" rel="noopener">Abrir no Drive</a>` : ""}</div>`;
@@ -2269,14 +2308,14 @@ function drawerHTML(p){
   const pubLine = !txt || b.card;
   const conteudo = txt ? `<div class="txted"><div class="field"><label for="f-hl">Título</label><input class="inp" id="f-hl" data-b="headline" value="${esc(b.headline)}" ${dis}></div>
       <div class="field"><label for="f-sub">Subtítulo</label><input class="inp" id="f-sub" data-b="sub" value="${esc(b.sub)}" ${dis}></div>
-      <div class="field"><label for="f-corpo">Texto completo</label><textarea id="f-corpo" data-b="corpo" rows="16" placeholder="Escreva aqui o ${esc(t.label.toLowerCase())}…" ${dis}>${esc(b.corpo)}</textarea><span class="hint tnum" id="wcount">${String(b.corpo || "").trim().split(/\s+/).filter(Boolean).length} palavras</span></div></div>`
-    : `<div class="form"><div class="field full"><label for="f-ideia">Ideia <span class="hint">· por que este material existe</span></label><textarea id="f-ideia" data-b="ideia" rows="2" ${dis}>${esc(b.ideia)}</textarea></div>
+      <div class="field"><label for="f-corpo">Texto completo</label>${rteHTML("f-corpo", "data-rt", "corpo", fmtOf(b, "corpo"), !!dis, `Escreva aqui o ${t.label.toLowerCase()}…`, "280px")}<span class="hint tnum" id="wcount">${String(b.corpo || "").trim().split(/\s+/).filter(Boolean).length} palavras</span></div></div>`
+    : `<div class="form"><div class="field full"><label for="f-ideia">Ideia <span class="hint">· por que este material existe</span></label>${rteHTML("f-ideia", "data-rt", "ideia", fmtOf(b, "ideia"), !!dis, "", "3.2em")}</div>
         <div class="field"><label for="f-obj">Objetivo</label><select class="inp" id="f-obj" data-b="objetivo" ${dis}><option value="">Definir…</option>${OBJETIVOS.map(o => `<option ${b.objetivo === o ? "selected" : ""}>${o}</option>`).join("")}</select></div>
         <div class="field"><label for="f-pub">Público</label><input class="inp" id="f-pub" data-b="publico" value="${esc(b.publico)}" ${dis}></div>
-        <div class="field full"><label for="f-hl">Headline</label><input class="inp" id="f-hl" data-b="headline" value="${esc(b.headline)}" ${dis}></div>
-        <div class="field full"><label for="f-sub">Sub-headline <span class="hint">· uma linha por lâmina no carrossel</span></label><textarea id="f-sub" data-b="sub" rows="3" ${dis}>${esc(b.sub)}</textarea></div>
+        ${carrOn(b) ? cardsHTML(b.cards, !!dis, "") : `<div class="field full"><label for="f-hl">Headline</label><input class="inp" id="f-hl" data-b="headline" value="${esc(b.headline)}" ${dis}></div>
+        <div class="field full"><label for="f-sub">Sub-headline${(b.formatos || []).includes("Carrossel") ? ` <span class="hint">· uma linha por lâmina no carrossel</span>` : ""}</label>${rteHTML("f-sub", "data-rt", "sub", fmtOf(b, "sub"), !!dis, "", "3.2em")}</div>`}
         ${c.regras && c.regras.linkPodcast ? `<div class="field full"><div class="seg"><label><input type="checkbox" data-pod ${b.pautaPodcast ? "checked" : ""} ${dis}> Pauta vem do podcast</label></div>${b.pautaPodcast ? `<span class="hint">A legenda ou o texto precisa ter o link do YouTube antes de ir ao cliente.</span>` : ""}</div>` : ""}</div>`;
-  const cardBrief = txt && b.card ? `<div class="form" style="margin-top:12px"><div class="field full"><label for="f-ideia">Ideia do card</label><textarea id="f-ideia" data-b="ideia" rows="2" ${dis}>${esc(b.ideia)}</textarea></div><div class="field full"><label for="f-cardhl">Texto do card <span class="hint">· frase que vai na arte</span></label><input class="inp" id="f-cardhl" data-b="cardTexto" value="${esc(b.cardTexto)}" ${dis}></div></div>` : "";
+  const cardBrief = txt && b.card ? `<div class="form" style="margin-top:12px"><div class="field full"><label for="f-ideia">Ideia do card</label>${rteHTML("f-ideia", "data-rt", "ideia", fmtOf(b, "ideia"), !!dis, "", "3.2em")}</div><div class="field full"><label for="f-cardhl">Texto do card <span class="hint">· frase que vai na arte</span></label><input class="inp" id="f-cardhl" data-b="cardTexto" value="${esc(b.cardTexto)}" ${dis}></div></div>` : "";
   const legenda = txt ? "" : `<section class="psec"><h3>${p.tipo === "anuncio" ? "Texto do anúncio" : "Legenda"}</h3><textarea id="f-leg" data-b="legenda" rows="7" ${dis}>${esc(b.legenda)}</textarea><div class="cap-foot"><span class="tnum ${capLen > 2200 ? "over" : ""}" id="capcount">${capLen.toLocaleString("pt-BR")} / 2.200 caracteres</span>${b.legenda ? `<button type="button" class="linkbtn" data-copy="${esc(p.id)}">Copiar</button>` : ""}</div></section>`;
   const midias = !art ? "" : `<section class="psec"><h3>Mídias</h3><div class="viewer pgv">${ms.length ? `<div class="stagebox"><div class="frame" style="aspect-ratio:${t.ratio}">${mediaHTML(p, ui.idx, "play")}</div>${ms.length > 1 ? `<button type="button" class="navb p" data-act="prev" aria-label="Anterior">‹</button><button type="button" class="navb n" data-act="next" aria-label="Próxima">›</button>` : ""}</div>${strip}`
     : `<div class="frame blank" style="aspect-ratio:${t.ratio};max-width:340px">${p.drive ? "Arquivos no Drive" : p.status === "pauta" ? "A arte entra aqui quando a produção anexar." : "Nenhum arquivo anexado ainda."}</div>`}
@@ -2285,7 +2324,7 @@ function drawerHTML(p){
   const refs = pubLine ? `<section class="psec"><h3>Referências</h3><div class="form"><div class="field full"><label for="f-ref">Referências</label><textarea id="f-ref" data-b="referencias" rows="2" placeholder="Pinterest, Behance, sites…" ${dis}>${esc(b.referencias)}</textarea></div>
         <div class="field full"><label for="f-refig">Link de referência do Instagram</label><div class="row" style="flex-wrap:nowrap"><input class="inp" id="f-refig" data-b="refIg" value="${esc(b.refIg)}" placeholder="https://www.instagram.com/p/…" ${dis}>${/^https?:\/\//.test(b.refIg || "") ? `<a class="btn sm" href="${esc(b.refIg)}" target="_blank" rel="noopener">Abrir</a>` : ""}</div></div></div></section>` : "";
   const pdDef = (() => { const x = Object.assign({}, p, {dataProducao: ""}); return prodDate(x); })();
-  const stepper = (() => { const ord = semCli(p) ? ORDER.filter(k => !["cliente","ajuste"].includes(k)) : ORDER, sj = ord.indexOf(p.status); return `<div><div class="stepbar" style="grid-template-columns:repeat(${ord.length},1fr)">${ord.map((k, i) => `<div class="${i === sj ? "on" : i < sj && k !== "ajuste" ? "past" : ""}"></div>`).join("")}</div><div class="stepl" style="grid-template-columns:repeat(${ord.length},1fr)">${ord.map((k, i) => `<span class="${i === sj ? "on" : ""}">${semCli(p) && k === "publicado" ? "Entregue" : STATUS[k].label}</span>`).join("")}</div></div>`; })();
+  const stepper = stepperHTML(p);
   return `<aside class="drawer pg ${ed ? "edit" : "view"}" role="dialog" aria-modal="true" aria-label="${esc(titleOf(p))}">${top}
     <div class="d-body pgb"><div class="pgw"><div class="pgmain">
       ${showAdj ? `<div class="sec"><h3>${lastAdj.acao === "ajuste" ? `Ajuste pedido pelo cliente${lastAdj.tipo ? " · " + ({arte:"na arte", legenda:"na legenda", ambos:"na arte e na legenda", texto:"no texto"}[lastAdj.tipo] || "") : ""}` : "Ajuste pedido pelo planejamento"}</h3><div class="warnbox">${esc(lastAdj.texto || "Sem detalhes.")}</div></div>` : ""}
@@ -2333,8 +2372,11 @@ function actionsHTML(p, c, edFiles){
     return `<div class="sec" style="display:flex;flex-direction:column;gap:10px"><h3>Próximo passo</h3>${out.join("")}</div>`;
   }
   const art = needsArt(p), fx = fluxoOf(p);
-  if (p.status === "pauta" && canPlan(p) && fx === "video") out.push(`<div class="actions"><button type="button" class="btn primary" data-act="toProd" data-sub="captacao">Enviar para captação</button><button type="button" class="btn" data-act="toProd" data-sub="edicao">Já tem material: direto para edição</button></div><div class="muted" style="font-size:12px">Roteiro pronto: o audiovisual capta e depois edita. Ligue a pauta a uma captação em Captações.</div>`);
-  else if (p.status === "pauta" && canPlan(p)) out.push(art ? `<div class="actions"><button type="button" class="btn primary" data-act="toProd">Enviar para produção</button></div><div class="muted" style="font-size:12px">Precisa de quem produz, da ideia ou headline e dos formatos de entrega.</div>` : `<div class="actions"><button type="button" class="btn primary" data-act="textReady">Texto pronto: enviar para revisão</button></div><div class="muted" style="font-size:12px">Pauta só de texto: não passa pela produção.</div>`);
+  if (p.status === "pauta" && canPlan(p) && fx === "video") out.push(`<div class="actions"><button type="button" class="btn primary" data-mvst="pautado">Roteiro completo: Pautado</button><button type="button" class="btn" data-act="toProd" data-sub="captacao">Enviar para captação</button><button type="button" class="btn" data-act="toProd" data-sub="edicao">Já tem material: direto para edição</button></div><div class="muted" style="font-size:12px">Roteiro pronto: o audiovisual capta e depois edita. Ligue a pauta a uma captação em Captações.</div>`);
+  else if (p.status === "pauta" && canPlan(p) && art) out.push(`<div class="actions"><button type="button" class="btn primary" data-mvst="pautado">Briefing completo: marcar como Pautado</button><button type="button" class="btn" data-act="toProd">Direto para produção</button></div><div class="muted" style="font-size:12px">Pautado = a pauta está completa e a criação já pode pegar. A criação move para Em produção quando começar.</div>`);
+  if (p.status === "pautado" && (canProduce(p) || canPlan(p)) && fx !== "video") out.push(`<div class="actions"><button type="button" class="btn primary" data-mvst="producao">Iniciar produção</button></div><div class="muted" style="font-size:12px">Ao iniciar, começa a contar o tempo de criação desta peça.</div>`);
+  if (p.status === "pautado" && (canProduce(p) || canPlan(p)) && fx === "video") out.push(`<div class="actions"><button type="button" class="btn primary" data-act="toProd" data-sub="captacao">Iniciar captação</button><button type="button" class="btn" data-act="toProd" data-sub="edicao">Já tem material: edição</button></div>`);
+  else if (p.status === "pauta" && canPlan(p) && !art) out.push(art ? `<div class="actions"><button type="button" class="btn primary" data-act="toProd">Enviar para produção</button></div><div class="muted" style="font-size:12px">Precisa de quem produz, da ideia ou headline e dos formatos de entrega.</div>` : `<div class="actions"><button type="button" class="btn primary" data-act="textReady">Texto pronto: enviar para revisão</button></div><div class="muted" style="font-size:12px">Pauta só de texto: não passa pela produção.</div>`);
   if (fx === "video" && p.status === "producao" && p.subetapa !== "edicao" && edFiles) out.push(`<div class="box"><b style="font-size:13px">Captação</b><span class="muted" style="font-size:12.5px">Quando o material bruto estiver no Drive, passe para a edição. Marcar a captação ligada como Realizada faz isso sozinho.</span><div class="actions"><button type="button" class="btn primary" data-act="toEdicao">Material captado: ir para edição</button></div></div>`);
   if (edFiles && art && ["producao","ajuste"].includes(p.status) && !(p.status === "ajuste" && p.ajusteCom === "planejamento") && !(fx === "video" && p.status === "producao" && p.subetapa !== "edicao")) {
     out.push(`<div class="box"><b style="font-size:13px">${p.status === "ajuste" ? "Ajuste na arte" : p.versao ? "Nova versão" : isText(p) ? "Card / banner" : "Arte final"}</b>
@@ -2416,7 +2458,7 @@ function postModalHTML(p){
   const lbl = esc(titleOf(p));
   if (isText(p)) return `<div class="post wide doc" role="dialog" aria-modal="true" aria-label="${lbl}">${close}<article class="docw"><span class="netb">${esc(t.label)}${t.grupo === "linkedin" ? " · LinkedIn" : ""}</span>
     ${b.card && n ? `<div class="docimg">${mediaHTML(p, ui.idx, "play")}${nav}</div>` : ""}
-    <h1 class="doch">${esc(b.headline || "Sem título")}</h1>${b.sub ? `<p class="docsub">${esc(b.sub)}</p>` : ""}<div class="doctxt">${esc(b.corpo || "Texto ainda não escrito.")}</div></article>${approvalPanel(p)}</div>`;
+    <h1 class="doch">${esc(b.headline || "Sem título")}</h1>${b.sub ? `<p class="docsub">${fmtOf(b, "sub")}</p>` : ""}<div class="doctxt">${b.corpo ? fmtOf(b, "corpo") : "Texto ainda não escrito."}</div></article>${approvalPanel(p)}</div>`;
   if (t.grupo === "meta" || t.grupo === "ads") return `<div class="post igpost" role="dialog" aria-modal="true" aria-label="${lbl}">${close}<div class="phd"><i></i><span style="display:flex;flex-direction:column;gap:4px"><span class="sk" style="width:110px"></span>${t.grupo === "ads" ? `<small style="font-size:11px;color:var(--muted)">Patrocinado · ${esc((p.redes || []).join(", "))}</small>` : ""}</span></div>
     <div class="igmedia" style="aspect-ratio:4 / 5">${mediaHTML(p, ui.idx, "play")}${nav}</div>
     ${t.grupo === "ads" ? `<div class="adcta"><span>Saiba mais</span><span>›</span></div>` : ""}
@@ -2464,19 +2506,20 @@ function newPecaHTML(){
   const ta = (id, rows, ph) => `<textarea id="np-${id}" rows="${rows}" ${ph ? `placeholder="${esc(ph)}"` : ""}>${esc(val(id))}</textarea>`;
   const inp = (id, ph) => `<input class="inp" id="np-${id}" value="${esc(val(id))}" ${ph ? `placeholder="${esc(ph)}"` : ""}>`;
   const opc = `<span class="hint">· opcional</span>`;
+  const rtn = (k, ph, min) => rteHTML("np-" + k, "data-rtn", k, f[k + "Fmt"] !== undefined ? cleanFmt(f[k + "Fmt"]) : plainHTML(f[k]), false, ph, min);
   let conteudo;
   if (cat === "interna") conteudo = `<div class="field full"><label for="np-tit">Título da pauta</label>${inp("tit", "Ex.: Montar newsletter de novembro, organizar pasta de fotos")}</div>
-      <div class="field full"><label for="np-ideia">Descrição e checklist ${opc}</label>${ta("ideia", 4, "O que precisa ser feito, links, passos…")}</div>`;
+      <div class="field full"><label for="np-ideia">Descrição e checklist ${opc}</label>${rtn("ideia", "O que precisa ser feito, links, passos…", "6em")}</div>`;
   else if (cat === "conteudo" && generico) conteudo = `<div class="field full"><label for="np-tit">O que precisa ser feito</label>${inp("tit", "Ex.: Flyer da palestra de sábado, vídeo de boas-vindas, apresentação comercial")}</div>
-      <div class="field full"><label for="np-ideia">Ideia e detalhes ${opc}</label>${ta("ideia", 3, "Por que este material existe, medidas, onde vai ser usado…")}</div>`;
+      <div class="field full"><label for="np-ideia">Ideia e detalhes ${opc}</label>${rtn("ideia", "Por que este material existe, medidas, onde vai ser usado…", "4.5em")}</div>`;
   else if (texto) conteudo = `<div class="txted"><div class="field"><label for="np-hl">Título</label>${inp("hl")}</div>
       <div class="field"><label for="np-sub">Subtítulo ${opc}</label>${inp("sub")}</div>
-      <div class="field"><label for="np-corpo">Texto completo ${opc}</label>${ta("corpo", 6, `Escreva aqui o ${CANAIS[tipoNow].label.toLowerCase()}…`)}</div></div>`;
-  else conteudo = `<div class="field full"><label for="np-ideia">Ideia <span class="hint">· por que este material existe</span></label>${ta("ideia", 2)}</div>
+      <div class="field"><label for="np-corpo">Texto completo ${opc}</label>${rtn("corpo", `Escreva aqui o ${CANAIS[tipoNow].label.toLowerCase()}…`, "240px")}</div></div>`;
+  else conteudo = `<div class="field full"><label for="np-ideia">Ideia <span class="hint">· por que este material existe</span></label>${rtn("ideia", "", "3.2em")}</div>
       <div class="field"><label for="np-obj">Objetivo</label><select class="inp" id="np-obj"><option value="">Definir…</option>${OBJETIVOS.map(o => `<option ${val("obj") === o ? "selected" : ""}>${o}</option>`).join("")}</select></div>
       <div class="field"><label for="np-pub">Público</label>${inp("pub")}</div>
-      <div class="field full"><label for="np-hl">Headline</label>${inp("hl")}</div>
-      <div class="field full"><label for="np-sub">Sub-headline <span class="hint">· uma linha por lâmina no carrossel</span></label>${ta("sub", 2)}</div>`;
+      ${(u.fmts || []).includes("Carrossel") ? cardsHTML(u.cards || (u.cards = [{hl:"", sub:""}, {hl:"", sub:""}]), false, "np") : `<div class="field full"><label for="np-hl">Headline</label>${inp("hl")}</div>
+      <div class="field full"><label for="np-sub">Sub-headline</label>${rtn("sub", "", "3.2em")}</div>`}`;
   const fmts = u.fmts || [];
   const redeField = cat === "conteudo" ? `<div class="field full"><label for="np-tipo">Rede de divulgação ou formato</label><select class="inp" id="np-tipo"><optgroup label="Redes e canais">${redesTodas.map(k => `<option value="${k}" ${tipoSel === k ? "selected" : ""}>${lbl(k)}${CANAIS[k].texto ? " (texto)" : ""}${escopo.includes(k) ? " · no escopo" : ""}</option>`).join("")}</optgroup><optgroup label="Demandas pontuais">${GENERICOS.map(k => `<option value="${k}" ${tipoSel === k ? "selected" : ""}>${CANAIS[k].label}</option>`).join("")}</optgroup></select>
         ${["feed","stories"].includes(tipoSel) ? `<div class="seg" style="margin-top:6px">${["Instagram","Facebook"].map(r => `<label><input type="checkbox" data-npredes value="${r}" ${(u.redesM || (metaRedes(c).length ? metaRedes(c) : ["Instagram","Facebook"])).includes(r) ? "checked" : ""}> ${r}</label>`).join("")}</div>` : ""}</div>`
@@ -2763,6 +2806,16 @@ function openCap(pre){
 
 document.addEventListener("click", ev => { if (ui.kmenu && !(ev.target.closest && ev.target.closest(".kcw"))) { ui.kmenu = null; const m = document.querySelector(".kmenu"); if (m) m.remove(); } }, true);
 document.addEventListener("click", ev => {
+  const rc = ev.target.closest && ev.target.closest("[data-rtc]");
+  if (rc) { ev.preventDefault(); ev.stopImmediatePropagation(); const ed = rc.closest(".rte").querySelector(".rted"); if (document.activeElement !== ed) ed.focus(); document.execCommand("styleWithCSS", false, false); document.execCommand(rc.dataset.rtc, false, null); ed.dispatchEvent(new Event("input", {bubbles:true})); return; }
+  const ca = ev.target.closest && ev.target.closest("[data-act=CardAdd],[data-act=CardDel],[data-act=npCardAdd],[data-act=npCardDel]");
+  if (ca) { ev.preventDefault(); ev.stopImmediatePropagation(); const a = ca.dataset.act, i = +ca.dataset.i;
+    if (a.startsWith("np")) { const u = ui.tmp; u.cards = u.cards || []; if (a === "npCardAdd") u.cards.push({hl:"", sub:""}); else u.cards.splice(i, 1); fillOverlay(); const el = a === "npCardAdd" && $("#npch" + (u.cards.length - 1)); if (el) el.focus(); return; }
+    const p = S.pecas.find(x => x.id === ui.openId); if (!p || !p.briefing || !p.briefing.cards || !canEditP(p)) return; const cs = p.briefing.cards;
+    if (a === "CardAdd") cs.push({hl:"", sub:"", subFmt:""}); else { cs.splice(i, 1); p.briefing.headline = (cs[0] || {}).hl || p.briefing.headline; }
+    save(); fillOverlay(); const el = a === "CardAdd" && $("#ch" + (cs.length - 1)); if (el) el.focus(); return; }
+  const mv = ev.target.closest && ev.target.closest("[data-mvst]");
+  if (mv) { ev.preventDefault(); ev.stopImmediatePropagation(); const p = S.pecas.find(x => x.id === ui.openId); if (p) { const keep = ui.openId; moveTo(p, mv.dataset.mvst); if (!ui.openId && keep && S.pecas.some(x => x.id === keep)) { ui.openId = keep; fillOverlay(); } } return; }
   const t = ev.target.closest && ev.target.closest("[data-etqdel],[data-etq],[data-npetq],[data-etqcor],[data-act=etqNovaTg],[data-act=etqMng],[data-act=etqCriar]");
   if (!t) return;
   ev.preventDefault(); ev.stopImmediatePropagation();
@@ -2779,6 +2832,8 @@ document.addEventListener("click", ev => {
     if (ui.modal === "newPeca") u.etqs = [...new Set([...(u.etqs || []), id])]; else if (p && canEtq(p)) p.etiquetas = [...new Set([...(p.etiquetas || []), id])];
     u.etqNova = false; u.etqNome = ""; save(); toast(`Etiqueta ${nome} criada.`); return redraw(); }
 });
+document.addEventListener("mousedown", ev => { if (ev.target.closest && ev.target.closest("[data-rtc]")) ev.preventDefault(); });
+document.addEventListener("paste", ev => { const ed = ev.target.closest && ev.target.closest(".rted[contenteditable]"); if (!ed) return; ev.preventDefault(); const txt = (ev.clipboardData || window.clipboardData).getData("text/plain"); document.execCommand("insertText", false, txt); });
 /* caixas de texto crescem com o conteúdo */
 const FS_OK = window.CSS && CSS.supports && CSS.supports("field-sizing", "content");
 function autoGrow(el){ if (FS_OK || !el || el.tagName !== "TEXTAREA") return; el.style.height = "auto"; el.style.height = (el.scrollHeight + 2) + "px"; }
@@ -2989,7 +3044,11 @@ document.addEventListener("input", ev => {
   if (t.dataset.ob) { const c = S.clientes.find(x => x.id === ui.hubId); if (!c) return; c.orientacoes = c.orientacoes || {}; c.orientacoes[t.dataset.ob] = t.value; c.onboarding = Object.assign({}, c.onboarding, {atualizadoEm: nowIso(), por: ui.me}); t.closest(".obq").classList.toggle("ok", !!t.value.trim()); save(); const el = $("#obsaved"); if (el) el.textContent = "Salvando…"; clearTimeout(ui.obSavedT); ui.obSavedT = setTimeout(() => { const e2 = $("#obsaved"); if (e2) e2.textContent = "Salvo automaticamente"; }, 1200); return; }
   if (t.dataset.obp && obPub) { obPub.respostas = obPub.respostas || {}; obPub.respostas[t.dataset.obp] = t.value; obPend[t.dataset.obp] = t.value; t.closest(".obq").classList.toggle("ok", !!t.value.trim()); if (!(obNome() || (ui.pnome || "").trim())) { const el = $("#obsaved"); if (el) el.textContent = "Escreva seu nome no topo para salvar"; return; } clearTimeout(obT); obT = setTimeout(() => obSave(false), 1200); return; }
   if (t.dataset.cri && ui.tmp.cri) { setPath(ui.tmp.cri, t.dataset.cri, t.value); const m = t.dataset.cri.match(/^cores\.(\d+)\.hex$/); if (m) { const el = document.getElementById("rgb" + m[1]); if (el) el.textContent = validHex(t.value) ? hexRgb(t.value) : "RGB automático"; } return; }
-  if (t.id === "f-corpo") { const el = $("#wcount"); if (el) { const n = t.value.trim().split(/\s+/).filter(Boolean).length; el.textContent = `${n} ${n === 1 ? "palavra" : "palavras"}`; } }
+  if (t.id === "f-corpo" && t.value !== undefined) { const el = $("#wcount"); if (el) { const n = t.value.trim().split(/\s+/).filter(Boolean).length; el.textContent = `${n} ${n === 1 ? "palavra" : "palavras"}`; } }
+  if (t.dataset && t.dataset.rt !== undefined) { const p = S.pecas.find(x => x.id === ui.openId); if (p) { p.briefing = p.briefing || {}; setRt(p.briefing, t.dataset.rt, t); if (t.dataset.rt === "corpo") { const el = $("#wcount"); if (el) { const n = String(p.briefing.corpo || "").trim().split(/\s+/).filter(Boolean).length; el.textContent = `${n} ${n === 1 ? "palavra" : "palavras"}`; } } save(); } return; }
+  if (t.dataset && t.dataset.rtn !== undefined) { const u = ui.tmp, f = u.f = u.f || {}, m = t.dataset.rtn.match(/^cards\.(\d+)\.sub$/); if (m) { const c = (u.cards || [])[+m[1]]; if (c) { c.sub = rtText(t); c.subFmt = cleanFmt(t.innerHTML); } } else { f[t.dataset.rtn] = rtText(t); f[t.dataset.rtn + "Fmt"] = cleanFmt(t.innerHTML); } return; }
+  if (t.dataset && t.dataset.ch !== undefined) { const p = S.pecas.find(x => x.id === ui.openId); if (p && p.briefing && p.briefing.cards) { const i = +t.dataset.ch; p.briefing.cards[i].hl = t.value; if (i === 0) p.briefing.headline = t.value; save(); } return; }
+  if (t.dataset && t.dataset.npch !== undefined) { const c = (ui.tmp.cards || [])[+t.dataset.npch]; if (c) c.hl = t.value; return; }
   if (t.id && t.id.startsWith("np-") && t.closest && t.closest("#npForm")) { (ui.tmp.f = ui.tmp.f || {})[t.id.slice(3)] = t.type === "checkbox" ? t.checked : t.value; if (t.id === "etqnome") return; return; }
   if (t.id === "etqnome") { ui.tmp.etqNome = t.value; return; }
   if (t.id === "drvlink") { ui.tmp.drvLink = t.value; return; }
@@ -3004,7 +3063,7 @@ document.addEventListener("input", ev => {
 document.addEventListener("focusout", ev => {
   // Atualiza títulos e prontidão do drawer quando o campo perde o foco (sem roubar o cursor enquanto digita)
   const t = ev.target;
-  if (ui.openId && !ui.modal && ["f-hl","f-ideia"].includes(t.id)) { const p = S.pecas.find(x => x.id === ui.openId), b = document.querySelector(".d-top .ttl b"); if (p && b) b.textContent = titleOf(p); }
+  if (ui.openId && !ui.modal && (["f-hl","f-ideia","ch0"].includes(t.id))) { const p = S.pecas.find(x => x.id === ui.openId), b = document.querySelector(".d-top .ttl b"); if (p && b) b.textContent = titleOf(p); }
 });
 document.addEventListener("change", async ev => {
   const t = ev.target, p = S.pecas.find(x => x.id === ui.openId);
@@ -3034,7 +3093,7 @@ document.addEventListener("change", async ev => {
     if (t.id === "np-tipo") { u.tipo = t.value; u.fmts = []; delete f.prod; fillOverlay(); return; }
     if (t.id === "np-card") { f.card = t.checked; fillOverlay(); return; }
     if (t.dataset.npredes !== undefined) { const def = metaRedes(cli(u.cid !== undefined ? u.cid : (($("#np-cli") || {}).value || ""))); u.redesM = u.redesM || (def.length ? def : ["Instagram","Facebook"]); u.redesM = t.checked ? [...new Set([...u.redesM, t.value])] : u.redesM.filter(x => x !== t.value); return; }
-    if (t.dataset.npfmt !== undefined) { u.fmts = u.fmts || []; u.fmts = t.checked ? [...new Set([...u.fmts, t.value])] : u.fmts.filter(x => x !== t.value); return; }
+    if (t.dataset.npfmt !== undefined) { u.fmts = u.fmts || []; u.fmts = t.checked ? [...new Set([...u.fmts, t.value])] : u.fmts.filter(x => x !== t.value); if (t.value === "Carrossel") fillOverlay(); return; }
     if (t.id && t.id.startsWith("np-")) { f[t.id.slice(3)] = t.value; if (t.dataset.npads === undefined) return; } }
   if (t.dataset.npads !== undefined) { const u = ui.tmp; u.ads = u.ads || ["Meta Ads"]; u.ads = t.checked ? [...new Set([...u.ads, t.value])] : u.ads.filter(x => x !== t.value); return; }
   if (t.dataset.criPick !== undefined && ui.tmp.cri) { const i = +t.dataset.criPick; ui.tmp.cri.cores[i].hex = t.value.toUpperCase(); render(); return; }
@@ -3061,7 +3120,7 @@ document.addEventListener("change", async ev => {
   }
   if (p && t.id === "f-priv") { if (!canPriv(p)) return; const on = t.value === "1"; if (on) p.privado = true; else delete p.privado; p.hist = [...(p.hist || []), entry("moveu", {texto: on ? "Pauta marcada como privada" : "Pauta marcada como pública"})]; save(); toast(on ? "Pauta privada: só a Diretoria, quem criou e os responsáveis veem." : "Pauta pública: o time do cliente vê e edita."); fillOverlay(); return; }
   if (p && t.dataset.redes !== undefined) { p.redes = t.checked ? [...new Set([...(p.redes || []), t.value])] : (p.redes || []).filter(x => x !== t.value); save(); return; }
-  if (p && t.dataset.fmt !== undefined) { const b = p.briefing = p.briefing || {}; b.formatos = t.checked ? [...new Set([...(b.formatos || []), t.value])] : (b.formatos || []).filter(x => x !== t.value); save(); return; }
+  if (p && t.dataset.fmt !== undefined) { const b = p.briefing = p.briefing || {}; b.formatos = t.checked ? [...new Set([...(b.formatos || []), t.value])] : (b.formatos || []).filter(x => x !== t.value); if (t.value === "Carrossel") { if (t.checked && !Array.isArray(b.cards)) b.cards = [{hl:b.headline || "", sub:"", subFmt:""}, {hl:"", sub:"", subFmt:""}]; save(); fillOverlay(); return; } save(); return; }
   if (p && t.dataset.pod !== undefined) { p.briefing = p.briefing || {}; p.briefing.pautaPodcast = t.checked; save(); fillOverlay(); return; }
   if (p && t.dataset.b && t.tagName === "SELECT") { p.briefing = p.briefing || {}; p.briefing[t.dataset.b] = t.value; save(); return; }
   if ((t.id === "upfile" || t.id === "upfile2") && p) { const files = [...t.files].sort((a, b) => a.name.localeCompare(b.name, "pt-BR", {numeric:true})); t.value = ""; if (files.length) uploadFiles(p, files); return; }
@@ -3116,6 +3175,8 @@ document.addEventListener("submit", async ev => {
     const np = {id:uid(), clienteId:c.id, data, tipo:tp, redes, status:"pauta", resp, briefing, versao:0, midias:[], hist:[entry("pauta")], coments:[], ajusteCom:null, criadoEm:nowIso(), criadoPor:ui.me, v3:true};
     if (!c.id) { np.unidade = (ME() || {}).unidade || ""; if (v("sol")) np.solicitante = v("sol"); }
     { const map = {ideia:"ideia", obj:"objetivo", pub:"publico", sub:"sub", corpo:"corpo", leg:"legenda", ref:"referencias", refig:"refIg", cardtx:"cardTexto"}; Object.entries(map).forEach(([k, bk]) => { if (v(k)) briefing[bk] = v(k); }); if (v("hl") && !briefing.headline) briefing.headline = v("hl"); if (v("dprod")) np.dataProducao = v("dprod"); if (v("drive")) np.drive = v("drive"); }
+    { const f = u.f || {}; ["ideia","sub","corpo"].forEach(k => { const el = document.querySelector(`[data-rtn="${k}"]`); if (!el) return; const txt = rtText(el).trim(); if (txt) { briefing[k] = txt; briefing[k + "Fmt"] = cleanFmt(el.innerHTML); } else { delete briefing[k]; } }); }
+    if ((briefing.formatos || []).includes("Carrossel") && u.cards) { briefing.cards = u.cards.map(c => ({hl:(c.hl || "").trim(), sub:c.sub || "", subFmt:c.subFmt || ""})); if (!briefing.headline && briefing.cards[0].hl) briefing.headline = briefing.cards[0].hl; }
     const etqs = (u.etqs || []).filter(etqOf); if (etqs.length) np.etiquetas = etqs; if (v("priv") === "1") np.privado = true;
     if (resp.prod && resp.prod !== ui.me && (cat === "interna" || GENERICOS.includes(tp))) notify([resp.prod], `${cat === "interna" ? "Pauta" : "Demanda"} para você: ${briefing.headline}${c.id ? " (" + c.nome + ")" : ""}`, np);
     S.pecas.push(np); save(); ui.modal = null; ui.tmp = {}; ui.openId = np.id; ui.idx = 0; ui.month = firstOfMonth(pd(data)); toast("Pauta criada."); render(); return; }
