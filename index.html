@@ -1317,8 +1317,9 @@ function stageNotify(p, st){
   if (st === "revisao" && f !== "relatorio" && precisaHead(p)) { ids = ids.concat(ativos().filter(m => m.unidade === unitOf(p) && (m.papeis || []).includes("head")).map(m => m.id)); msg = `Para revisar e validar: ${t}`; }
   if (ids.length) notify(ids, msg, p);
 }
-const precisaHead = p => !!p.clienteId && !!((cli(p.clienteId).regras || {}).validaHead) && !isRel(p);
-const aguardaHead = p => precisaHead(p) && !p.validadoHead;
+const precisaHead = p => !!p.clienteId && !isRel(p) && !isTask(p);
+const aguardaHead = p => precisaHead(p) && !p.validadoHead && !isHead();
+function headValida(p){ if (precisaHead(p) && !p.validadoHead && isHead()) { p.validadoHead = true; p.hist.push(entry("validou")); } }
 function prodBlock(p){
   const b = p.briefing || {};
   if (!(p.resp || {}).prod) return "Defina quem produz antes.";
@@ -1394,7 +1395,7 @@ function visaoGeralCards(c){
   const pk = S.pacotes.filter(x => { if (x.clienteId !== c.id) return false; const d = pd((x.id.split("~")[1] || "").slice(1)); return d && d >= addDays(mS, -6) && d <= mE; });
   const q = qualityOf(ps, pk), ppl = ids => (ids || []).length ? ids.map(id => esc(mName(id))).join(", ") : "—";
   const qk = (v, l, s) => `<div class="qk"><b>${v}</b><span>${l}</span>${s ? `<small>${s}</small>` : ""}</div>`;
-  return `<div class="grid2"><section class="card"><h2>Visão geral</h2><dl class="kv"><dt>Status</dt><dd>${esc(c.status || "Ativo")}</dd><dt>Categoria</dt><dd>${esc(c.categoria || "—")}</dd><dt>Segmento</dt><dd>${esc(c.segmento || "—")}</dd><dt>Cliente desde</dt><dd>${c.inicio ? esc(fmtD(c.inicio,{day:"2-digit", month:"long", year:"numeric"})) : "—"}</dd><dt>Aprovação</dt><dd>${c.aprovacao === "semanal" ? "Semanal" : "Mensal"}, enviar ${Number(c.antecedencia) || 7} dias antes</dd><dt>Contato</dt><dd>${esc((c.contato || {}).nome || "—")}</dd><dt>Equipe</dt><dd>Planejamento: ${ppl(sq.planejamento)}<br>Produção: ${ppl(sq.producao)}<br>Social media: ${ppl(sq.social)}</dd><dt>Pasta no Drive</dt><dd>${c.drive ? `<a href="${esc(c.drive)}" target="_blank" rel="noopener">Abrir pasta</a>` : "Não conectada"}</dd></dl></section>
+  return `<div class="grid2"><section class="card"><h2>Visão geral</h2><dl class="kv"><dt>Status</dt><dd>${esc(c.status || "Ativo")}</dd><dt>Categoria</dt><dd>${esc(c.categoria || "—")}</dd><dt>Segmento</dt><dd>${esc(c.segmento || "—")}</dd><dt>Cliente desde</dt><dd>${c.inicio ? esc(fmtD(c.inicio,{day:"2-digit", month:"long", year:"numeric"})) : "—"}</dd><dt>Aprovação</dt><dd>${c.aprovacao === "semanal" ? "Semanal" : "Mensal"}, enviar ${Number(c.antecedencia) || 7} dias antes</dd><dt>Contato</dt><dd>${contatoHTML(c)}</dd><dt>Equipe</dt><dd>Planejamento: ${ppl(sq.planejamento)}<br>Produção: ${ppl(sq.producao)}<br>Social media: ${ppl(sq.social)}</dd><dt>Pasta no Drive</dt><dd>${c.drive ? `<a href="${esc(c.drive)}" target="_blank" rel="noopener">Abrir pasta</a>` : "Não conectada"}</dd></dl></section>
     <section class="card"><div class="spread"><h2>Qualidade do mês</h2><span class="muted" style="font-size:12px">${esc(monthLabel(mS))}</span></div><div class="qgrid">${qk(pctTxt(q.pubDia), "publicadas em dia", `${q.pub} publicadas`)}${qk(pctTxt(q.semAj), "aprovadas sem ajuste")}${qk(pctTxt(q.prazo), "enviadas no prazo", q.pkN ? `${q.pkN} pacotes` : "sem pacote no mês")}${qk(daysTxt(q.avgD), "tempo médio até aprovar")}</div></section></div>`;
 }
 function infoHTML(c, edit){
@@ -1411,7 +1412,7 @@ function infoHTML(c, edit){
     <div class="form"><div class="field"><label for="tt-f">Títulos · fonte</label><input class="inp" id="tt-f" data-cri="tipografia.titulo.fonte" value="${esc(d.tipografia.titulo.fonte || "")}" placeholder="Ex.: Montserrat"></div><div class="field"><label for="tt-p">Títulos · pesos</label><input class="inp" id="tt-p" data-cri="tipografia.titulo.pesos" value="${esc(d.tipografia.titulo.pesos || "")}" placeholder="Ex.: 700, 800"></div><div class="field"><label for="tx-f">Textos · fonte</label><input class="inp" id="tx-f" data-cri="tipografia.texto.fonte" value="${esc(d.tipografia.texto.fonte || "")}"></div><div class="field"><label for="tx-p">Textos · pesos</label><input class="inp" id="tx-p" data-cri="tipografia.texto.pesos" value="${esc(d.tipografia.texto.pesos || "")}" placeholder="Ex.: 400, 600"></div></div>
     <div class="actions"><button type="button" class="btn primary" data-act="saveCri">Salvar especificações</button><button type="button" class="btn ghost" data-act="cancelEdit">Cancelar</button></div>` : "";
   return `<div class="scopebar"><span class="eyebrow">Escopo</span>${scope.map(([n, t]) => `<span class="sc"><b>${esc(n)}</b> ${esc(t)}</span>`).join("") || `<span class="muted">Sem escopo definido</span>`}</div>
-    <div class="grid2"><div class="card"><h2>Cadastro e aprovação</h2><dl class="kv"><dt>Status</dt><dd>${esc(c.status || "Ativo")}</dd><dt>Categoria</dt><dd>${esc(c.categoria || "—")}</dd><dt>Segmento</dt><dd>${esc(c.segmento || "—")}</dd><dt>Unidade</dt><dd>${esc(unidade(c.unidade).nome)}</dd><dt>Quem aprova</dt><dd>${esc((c.contato || {}).nome || "—")}</dd><dt>Periodicidade</dt><dd>${c.aprovacao === "semanal" ? "Semanal" : "Mensal"}, enviar ${Number(c.antecedencia) || 7} dias antes</dd>${c.notas ? `<dt>Particularidades</dt><dd style="white-space:pre-wrap">${esc(c.notas)}</dd>` : ""}</dl><div class="row"><button type="button" class="btn sm" data-act="previewCli" data-cid="${esc(c.id)}">Ver prévia do cliente</button></div></div>
+    <div class="grid2"><div class="card"><h2>Cadastro e aprovação</h2><dl class="kv"><dt>Status</dt><dd>${esc(c.status || "Ativo")}</dd><dt>Categoria</dt><dd>${esc(c.categoria || "—")}</dd><dt>Segmento</dt><dd>${esc(c.segmento || "—")}</dd><dt>Unidade</dt><dd>${esc(unidade(c.unidade).nome)}</dd><dt>Quem aprova</dt><dd>${contatoHTML(c)}</dd><dt>Periodicidade</dt><dd>${c.aprovacao === "semanal" ? "Semanal" : "Mensal"}, enviar ${Number(c.antecedencia) || 7} dias antes</dd>${c.notas ? `<dt>Particularidades</dt><dd style="white-space:pre-wrap">${esc(c.notas)}</dd>` : ""}</dl><div class="row"><button type="button" class="btn sm" data-act="previewCli" data-cid="${esc(c.id)}">Ver prévia do cliente</button></div></div>
       <div class="card"><h2>Equipe</h2><dl class="kv"><dt>Planejamento</dt><dd>${ppl(sq.planejamento)}</dd><dt>Produção</dt><dd>${ppl(sq.producao)}</dd><dt>Social media</dt><dd>${ppl(sq.social)}</dd><dt>Atendimento</dt><dd>${ppl(atendimentoDe(c))}</dd></dl></div></div>
     ${portalLinkHTML(c)}
     <section class="card"><div class="spread"><div><div class="eyebrow">Para o time de criação</div><h2>Especificações da marca</h2></div>${edit && !editing ? `<button type="button" class="btn sm" data-act="editCri" data-cid="${esc(c.id)}">Editar</button>` : ""}</div>
@@ -1770,6 +1771,10 @@ function qualityOf(ps, pk){
   const pct = (a, b) => b ? Math.round(a / b * 100) : null;
   return {n, pub:pub.length, pubDia:pct(pubDia, pub.length), late:ps.filter(isLate).length, semAj:pct(semAj, apr.length), avgD:dur.length ? dur.reduce((a, b) => a + b, 0) / dur.length : null, prazo:pct(okPk, (pk || []).length), pkN:(pk || []).length};
 }
+function contatoHTML(c){
+  const k = c.contato || {}, wa = String(k.whatsapp || "").replace(/\D/g, ""), num = wa && wa.length <= 11 ? "55" + wa : wa;
+  return [esc(k.nome || "—"), k.whatsapp ? `<a href="https://wa.me/${esc(num)}" target="_blank" rel="noopener">WhatsApp ${esc(k.whatsapp)}</a>` : "", k.email ? `<a href="mailto:${esc(k.email)}">${esc(k.email)}</a>` : ""].filter(Boolean).join("<br>");
+}
 const pctTxt = v => v === null || v === undefined ? "—" : v + "%";
 const daysTxt = v => v === null || v === undefined ? "—" : v.toFixed(1).replace(".", ",") + " d";
 function indicadoresHTML(){
@@ -1833,7 +1838,7 @@ function fluxosHTML(){
     <div class="tbw"><table class="tb"><thead><tr><th>Tipo</th><th>Etapas</th><th class="num">Em andamento</th></tr></thead><tbody>${Object.entries(FLUXOS).map(([k, f]) => `<tr><td><b>${esc(f.nome)}</b></td><td class="muted">${esc(f.etapas)}</td><td class="num">${cont(k)}</td></tr>`).join("")}</tbody></table></div>
     <section class="card"><h2>Prazo por etapa</h2><p class="muted" style="font-size:12.5px">Dias corridos que uma pauta pode ficar na mesma etapa. Passou disso, o cartão mostra "Parada há N dias". Não muda o atraso pela data.</p>
       <div class="form">${Object.entries(PRAZO_ST).map(([k, l]) => `<div class="field"><label for="pz-${k}">${l}</label><input class="inp" type="number" min="1" max="60" id="pz-${k}" data-prazo="${k}" value="${pz[k]}" ${isDirReal() ? "" : "disabled"}></div>`).join("")}</div></section>
-    <section class="card"><h2>Validação do Head</h2><p class="muted" style="font-size:12.5px">Ligada por cliente, em Editar cadastro e escopo. Com ela, a pauta só vai ao cliente depois que um Head validar na revisão. Clientes com validação: ${esc(S.clientes.filter(c => (c.regras || {}).validaHead).map(c => c.nome).join(", ") || "nenhum")}.</p></section>`;
+    <section class="card"><h2>Validação do Head</h2><p class="muted" style="font-size:12.5px">Padrão para todas as pautas de cliente: na revisão, um Head valida antes de a pauta ir ao cliente. Quando quem envia já é Head (ou Diretoria), a validação é registrada no mesmo clique.</p></section>`;
 }
 function configHTML(){
   const tabs = [["usuarios","Usuários"],["fluxos","Fluxos de pauta"],["unidades","Unidades"],["integracoes","Integrações"],["seguranca","Segurança e backup"]];
@@ -1963,7 +1968,8 @@ function moveTo(p, st){
   if (p.status === st) return;
   const b = p.briefing || {}, from = p.status;
   if (isRel(p)) { if (["cliente","ajuste"].includes(st)) return toast("O relatório não passa pela aprovação do cliente: é apresentado."); if (!canPlan(p) && owner(p) !== ui.me) return toast("Só quem está com o relatório pode movê-lo."); setStatus(p, st, entry("moveu", {texto:`${stLabel(Object.assign({}, p, {status:from}))} → ${stLabel(Object.assign({}, p, {status:st}))}`})); toast(`${titleOf(p)} → ${stLabel(p)}`); return render(); }
-  if (st === "cliente" && aguardaHead(p)) return toast("Este cliente exige a validação de um Head antes de ir ao cliente.");
+  if (st === "cliente" && aguardaHead(p)) return toast("A pauta precisa da validação de um Head antes de ir ao cliente.");
+  if (st === "cliente") headValida(p);
   if (isTask(p)) {
     if (!["pauta","producao","publicado"].includes(st)) return toast("Tarefas internas vão de A fazer para Fazendo e Concluída.");
     if (!canPlan(p) && !canProduce(p)) return toast("Só o responsável pela tarefa pode movê-la.");
@@ -2289,7 +2295,7 @@ function actionsHTML(p, c, edFiles){
       <div class="actions"><button type="button" class="btn primary" data-act="toReview">${p.status === "ajuste" ? "Ajuste feito: enviar para revisão" : "Enviar para revisão"}</button></div><div class="muted" style="font-size:12px">A janela fica aberta: confira os arquivos e envie quando estiver pronto.</div></div>`);
   }
   if (p.status === "ajuste" && (p.ajusteCom === "planejamento" || !art) && canPlan(p)) out.push(`<div class="actions"><button type="button" class="btn primary" data-act="ajusteOk">Ajuste concluído: enviar para revisão</button></div><div class="muted" style="font-size:12px">Depois da revisão, a pauta volta para o cliente.</div>`);
-  if (p.status === "revisao" && precisaHead(p)) out.push(p.validadoHead ? `<div class="okbox">Validada pelo Head.</div>` : `<div class="box"><b style="font-size:13px">Aguardando validação do Head</b><span class="muted" style="font-size:12.5px">Este cliente exige a validação de um Head antes de ir para aprovação.</span>${isHead() ? `<div class="actions"><button type="button" class="btn primary" data-act="validarHead">Validar</button></div>` : ""}</div>`);
+  if (p.status === "revisao" && precisaHead(p) && !isHead()) out.push(p.validadoHead ? `<div class="okbox">Validada pelo Head.</div>` : `<div class="box"><b style="font-size:13px">Aguardando validação do Head</b><span class="muted" style="font-size:12.5px">Toda pauta de cliente passa pela validação de um Head antes de ir para aprovação. Quando um Head envia ao cliente, a validação é registrada junto.</span>${isHead() ? `<div class="actions"><button type="button" class="btn primary" data-act="validarHead">Validar</button></div>` : ""}</div>`);
   if (p.status === "revisao" && canPlan(p)) {
     out.push(`<div class="actions">${semCli(p) ? `<button type="button" class="btn primary" data-act="approveInternal">Aprovar (sem cliente)</button>` : `<button type="button" class="btn primary" data-act="toClient" ${aguardaHead(p) ? 'disabled title="Aguardando validação do Head"' : ""}>Enviar ao cliente</button>`}${art ? `<button type="button" class="btn" data-act="toggleBack">Devolver para produção</button>` : ""}</div>`);
     if (u.back) out.push(`<div class="box"><label for="backtxt" style="font-weight:700;font-size:12.5px">O que precisa ajustar?</label><textarea id="backtxt" rows="3">${esc(u.backText || "")}</textarea><div class="actions"><button type="button" class="btn primary" data-act="sendBack">Devolver para ${esc(mName((p.resp || {}).prod))}</button></div></div>`);
@@ -2472,6 +2478,8 @@ function clientFormHTML(){
         <div class="field"><label for="cf-drive">Pasta do cliente no Drive</label><input class="inp" id="cf-drive" data-cf="drive" value="${esc(d.drive || "")}" placeholder="https://drive.google.com/…"></div></div>
       <div class="eyebrow">2 · Aprovação</div>
       <div class="form"><div class="field"><label for="cf-cn">Quem aprova</label><input class="inp" id="cf-cn" data-cfc="nome" value="${esc(d.contato.nome)}"></div>
+        <div class="field"><label for="cf-wa">WhatsApp</label><input class="inp" id="cf-wa" type="tel" data-cfc="whatsapp" value="${esc(d.contato.whatsapp || "")}" placeholder="(51) 99999-9999" autocomplete="off"></div>
+        <div class="field"><label for="cf-em">E-mail</label><input class="inp" id="cf-em" type="email" data-cfc="email" value="${esc(d.contato.email || "")}" placeholder="contato@cliente.com.br" autocomplete="off"></div>
         <div class="field"><label for="cf-apr">Periodicidade</label><select class="inp" id="cf-apr" data-cf="aprovacao"><option value="mensal" ${d.aprovacao !== "semanal" ? "selected" : ""}>Mensal</option><option value="semanal" ${d.aprovacao === "semanal" ? "selected" : ""}>Semanal</option></select></div>
         <div class="field"><label for="cf-ant">Enviar com quantos dias de antecedência</label><input class="inp" type="number" min="1" max="30" id="cf-ant" data-cf="antecedencia" value="${esc(d.antecedencia)}"></div></div>
       <div class="eyebrow">3 · Redes e escopo</div>
@@ -2489,7 +2497,7 @@ function clientFormHTML(){
         <div class="field full"><span class="lb">Social media (publica)</span>${box("social", ppl(p => p.includes("social") || p.includes("head")))}</div>
         <div class="field full"><span class="lb">Atendimento <span class="hint">· é avisado quando a pauta vai para o cliente</span></span>${box("atendimento", ppl(p => p.includes("atendimento") || p.includes("head")))}</div>
         <div class="field full"><label for="cf-not">Particularidades</label><textarea id="cf-not" data-cf="notas" rows="3">${esc(d.notas)}</textarea></div>
-        <div class="field full"><div class="seg"><label><input type="checkbox" data-cfr="validaHead" ${d.regras.validaHead ? "checked" : ""}> Exigir validação de um Head na revisão, antes de enviar ao cliente</label><label><input type="checkbox" data-cfr="linkPodcast" ${d.regras.linkPodcast ? "checked" : ""}> Exigir link do YouTube nas pautas que vêm do podcast</label></div></div></div>
+        <div class="field full"><div class="seg"><label><input type="checkbox" data-cfr="linkPodcast" ${d.regras.linkPodcast ? "checked" : ""}> Exigir link do YouTube nas pautas que vêm do podcast</label></div></div></div>
       ${ui.tmp.err ? `<div class="err">${esc(ui.tmp.err)}</div>` : ""}<div class="actions"><button type="submit" class="btn primary">${isNew ? "Cadastrar cliente" : "Salvar"}</button><button type="button" class="btn ghost" data-act="close">Cancelar</button></div>
       ${!isNew && headOfUnit(d.unidade) ? (ui.tmp.delc ? `<div class="row"><span style="font-size:12.5px;color:var(--danger);font-weight:700">Excluir o cliente e todas as peças dele?</span><button type="button" class="btn sm danger" data-act="delClientGo">Excluir</button><button type="button" class="btn sm ghost" data-act="delClient">Cancelar</button></div>` : `<div><button type="button" class="linkbtn" style="color:var(--danger)" data-act="delClient">Excluir cliente</button></div>`) : ""}
     </form></div>`;
@@ -2803,7 +2811,7 @@ document.addEventListener("click", async ev => {
     case "relGo": { const st = d.st, ac = {producao: p.status === "revisao" ? "devolveu" : "producao", revisao:"entrega", aprovado:"registrou", publicado:"apresentou"}[st]; setStatus(p, st, entry(ac)); toast(`${titleOf(p)} → ${stLabel(p)}`); render(); break; }
     case "toReview": if (!(p.midias || []).length && !p.drive) { toast("Anexe os arquivos ou preencha o link do Drive antes."); break; } sendToReview(p); ui.tmp = {}; toast("Enviada para revisão do planejamento"); render(); break;
     case "approveInternal": if (!semCli(p) || !canPlan(p)) break; setStatus(p, "aprovado", entry("aprovou_interno")); toast("Aprovada. Quando entregar, marque como concluída."); render(); break;
-    case "toClient": if (aguardaHead(p)) { toast("Este cliente exige a validação de um Head antes."); break; } if (readyToSend(p)) { toast(readyToSend(p)); fillOverlay(); break; } if ([...String((p.briefing || {}).legenda || "")].length > 2200) { toast("A legenda passa de 2.200 caracteres, o limite do Instagram."); break; } setStatus(p, "cliente", entry("enviou_cliente"), {ajusteCom:null}); toast("Enviada ao cliente"); render(); break;
+    case "toClient": if (aguardaHead(p)) { toast("A pauta precisa da validação de um Head antes de ir ao cliente."); break; } headValida(p); if (readyToSend(p)) { toast(readyToSend(p)); fillOverlay(); break; } if ([...String((p.briefing || {}).legenda || "")].length > 2200) { toast("A legenda passa de 2.200 caracteres, o limite do Instagram."); break; } setStatus(p, "cliente", entry("enviou_cliente"), {ajusteCom:null}); toast("Enviada ao cliente"); render(); break;
     case "toggleBack": u.back = !u.back; fillOverlay(); break;
     case "sendBack": { const txt = (u.backText || "").trim(); if (!txt) { toast("Descreva o ajuste para a produção."); break; } setStatus(p, "producao", entry("devolveu", {texto:txt}), {retorno:true}); ui.tmp = {}; toast("Devolvida para a produção"); render(); break; }
     case "regApprove": u.reg = "ap"; fillOverlay(); break;
@@ -2861,7 +2869,7 @@ document.addEventListener("click", async ev => {
       if (d.k) { const c = cli(d.cid), [a] = periodRange(c, d.k); ui.month = firstOfMonth(a); if (d.k[0] === "s") ui.pweek = ymd(a); } else { const x = S.pecas.find(y => y.clienteId === d.cid && CLIENT_ST.includes(y.status) && pd(y.data) >= firstOfMonth(TODAY)); ui.month = x ? firstOfMonth(pd(x.data)) : firstOfMonth(TODAY); }
       render(); window.scrollTo(0,0); break;
     case "exitPreview": ui.preview = false; ui.openId = null; ui.month = firstOfMonth(TODAY); ui.pweek = null; render(); break;
-    case "sendReady": { const c = cli(d.cid), [a, b] = periodRange(c, d.k); let n = 0; S.pecas.filter(x => x.clienteId === c.id && x.status === "revisao" && pd(x.data) >= a && pd(x.data) <= b && !readyToSend(x)).forEach(x => { setStatus(x, "cliente", entry("enviou_cliente")); n++; }); toast(`${n} ${n === 1 ? "peça enviada" : "peças enviadas"} ao cliente`); render(); break; }
+    case "sendReady": { const c = cli(d.cid), [a, b] = periodRange(c, d.k); let n = 0; S.pecas.filter(x => x.clienteId === c.id && x.status === "revisao" && pd(x.data) >= a && pd(x.data) <= b && !readyToSend(x) && !aguardaHead(x)).forEach(x => { headValida(x); setStatus(x, "cliente", entry("enviou_cliente")); n++; }); toast(`${n} ${n === 1 ? "peça enviada" : "peças enviadas"} ao cliente`); render(); break; }
     case "msg": ui.tmp = {cid:d.cid, k:d.k}; ui.modal = "msg"; fillOverlay(); break;
     case "copyMsg": copyText(($("#msgtxt") || {}).value || "", "Mensagem copiada"); break;
     case "cliApprove": if (mode === "portal") { if (!needName()) break; portalPost({action:"approve", pecaId:p.id}).then(async () => { await loadPortal(); ui.tmp = {}; nextPending(p, "Peça aprovada"); }).catch(e => toast(e.message)); break; } setStatus(p, "aprovado", entry("aprovou")); ui.tmp = {}; nextPending(p, "Peça aprovada"); break;
@@ -3026,7 +3034,7 @@ document.addEventListener("submit", async ev => {
     save(); ui.modal = null; ui.tmp = {}; ui.month = firstOfMonth(from); toast(`${n} ${n === 1 ? "pauta criada" : "pautas criadas"} de ${fmtShort(from)} a ${fmtShort(to)}`); render(); return;
   }
   if (id === "cfForm") {
-    const cd = ui.tmp.cd; cd.nome = ($("#cf-nome").value || "").trim(); cd.notas = $("#cf-not").value; cd.antecedencia = Number($("#cf-ant").value) || 7; cd.drive = ($("#cf-drive").value || "").trim(); if (cd.drive) cd.driveId = folderIdOf(cd.drive) || cd.driveId; else { delete cd.driveId; delete cd.driveSub; } cd.contato.nome = ($("#cf-cn").value || "").trim();
+    const cd = ui.tmp.cd; cd.nome = ($("#cf-nome").value || "").trim(); cd.notas = $("#cf-not").value; cd.antecedencia = Number($("#cf-ant").value) || 7; cd.drive = ($("#cf-drive").value || "").trim(); if (cd.drive) cd.driveId = folderIdOf(cd.drive) || cd.driveId; else { delete cd.driveId; delete cd.driveSub; } cd.contato.nome = ($("#cf-cn").value || "").trim(); cd.contato.whatsapp = (($("#cf-wa") || {}).value || "").trim(); cd.contato.email = (($("#cf-em") || {}).value || "").trim(); if (cd.contato.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(cd.contato.email)) { ui.tmp.err = "Confira o e-mail do cliente."; fillOverlay(); return; }
     const fail = msg => { ui.tmp.err = msg; fillOverlay(); };
     if (!cd.nome) return fail("Dê um nome ao cliente.");
     const e = cd.escopo;
