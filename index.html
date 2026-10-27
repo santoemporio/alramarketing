@@ -999,6 +999,12 @@ const isHead = () => has("head") || isDir();
 function headOfUnit(u){ const m = ME(); return !!m && (isDir() || (has("head") && m.unidade === u)); }
 function unitScope(){ if (isDir()) return ui.unidade === "todas" ? S.unidades.map(u => u.id) : [ui.unidade]; const m = ME(); return m ? [m.unidade] : []; }
 const inScope = c => unitScope().includes(c.unidade);
+/* Todo o time interno vê todos os clientes cadastrados e as pautas deles dentro da aba Clientes.
+   Kanban, calendário e demais visões seguem só com as pautas dos clientes da pessoa (canSee). */
+const allClients = () => isClient() ? [] : S.clientes.filter(inScope);
+const meuCliente = c => !!c && visibleClients().some(x => x.id === c.id);
+const canSeeHub = p => !isClient() && privOk(p) && unitScope().includes(unitOf(p));
+const normTxt = t => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 function owner(p){
   const r = p.resp || {}, f = fluxoOf(p);
   if (isTask(p)) return ["pauta","pautado","producao"].includes(p.status) ? (r.prod || r.plan) : null;
@@ -1184,7 +1190,7 @@ const FLUXOS = {
 };
 /* pauta gerada pelo escopo do mês: atraso pela antecedência do cliente; as demais, pela própria data */
 const isEscopo = p => p.escopo === true || (!p.criadoPor && !!p.clienteId && !isTask(p) && !isRel(p) && p.tipo !== "anuncio" && canal(p).grupo !== "avulsa");
-const trafOf = p => (p.resp || {}).traf || (ativos().find(m => m.unidade === unitOf(p) && (m.papeis || []).includes("trafego")) || {}).id || (p.resp || {}).plan;
+const trafOf = p => (p.resp || {}).traf || (((cli(p.clienteId).squad || {}).trafego || []).find(id => ativos().some(m => m.id === id))) || (ativos().find(m => m.unidade === unitOf(p) && (m.papeis || []).includes("trafego")) || {}).id || (p.resp || {}).plan;
 const diretorOf = p => (p.resp || {}).dir || (ativos().find(m => m.unidade === unitOf(p) && (m.papeis || []).includes("diretoria")) || ativos().find(m => (m.papeis || []).includes("diretoria")) || {}).id;
 const isText = p => !!(CANAIS[p.tipo] || {}).texto;
 const needsArt = p => !isTask(p) && (!isText(p) || !!(p.briefing || {}).card);
@@ -1341,7 +1347,7 @@ function relatoriosHTML(inner){
 const canal = p => CANAIS[p.tipo] || CANAIS.feed;
 const titleOf = p => (p.briefing || {}).headline || (p.briefing || {}).ideia || `${canal(p).label} sem pauta`;
 const pill = st => { const s = STATUS[st] || STATUS.pauta; return `<span class="pill t-${s.tone}">${esc(s.label)}</span>`; };
-const canHub = c => !!(c && c.id) && !isClient() && visibleClients().some(x => x.id === c.id);
+const canHub = c => !!(c && c.id) && !isClient() && allClients().some(x => x.id === c.id);
 const cliLink = c => canHub(c) ? `<button type="button" class="cli clilink" data-hub="${esc(c.id)}" title="Abrir a ficha do cliente"><span class="dot" style="background:${esc(c.cor)}"></span><span>${esc(c.nome)}</span><span class="arr" aria-hidden="true">↗</span></button>` : cliTag(c);
 const cliAtalhos = c => canHub(c) ? `<div class="clinks">${[["geral","Escopo"],["info","Cadastro"],["materiais","Materiais"],["orient","Orientações"]].map(([k, l]) => `<button type="button" class="linkbtn" data-hub="${esc(c.id)}" data-hubtab="${k}">${l}</button>`).join("<span aria-hidden=\"true\">·</span>")}</div>` : "";
 const cliTag = c => `<span class="cli"><span class="dot" style="background:${esc(c.cor)}"></span><span>${esc(c.nome)}</span></span>`;
@@ -1502,7 +1508,7 @@ function infoHTML(c, edit){
     <div class="actions"><button type="button" class="btn primary" data-act="saveCri">Salvar especificações</button><button type="button" class="btn ghost" data-act="cancelEdit">Cancelar</button></div>` : "";
   return `<div class="scopebar"><span class="eyebrow">Escopo</span>${scope.map(([n, t]) => `<span class="sc"><b>${esc(n)}</b> ${esc(t)}</span>`).join("") || `<span class="muted">Sem escopo definido</span>`}</div>
     <div class="grid2"><div class="card"><h2>Cadastro e aprovação</h2><dl class="kv"><dt>Status</dt><dd>${esc(c.status || "Ativo")}</dd><dt>Categoria</dt><dd>${esc(c.categoria || "—")}</dd><dt>Segmento</dt><dd>${esc(c.segmento || "—")}</dd><dt>Unidade</dt><dd>${esc(unidade(c.unidade).nome)}</dd><dt>Quem aprova</dt><dd>${contatoHTML(c)}</dd><dt>Periodicidade</dt><dd>${c.aprovacao === "semanal" ? "Semanal" : "Mensal"}, enviar ${Number(c.antecedencia) || 7} dias antes</dd>${c.notas ? `<dt>Particularidades</dt><dd style="white-space:pre-wrap">${esc(c.notas)}</dd>` : ""}</dl><div class="row"><button type="button" class="btn sm" data-act="previewCli" data-cid="${esc(c.id)}">Ver prévia do cliente</button></div></div>
-      <div class="card"><h2>Equipe</h2><dl class="kv"><dt>Planejamento</dt><dd>${ppl(sq.planejamento)}</dd><dt>Produção</dt><dd>${ppl(sq.producao)}</dd><dt>Social media</dt><dd>${ppl(sq.social)}</dd><dt>Atendimento</dt><dd>${ppl(atendimentoDe(c))}</dd></dl></div></div>
+      <div class="card"><h2>Equipe</h2><dl class="kv"><dt>Planejamento</dt><dd>${ppl(sq.planejamento)}</dd><dt>Produção</dt><dd>${ppl(sq.producao)}</dd><dt>Social media</dt><dd>${ppl(sq.social)}</dd><dt>Atendimento</dt><dd>${ppl(atendimentoDe(c))}</dd><dt>Tráfego</dt><dd>${ppl(sq.trafego)}</dd></dl></div></div>
     ${portalLinkHTML(c)}
     <section class="card"><div class="spread"><div><div class="eyebrow">Para o time de criação</div><h2>Especificações da marca</h2></div>${edit && !editing ? `<button type="button" class="btn sm" data-act="editCri" data-cid="${esc(c.id)}">Editar</button>` : ""}</div>
       <p class="muted" style="font-size:12.5px">Logos, manual e elementos gráficos ficam na aba Materiais (categorias Logo, Manual da marca e Elemento gráfico). Aqui ficam as especificações.</p>${editing ? criEdit : criView}</section>
@@ -2166,9 +2172,10 @@ function captacoesHTML(){
 
 /* ================= clientes ================= */
 function clientesHTML(){
-  const vc = visibleClients();
+  const vc = allClients().slice().sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")), q = normTxt(ui.cq), mine = new Set(visibleClients().map(c => c.id));
   return `<div class="spread"><div><div class="eyebrow">Carteira ${isDir() && ui.unidade === "todas" ? "da rede" : "da unidade"}</div><h1>Clientes</h1></div>${isHead() ? `<button type="button" class="btn primary" data-act="newClient">+ Novo cliente</button>` : ""}</div>
-    ${vc.length ? `<div class="grid2">${vc.map(c => { const ps = S.pecas.filter(p => p.clienteId === c.id); const sq = [...new Set(Object.values(c.squad || {}).flat())]; return `<button type="button" class="ccard" data-hub="${esc(c.id)}"><div class="spread"><h3><span class="dot" style="background:${esc(c.cor)};width:11px;height:11px"></span>${esc(c.nome)}</h3><span class="pill ${c.status === "Ativo" ? "t-ok" : "t-warn"}">${esc(c.status || "Ativo")}</span></div><div class="row" style="font-size:12px;color:var(--muted);gap:4px 12px">${c.categoria ? `<span>${esc(c.categoria)}</span>` : ""}${c.segmento ? `<span>${esc(c.segmento)}</span>` : ""}<span>Aprovação ${c.aprovacao === "semanal" ? "semanal" : "mensal"}</span></div><div style="font-size:12.5px;display:flex;flex-direction:column;gap:2px">${scopeSummary(c).map(([n, t]) => `<div><b>${esc(n)}</b> <span class="muted">· ${esc(t)}</span></div>`).join("") || `<span class="muted">Escopo não definido</span>`}</div><div class="spread"><span class="avs">${sq.map(id => av(id, 26)).join("") || `<span class="muted" style="font-size:12px">Equipe não definida</span>`}</span><span class="muted" style="font-size:12px"><b style="color:var(--fg)">${ps.filter(p => p.status === "cliente").length}</b> com o cliente · <b style="color:var(--fg)">${ps.filter(p => ["pauta","producao","revisao","ajuste"].includes(p.status)).length}</b> em andamento</span></div></button>`; }).join("")}</div>` : noClients()}`;
+    ${vc.length ? `<div class="row"><label class="selw" style="flex:1;max-width:420px"><span>Pesquisar cliente</span><input class="inp" type="search" id="cliQ" placeholder="Digite o nome do cliente…" value="${esc(ui.cq || "")}" autocomplete="off"></label><span class="muted" id="cliQn" style="font-size:12.5px;align-self:flex-end;padding-bottom:9px">${vc.filter(c => !q || normTxt(c.nome).includes(q)).length} de ${vc.length}</span></div>` : ""}
+    ${vc.length ? `<div class="grid2" id="cliGrid">${vc.map(c => { const ps = S.pecas.filter(p => p.clienteId === c.id); const sq = [...new Set(Object.values(c.squad || {}).flat())]; return `<button type="button" class="ccard" data-hub="${esc(c.id)}" data-nome="${esc(normTxt(c.nome))}" ${q && !normTxt(c.nome).includes(q) ? "hidden" : ""}><div class="spread"><h3><span class="dot" style="background:${esc(c.cor)};width:11px;height:11px"></span>${esc(c.nome)}</h3><span class="pill ${c.status === "Ativo" ? "t-ok" : "t-warn"}">${esc(c.status || "Ativo")}</span></div><div class="row" style="font-size:12px;color:var(--muted);gap:4px 12px">${c.categoria ? `<span>${esc(c.categoria)}</span>` : ""}${c.segmento ? `<span>${esc(c.segmento)}</span>` : ""}<span>Aprovação ${c.aprovacao === "semanal" ? "semanal" : "mensal"}</span></div><div style="font-size:12.5px;display:flex;flex-direction:column;gap:2px">${scopeSummary(c).map(([n, t]) => `<div><b>${esc(n)}</b> <span class="muted">· ${esc(t)}</span></div>`).join("") || `<span class="muted">Escopo não definido</span>`}</div><div class="spread"><span class="avs">${sq.map(id => av(id, 26)).join("") || `<span class="muted" style="font-size:12px">Equipe não definida</span>`}</span><span class="muted" style="font-size:12px"><b style="color:var(--fg)">${ps.filter(p => p.status === "cliente").length}</b> com o cliente · <b style="color:var(--fg)">${ps.filter(p => ["pauta","producao","revisao","ajuste"].includes(p.status)).length}</b> em andamento</span></div></button>`; }).join("")}</div>` : noClients()}`;
 }
 function dashHTML(c){
   const mS = firstOfMonth(TODAY), mE = endOfMonth(TODAY);
@@ -2201,7 +2208,7 @@ function dashHTML(c){
 function hubHTML(){
   const c = S.clientes.find(x => x.id === ui.hubId);
   if (!c) { ui.view = "clientes"; return clientesHTML(); }
-  const tabs = [["geral","Visão geral"],["info","Informações do cliente"],["orient","Orientações"],["materiais","Materiais"],["pecas","Pautas"],["captacoes","Captações"],["acessos","Acessos"],["feedbacks","Feedbacks"]];
+  const tabs = [["geral","Visão geral"],["info","Informações do cliente"],["orient","Orientações"],["materiais","Materiais"],["pecas","Pautas"],["captacoes","Captações"],...(meuCliente(c) ? [["acessos","Acessos"]] : []),["feedbacks","Feedbacks"]];
   if (!tabs.some(t => t[0] === ui.hubTab)) ui.hubTab = "geral";
   const edit = canEditClient(c);
   let body = "";
@@ -2209,7 +2216,7 @@ function hubHTML(){
   else if (ui.hubTab === "materiais") body = materiaisHTML(c, canEditInfo(c));
   else if (ui.hubTab === "info") body = infoHTML(c, canEditInfo(c));
   else if (ui.hubTab === "orient") body = orientHTML(c, canEditInfo(c));
-  else if (ui.hubTab === "pecas") { const ps = S.pecas.filter(p => p.clienteId === c.id && canSee(p)); body = `<div class="spread"><p class="muted" style="font-size:12.5px">${isHead() ? "Todas as pautas deste cliente." : "Só as pautas deste cliente em que você atua."} Arraste os cartões para mudar a etapa.</p><span class="row">${ps.length ? bulkBar() : ""}${edit ? `<button type="button" class="btn sm primary" data-act="newPeca" data-cid="${esc(c.id)}">+ Nova pauta</button>` : ""}</span></div>` + (ps.length ? boardHTML(ps) : `<div class="empty"><p>Nenhuma pauta sua neste cliente.</p></div>`); }
+  else if (ui.hubTab === "pecas") { const ps = S.pecas.filter(p => p.clienteId === c.id && canSeeHub(p)); body = `<div class="spread"><p class="muted" style="font-size:12.5px">${isHead() ? "Todas as pautas deste cliente." : "Só as pautas deste cliente em que você atua."} Arraste os cartões para mudar a etapa.</p><span class="row">${ps.length ? bulkBar() : ""}${edit ? `<button type="button" class="btn sm primary" data-act="newPeca" data-cid="${esc(c.id)}">+ Nova pauta</button>` : ""}</span></div>` + (ps.length ? boardHTML(ps) : `<div class="empty"><p>Nenhuma pauta sua neste cliente.</p></div>`); }
   else if (ui.hubTab === "captacoes") { const e = fillEscopo(c.escopo), l = S.captacoes.filter(x => x.clienteId === c.id).sort((a, b) => b.data.localeCompare(a.data)); body = `<div class="spread"><p class="muted" style="font-size:12.5px">${e.captacao.on ? "Captação incluída no escopo: " + (CAPFREQ[e.captacao.freq] || "").toLowerCase() + (e.captacao.obs ? " · " + esc(e.captacao.obs) : "") : "Captação não incluída no escopo."}</p><button type="button" class="btn sm" data-act="newCap" data-cid="${esc(c.id)}">+ Agendar captação</button></div>${l.length ? `<div class="list">${l.map(capLi).join("")}</div>` : `<div class="empty"><p>Nenhuma captação para este cliente.</p></div>`}`; }
   else if (ui.hubTab === "acessos") body = acessosHTML(c);
   else { const l = S.feedbacks.filter(f => f.clienteId === c.id).slice().reverse(); body = l.length ? `<div class="list">${l.map(f => `<div class="card" style="gap:6px"><div class="spread"><span class="pill ${f.decisao === "total" ? "t-ok" : "t-warn"}">${f.decisao === "total" ? "Aprovou todo o planejamento" : f.decisao === "parcial" ? "Aprovou parte" : "Não aprovou"}</span><span class="muted" style="font-size:12px">${esc(f.periodo)} · ${esc(fmtStamp(f.em))}</span></div>${f.texto ? `<div style="white-space:pre-wrap">${esc(f.texto)}</div>` : ""}</div>`).join("")}</div>` : `<div class="empty"><p>O comentário que o cliente deixa ao aprovar o planejamento aparece aqui.</p></div>`; }
@@ -2515,7 +2522,7 @@ function newPecaHTML(){
   const trafs = people.filter(m => has(m, ["trafego","head"]));
   const planDef = ((c.squad || {}).planejamento || []).includes(ui.me) || isHead() || sem ? ui.me : (((c.squad || {}).planejamento || [])[0] || ui.me);
   const prodDef = sem || generico ? "" : defaultProd(c, cat === "trafego" ? "feed" : tipoSel) || "";
-  const trafDef = (people.find(m => (m.papeis || []).includes("trafego")) || {}).id || "";
+  const trafDef = ((c.squad || {}).trafego || [])[0] || (people.find(m => (m.papeis || []).includes("trafego")) || {}).id || "";
   const sel = (id, list, cur, empty) => `<select class="inp" id="np-${id}">${empty ? `<option value="">${empty}</option>` : ""}${list.map(m => `<option value="${esc(m.id)}" ${cur === m.id ? "selected" : ""}>${esc(m.nome)}</option>`).join("")}</select>`;
   const ta = (id, rows, ph) => `<textarea id="np-${id}" rows="${rows}" ${ph ? `placeholder="${esc(ph)}"` : ""}>${esc(val(id))}</textarea>`;
   const inp = (id, ph) => `<input class="inp" id="np-${id}" value="${esc(val(id))}" ${ph ? `placeholder="${esc(ph)}"` : ""}>`;
@@ -2620,6 +2627,7 @@ function clientFormHTML(){
         <div class="field full"><span class="lb">Produção (design e audiovisual)</span>${box("producao", ppl(p => p.includes("design") || p.includes("audiovisual")))}</div>
         <div class="field full"><span class="lb">Social media (publica)</span>${box("social", ppl(p => p.includes("social") || p.includes("head")))}</div>
         <div class="field full"><span class="lb">Atendimento <span class="hint">· é avisado quando a pauta vai para o cliente</span></span>${box("atendimento", ppl(p => p.includes("atendimento") || p.includes("head")))}</div>
+        <div class="field full"><span class="lb">Gestão de tráfego <span class="hint">· configura e acompanha as campanhas do cliente</span></span>${box("trafego", ppl(p => p.includes("trafego") || p.includes("head")))}</div>
         <div class="field full"><label for="cf-not">Particularidades</label><textarea id="cf-not" data-cf="notas" rows="3">${esc(d.notas)}</textarea></div>
         <div class="field full"><div class="seg"><label><input type="checkbox" data-cfr="linkPodcast" ${d.regras.linkPodcast ? "checked" : ""}> Exigir link do YouTube nas pautas que vêm do podcast</label></div></div></div>
       ${ui.tmp.err ? `<div class="err">${esc(ui.tmp.err)}</div>` : ""}<div class="actions"><button type="submit" class="btn primary">${isNew ? "Cadastrar cliente" : "Salvar"}</button><button type="button" class="btn ghost" data-act="close">Cancelar</button></div>
@@ -2749,7 +2757,7 @@ function fillOverlay(){
     const p = S.pecas.find(x => x.id === ui.openId);
     if (!p) ui.openId = null;
     else if (isClient() || ui.preview) html = CLIENT_ST.includes(p.status) ? postModalHTML(p) : "";
-    else html = canSee(p) ? drawerHTML(p) : "";
+    else html = canSee(p) || (ui.view === "hub" && canSeeHub(p)) ? drawerHTML(p) : "";
   }
   const act = document.activeElement && ov.contains(document.activeElement) ? document.activeElement : null;
   const actId = act && act.id, sel = act && act.selectionStart != null ? [act.selectionStart, act.selectionEnd] : null;
@@ -2787,7 +2795,7 @@ function goStep(i){
 function openClientForm(){
   const un = isDir() ? (ui.unidade !== "todas" ? ui.unidade : (S.unidades[0] || {}).id) : ME().unidade;
   const e = blankEscopo(); e.meta.instagram = true; e.meta.facebook = true; e.meta.feed.dias = [1,3,5];
-  ui.tmp = {cd:{nome:"", cor:CORES[S.clientes.length % CORES.length], unidade:un, segmento:"", categoria:"", status:"Em onboarding", aprovacao:"mensal", antecedencia:7, drive:"", contato:{nome:""}, escopo:e, squad:{planejamento:[], producao:[], social:[], atendimento:[]}, notas:"", regras:{}}};
+  ui.tmp = {cd:{nome:"", cor:CORES[S.clientes.length % CORES.length], unidade:un, segmento:"", categoria:"", status:"Em onboarding", aprovacao:"mensal", antecedencia:7, drive:"", contato:{nome:""}, escopo:e, squad:{planejamento:[], producao:[], social:[], atendimento:[], trafego:[]}, notas:"", regras:{}}};
   ui.modal = "client"; fillOverlay();
 }
 function setPath(obj, path, val){ const ks = path.split("."); let o = obj; ks.slice(0, -1).forEach(k => o = o[k]); o[ks[ks.length - 1]] = val; }
@@ -2946,7 +2954,7 @@ document.addEventListener("click", async ev => {
     case "newPeca": ui.tmp = {cid:d.cid}; ui.modal = "newPeca"; fillOverlay(); break;
     case "genOpen": ui.tmp = {cid:d.cid, m:d.m}; ui.modal = "gen"; fillOverlay(); break;
     case "newClient": openClientForm(); break;
-    case "editClient": { const c = cli(ui.hubId); const cd = Object.assign(JSON.parse(JSON.stringify(c)), {_exists:true}); cd.regras = cd.regras || {}; cd.contato = cd.contato || {nome:""}; cd.squad = Object.assign({planejamento:[], producao:[], social:[], atendimento:[]}, cd.squad); cd.escopo = fillEscopo(cd.escopo); ui.tmp = {cd}; ui.modal = "client"; fillOverlay(); break; }
+    case "editClient": { const c = cli(ui.hubId); const cd = Object.assign(JSON.parse(JSON.stringify(c)), {_exists:true}); cd.regras = cd.regras || {}; cd.contato = cd.contato || {nome:""}; cd.squad = Object.assign({planejamento:[], producao:[], social:[], atendimento:[], trafego:[]}, cd.squad); cd.escopo = fillEscopo(cd.escopo); ui.tmp = {cd}; ui.modal = "client"; fillOverlay(); break; }
     case "delClient": u.delc = !u.delc; fillOverlay(); break;
     case "delClientGo": { const id = u.cd.id; ["pecas","captacoes","materiais","acessos","feedbacks","pacotes"].forEach(col => S[col] = S[col].filter(x => x.clienteId !== id)); S.clientes = S.clientes.filter(c => c.id !== id); save(); ui.modal = null; ui.tmp = {}; ui.view = "clientes"; toast("Cliente excluído"); render(); break; }
     case "newPerson": ui.tmp = {pd:{nome:"", cargo:"", papeis:[], unidade: isDir() && ui.unidade !== "todas" ? ui.unidade : ME().unidade}}; ui.modal = "person"; fillOverlay(); break;
@@ -3060,6 +3068,7 @@ document.addEventListener("input", ev => {
   if (t.dataset.obp && obPub) { obPub.respostas = obPub.respostas || {}; obPub.respostas[t.dataset.obp] = t.value; obPend[t.dataset.obp] = t.value; t.closest(".obq").classList.toggle("ok", !!t.value.trim()); if (!(obNome() || (ui.pnome || "").trim())) { const el = $("#obsaved"); if (el) el.textContent = "Escreva seu nome no topo para salvar"; return; } clearTimeout(obT); obT = setTimeout(() => obSave(false), 1200); return; }
   if (t.dataset.cri && ui.tmp.cri) { setPath(ui.tmp.cri, t.dataset.cri, t.value); const m = t.dataset.cri.match(/^cores\.(\d+)\.hex$/); if (m) { const el = document.getElementById("rgb" + m[1]); if (el) el.textContent = validHex(t.value) ? hexRgb(t.value) : "RGB automático"; } return; }
   if (t.id === "f-corpo" && t.value !== undefined) { const el = $("#wcount"); if (el) { const n = t.value.trim().split(/\s+/).filter(Boolean).length; el.textContent = `${n} ${n === 1 ? "palavra" : "palavras"}`; } }
+  if (t.id === "cliQ") { ui.cq = t.value; const q = normTxt(t.value); let n = 0; document.querySelectorAll("#cliGrid [data-nome]").forEach(el => { const ok = !q || el.dataset.nome.includes(q); el.hidden = !ok; if (ok) n++; }); const el = $("#cliQn"); if (el) el.textContent = `${n} de ${document.querySelectorAll("#cliGrid [data-nome]").length}`; return; }
   if (t.dataset && t.dataset.rt !== undefined) { const p = S.pecas.find(x => x.id === ui.openId); if (p) { p.briefing = p.briefing || {}; setRt(p.briefing, t.dataset.rt, t); if (t.dataset.rt === "corpo") { const el = $("#wcount"); if (el) { const n = String(p.briefing.corpo || "").trim().split(/\s+/).filter(Boolean).length; el.textContent = `${n} ${n === 1 ? "palavra" : "palavras"}`; } } save(); } return; }
   if (t.dataset && t.dataset.rtn !== undefined) { const u = ui.tmp, f = u.f = u.f || {}, m = t.dataset.rtn.match(/^cards\.(\d+)\.sub$/); if (m) { const c = (u.cards || [])[+m[1]]; if (c) { c.sub = rtText(t); c.subFmt = cleanFmt(t.innerHTML); } } else { f[t.dataset.rtn] = rtText(t); f[t.dataset.rtn + "Fmt"] = cleanFmt(t.innerHTML); } return; }
   if (t.dataset && t.dataset.ch !== undefined) { const p = S.pecas.find(x => x.id === ui.openId); if (p && p.briefing && p.briefing.cards) { const i = +t.dataset.ch; p.briefing.cards[i].hl = t.value; if (i === 0) p.briefing.headline = t.value; save(); } return; }
