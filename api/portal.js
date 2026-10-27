@@ -35,7 +35,7 @@ module.exports = async (req, res) => {
       const cfg = (await db.getDoc("cfg", "main")) || {};
       const lo = new Date(Date.now() - 150 * 864e5).toISOString().slice(0, 10), hi = new Date(Date.now() + 150 * 864e5).toISOString().slice(0, 10);
       const rows = await db.listCol("pecas", `&data->>clienteId=eq.${encodeURIComponent(c.id)}`);
-      const pecas = rows.filter(r => r.data && CLIENT_ST.includes(r.data.status) && r.data.tipo !== "tarefa" && r.data.data >= lo && r.data.data <= hi).map(r => sanitize(r.id, r.data));
+      const pecas = rows.filter(r => r.data && CLIENT_ST.includes(r.data.status) && r.data.tipo !== "tarefa" && r.data.tipo !== "relatorio" && r.data.data >= lo && r.data.data <= hi).map(r => sanitize(r.id, r.data));
       return res.status(200).json({ rede: cfg.rede || "Alra", storageUrl: db.URL_, cliente: { id: c.id, nome: c.nome, cor: c.cor, aprovacao: c.aprovacao, contato: { nome: (c.contato || {}).nome || "" } }, pecas });
     }
     if (req.method !== "POST") return res.status(405).json({ error: "Método não permitido." });

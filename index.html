@@ -481,7 +481,7 @@ textarea:disabled,.inp:disabled{background:var(--surface);opacity:1;border-color
 .selw{display:flex;flex-direction:column;gap:3px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .inp.sm{padding:6px 10px;font-size:13px;min-width:160px;text-transform:none;letter-spacing:0;font-weight:600;color:var(--fg)}
 .kpis.k5{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
-.kcw{position:relative}.kcw .kc{width:100%}
+.kcw{position:relative}.stx{font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:99px;background:var(--surface);color:var(--muted)}.kcw .kc{width:100%}
 .kmore{position:absolute;top:6px;right:6px;border:0;background:var(--bg);color:var(--muted);border-radius:7px;width:26px;height:22px;font-weight:800;letter-spacing:1px;cursor:pointer;opacity:0;transition:opacity .12s;line-height:1}
 .kcw:hover .kmore,.kmore:focus-visible,.kmore[aria-expanded="true"]{opacity:1}.kmore:hover{color:var(--fg);background:var(--surface)}
 @media (hover:none){.kmore{opacity:.85}}
@@ -612,10 +612,11 @@ const CANAIS = {
   impresso:{label:"Material impresso", k:"IMPRESSO", grupo:"avulsa", ratio:"1 / 1.414", net:"Outros"},
   apresentacao:{label:"Apresentação", k:"APRES.", grupo:"avulsa", ratio:"16 / 9", net:"Outros"},
   texto:{label:"Texto / roteiro", k:"TEXTO", grupo:"avulsa", ratio:"1.91 / 1", net:"Outros", texto:true},
-  outro:{label:"Outros", k:"OUTROS", grupo:"avulsa", ratio:"4 / 5", net:"Outros"}
+  outro:{label:"Outros", k:"OUTROS", grupo:"avulsa", ratio:"4 / 5", net:"Outros"},
+  relatorio:{label:"Relatório de resultados", k:"RELAT", grupo:"relatorio", ratio:"1.91 / 1", net:"Relatório mensal", texto:true}
 };
 const GENERICOS = ["arte","video","fotos","impresso","apresentacao","texto","outro"];
-const GRUPOS = {meta:"Instagram e Facebook", stories:"Stories", ads:"Anúncios", interna:"Interna", avulsa:"Outros", linkedin:"LinkedIn", youtube:"YouTube", tiktok:"TikTok", blog:"Blog"};
+const GRUPOS = {meta:"Instagram e Facebook", stories:"Stories", ads:"Anúncios", interna:"Interna", avulsa:"Outros", relatorio:"Relatórios", linkedin:"LinkedIn", youtube:"YouTube", tiktok:"TikTok", blog:"Blog"};
 const FORMATOS_GEN = ["Arte digital","Impresso","Vídeo","Fotos","Apresentação","Documento","Outro"];
 const FORMATOS = ["Post estático","Carrossel","Reels","Stories","Vídeo","Capa","Banner site","Banner newsletter"];
 const STATUS = {
@@ -634,7 +635,7 @@ const EQUIP = ["Câmera","Lentes","Tripé","Gimbal","Microfone","Iluminação","
 const CAPFREQ = {semanal:"Semanal", quinzenal:"Quinzenal", mensal:"Mensal", demanda:"Sob demanda"};
 const ACOES = {
   pauta:"Pauta criada", producao:"Enviada para produção", arquivos:"Arquivos anexados", entrega:"Enviada para revisão", nova_versao:"Nova versão enviada para revisão",
-  devolveu:"Devolvida para a produção", enviou_cliente:"Enviada ao cliente", aprovou:"Aprovada pelo cliente", aprovou_interno:"Aprovada internamente (pauta sem cliente)", aprovou_tudo:"Aprovada em \"aprovar todo o planejamento\"",
+  devolveu:"Devolvida para a produção", enviou_cliente:"Enviada ao cliente", aprovou:"Aprovada pelo cliente", aprovou_interno:"Aprovada internamente (pauta sem cliente)", no_ar:"Campanha no ar", encerrou:"Campanha encerrada", entregou:"Entregue", captado:"Material captado: foi para a edição", validou:"Validada pelo Head", apresentou:"Apresentado ao cliente", aprovou_tudo:"Aprovada em \"aprovar todo o planejamento\"",
   ajuste:"Cliente pediu ajuste", registrou:"Aprovação registrada pela equipe", publicou:"Publicada", concluiu:"Tarefa concluída", iniciou:"Tarefa iniciada", reabriu:"Tarefa reaberta", ajuste_ok:"Ajuste concluído, de volta à revisão", data:"Data alterada", moveu:"Etapa alterada no quadro", notificou:"Notificação enviada"
 };
 const ICONS = {
@@ -794,6 +795,9 @@ function demoData(){
   D.clientes.forEach(c => { for (let k = -10; k <= 18; k += 2) { const s0 = k < -4 ? "publicado" : st[(i++) % 6]; const tp = i % 5 === 0 ? "stories" : "feed"; D.pecas.push({id:"pc" + i, clienteId:c.id, data:dd(k), tipo:tp, redes:["Instagram","Facebook"], status:s0, resp:{plan:"p-plan", prod:tp === "stories" ? "p-av" : "p-des"}, briefing:{headline:["Lançamento de serviço","Dica da semana","Bastidores","Depoimento","Promoção do mês","Evento"][i % 6], formatos:["Post estático"], legenda:s0 === "pauta" ? "" : "Legenda de exemplo."}, versao:s0 === "pauta" ? 0 : 1, midias:[], hist:[{acao:"pauta", em:at(k - 14), por:"p-plan"}].concat(["producao","revisao","cliente","ajuste","aprovado","publicado"].includes(s0) ? [{acao:"producao", em:at(k - 12), por:"p-plan"}] : []).concat(["revisao","cliente","aprovado","publicado"].includes(s0) ? [{acao:"entrega", em:at(k - 9), por:"p-des"}] : []).concat(s0 === "ajuste" ? [{acao:"enviou_cliente", em:at(k - 8), por:"p-plan"}, {acao:"ajuste", em:at(k - 7), por:"cliente", nome:"Cliente", texto:"Trocar a foto principal.", tipo:"arte"}] : []).concat(["cliente","aprovado","publicado"].includes(s0) ? [{acao:"enviou_cliente", em:at(k - 8), por:"p-plan"}] : []).concat(["aprovado","publicado"].includes(s0) ? [{acao:"aprovou", em:at(k - 6), por:"cliente", nome:"Cliente"}] : []).concat(s0 === "publicado" ? [{acao:"publicou", em:at(k), por:"p-head"}] : []), coments:[], ajusteCom:s0 === "ajuste" ? "criacao" : null, criadoEm:at(k - 14), v3:true}); } });
   D.pecas.push({id:"pc-av", clienteId:"", unidade:un, data:dd(2), tipo:"arte", redes:[], status:"producao", resp:{plan:"p-head", prod:"p-des"}, briefing:{headline:"Flyer do evento interno", formatos:["Impresso"]}, solicitante:"Alra (interno)", versao:0, midias:[], hist:[{acao:"pauta", em:at(-2), por:"p-head"}, {acao:"producao", em:at(-1), por:"p-head"}], coments:[], criadoEm:at(-2), criadoPor:"p-head", v3:true});
   D.pecas.push({id:"pc-tk", clienteId:"c-a", data:dd(1), tipo:"tarefa", redes:[], status:"pauta", resp:{plan:"p-head", prod:"p-tr"}, briefing:{headline:"Subir campanha de novembro"}, versao:0, midias:[], hist:[{acao:"pauta", em:at(-1), por:"p-head"}], coments:[], criadoEm:at(-1), v3:true});
+  D.pecas.push({id:"pc-vid", clienteId:"c-b", data:dd(6), tipo:"feed", redes:["Instagram"], status:"pauta", resp:{plan:"p-plan", prod:"p-av"}, briefing:{headline:"Reels: treino de 5 minutos", ideia:"Treino rápido", formatos:["Reels"]}, versao:0, midias:[], hist:[{acao:"pauta", em:at(-1), por:"p-plan"}], coments:[], criadoEm:at(-1), criadoPor:"p-plan", v3:true});
+  D.pecas.push({id:"pc-ads", clienteId:"c-a", data:dd(5), tipo:"anuncio", redes:["Meta Ads"], status:"aprovado", resp:{plan:"p-plan", prod:"p-des", traf:"p-tr"}, briefing:{headline:"Campanha de avaliação gratuita", formatos:["Post estático"], legenda:"Agende sua avaliação."}, versao:1, midias:[], hist:[{acao:"pauta", em:at(-6), por:"p-plan"}, {acao:"aprovou", em:at(-1), por:"cliente", nome:"Cliente"}], coments:[], criadoEm:at(-6), criadoPor:"p-plan", v3:true});
+  D.clientes[0].regras = {validaHead:true};
   D.captacoes = [{id:"cap1", clienteId:"c-b", titulo:"Reels de treino", data:dd(3), inicio:"09:00", fim:"11:00", local:"Unidade centro", resp:"p-av", status:"Confirmada", equip:["Câmera","Gimbal","Microfone"], pecas:[]}, {id:"cap2", clienteId:"c-c", titulo:"Fotos do cardápio", data:dd(-3), inicio:"14:00", fim:"16:00", local:"Loja", resp:"p-av", status:"Realizada", equip:["Câmera","Iluminação"], pecas:[]}];
   D.materiais = [{id:"m1", clienteId:"c-a", nome:"Logo principal", categoria:"Logo", origem:"Arquivo do cliente", link:"https://drive.google.com/", em:at(-30)}];
   return D;
@@ -884,12 +888,23 @@ async function portalPost(body){
   return j;
 }
 const nameField = () => mode === "portal" && !portalName() ? `<div class="field"><label for="pnome">Seu nome <span class="hint">· fica registrado junto com a sua resposta</span></label><input class="inp" id="pnome" value="${esc(ui.pnome || "")}" autocomplete="name"></div>` : "";
-let seenNotifs = null;
+let seenNotifs = null, audioCtx = null;
+function chime(){
+  try {
+    if (lsGet("alra-som") === "off") return;
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    const t0 = audioCtx.currentTime;
+    [[880, 0], [1320, 0.12]].forEach(([f, d]) => { const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.type = "sine"; o.frequency.value = f; g.gain.setValueAtTime(0.0001, t0 + d); g.gain.exponentialRampToValueAtTime(0.18, t0 + d + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + d + 0.35); o.connect(g).connect(audioCtx.destination); o.start(t0 + d); o.stop(t0 + d + 0.4); });
+  } catch(e) {}
+}
+document.addEventListener("pointerdown", () => { try { if (!audioCtx && lsGet("alra-som") !== "off") { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } else if (audioCtx && audioCtx.state === "suspended") audioCtx.resume(); } catch(e) {} }, {once: true});
 function notifyIncoming(){
   const mine = S.notifs.filter(n => n.para === ui.me && !n.lida);
   if (seenNotifs === null) { seenNotifs = new Set(mine.map(n => n.id)); return; }
   const fresh = mine.filter(n => !seenNotifs.has(n.id));
   fresh.forEach(n => seenNotifs.add(n.id));
+  if (fresh.length) chime();
   if (fresh.length) toast(fresh.length === 1 ? `${fromName(fresh[0])}: ${fresh[0].texto}` : `${fresh.length} novas notificações`);
 }
 
@@ -973,8 +988,12 @@ function headOfUnit(u){ const m = ME(); return !!m && (isDir() || (has("head") &
 function unitScope(){ if (isDir()) return ui.unidade === "todas" ? S.unidades.map(u => u.id) : [ui.unidade]; const m = ME(); return m ? [m.unidade] : []; }
 const inScope = c => unitScope().includes(c.unidade);
 function owner(p){
-  const r = p.resp || {};
+  const r = p.resp || {}, f = fluxoOf(p);
   if (isTask(p)) return ["pauta","producao"].includes(p.status) ? (r.prod || r.plan) : null;
+  if (f === "relatorio") return {pauta: r.prod || r.plan, producao: r.plan, revisao: diretorOf(p), aprovado: (atendimentoDe(cli(p.clienteId))[0] || r.plan)}[p.status] || null;
+  if (f === "trafego" && p.status === "aprovado") return trafOf(p);
+  if (f === "trafego" && p.status === "publicado") return p.encerrada ? null : trafOf(p);
+  if (f === "pontual" && p.status === "aprovado") return atendimentoDe(cli(p.clienteId))[0] || r.plan;
   switch (p.status) {
     case "pauta": case "revisao": return r.plan;
     case "producao": return r.prod;
@@ -995,7 +1014,7 @@ function canSee(p){
 const myTurn = p => owner(p) === ui.me && (p.status !== "aprovado" || diffDays(pd(p.data), TODAY) <= 1);
 const canPlan = p => headOfUnit(unitOf(p)) || (p.resp || {}).plan === ui.me;
 const canProduce = p => headOfUnit(unitOf(p)) || (p.resp || {}).prod === ui.me;
-const canPublish = p => headOfUnit(unitOf(p)) || (semCli(p) ? [(p.resp || {}).plan, (p.resp || {}).prod].includes(ui.me) : ((cli(p.clienteId).squad || {}).social || []).includes(ui.me));
+const canPublish = p => { const f = fluxoOf(p); if (headOfUnit(unitOf(p))) return true; if (f === "trafego") return trafOf(p) === ui.me || has("trafego"); if (f === "pontual") return atendimentoDe(cli(p.clienteId)).includes(ui.me) || (p.resp || {}).plan === ui.me; if (f === "relatorio") return atendimentoDe(cli(p.clienteId)).includes(ui.me); return semCli(p) ? [(p.resp || {}).plan, (p.resp || {}).prod].includes(ui.me) : ((cli(p.clienteId).squad || {}).social || []).includes(ui.me); };
 function visibleClients(){ return S.clientes.filter(c => inScope(c) && (headOfUnit(c.unidade) || Object.values(c.squad || {}).flat().includes(ui.me) || S.pecas.some(p => p.clienteId === c.id && canSee(p)))); }
 const canEditClient = c => !!c && (headOfUnit(c.unidade) || ((c.squad || {}).planejamento || []).includes(ui.me));
 const canPlanAny = () => isHead() || has("planejamento");
@@ -1055,12 +1074,49 @@ const isGenerated = (c, d) => !!((c.gerado || {})[ym(d)]) || S.pecas.some(p => p
 const REDES_ADS = ["Meta Ads","Google Ads","TikTok Ads","LinkedIn Ads"];
 const CATS = {simples:"Cartão simples", conteudo:"Conteúdo orgânico", trafego:"Tráfego pago", interna:"Interna (to-do)"};
 const isTask = p => p.tipo === "tarefa";
+const isRel = p => p.tipo === "relatorio";
+/* fluxo de cada tipo de pauta (documento "Organograma e fluxos de pauta") */
+function fluxoOf(p){
+  if (isRel(p)) return "relatorio";
+  if (isTask(p)) return "tarefa";
+  if (p.tipo === "anuncio") return "trafego";
+  if (!p.clienteId) return "interna";
+  if (canal(p).grupo === "avulsa") return "pontual";
+  if (isText(p)) return "texto";
+  if (isVideoP(p)) return "video";
+  return "arte";
+}
+const FLUXOS = {
+  arte:{nome:"Conteúdo com arte", etapas:"Pauta → Produção → Revisão → Cliente → Aprovado → Publicado"},
+  video:{nome:"Vídeo", etapas:"Roteiro → Captação → Edição → Revisão → Cliente → Aprovado → Publicado"},
+  texto:{nome:"Conteúdo de texto", etapas:"Pauta → Redação → Revisão → Cliente → Aprovado → Publicado"},
+  trafego:{nome:"Tráfego pago", etapas:"Briefing → Criativo → Revisão → Cliente → Aprovado → No ar → Encerrada"},
+  pontual:{nome:"Demanda pontual do cliente", etapas:"Solicitação → Produção → Revisão → Cliente → Aprovado → Entregue"},
+  interna:{nome:"Demanda interna (sem cliente)", etapas:"Pauta → Produção → Revisão → Aprovado → Entregue"},
+  tarefa:{nome:"Cartão simples e tarefa", etapas:"A fazer → Fazendo → Concluída"},
+  relatorio:{nome:"Relatório de resultados", etapas:"Coleta → Análise → Revisão da Diretoria → Pronto → Apresentado"}
+};
+/* pauta gerada pelo escopo do mês: atraso pela antecedência do cliente; as demais, pela própria data */
+const isEscopo = p => p.escopo === true || (!p.criadoPor && !!p.clienteId && !isTask(p) && !isRel(p) && p.tipo !== "anuncio" && canal(p).grupo !== "avulsa");
+const trafOf = p => (p.resp || {}).traf || (ativos().find(m => m.unidade === unitOf(p) && (m.papeis || []).includes("trafego")) || {}).id || (p.resp || {}).plan;
+const diretorOf = p => (p.resp || {}).dir || (ativos().find(m => m.unidade === unitOf(p) && (m.papeis || []).includes("diretoria")) || ativos().find(m => (m.papeis || []).includes("diretoria")) || {}).id;
 const isText = p => !!(CANAIS[p.tipo] || {}).texto;
 const needsArt = p => !isTask(p) && (!isText(p) || !!(p.briefing || {}).card);
 const catOf = p => isTask(p) ? "interna" : p.tipo === "anuncio" ? "trafego" : "conteudo";
 const TASK_ST = {pauta:"A fazer", producao:"Fazendo", publicado:"Concluída"};
-const stLabel = p => (isTask(p) && TASK_ST[p.status]) || (!p.clienteId && p.status === "publicado" && "Entregue") || (STATUS[p.status] || STATUS.pauta).label;
-const pillP = p => isTask(p) ? `<span class="pill ${p.status === "publicado" ? "t-ok" : p.status === "producao" ? "t-info" : "t-prod"}">${esc(stLabel(p))}</span>` : pill(p.status);
+function stLabel(p){
+  const f = fluxoOf(p), s = p.status;
+  if (f === "tarefa") return TASK_ST[s] || (STATUS[s] || STATUS.pauta).label;
+  if (f === "relatorio") return {pauta:"Coleta", producao:"Análise", revisao:"Revisão da Diretoria", aprovado:"Pronto para apresentar", publicado:"Apresentado"}[s] || (STATUS[s] || STATUS.pauta).label;
+  if (f === "video" && s === "pauta") return "Roteiro";
+  if (f === "video" && s === "producao") return p.subetapa === "edicao" ? "Edição" : "Captação";
+  if (f === "texto" && s === "pauta") return "Redação";
+  if (f === "trafego") { if (s === "pauta") return "Briefing"; if (s === "producao") return "Criativo"; if (s === "aprovado") return "Aprovado · configurar"; if (s === "publicado") return p.encerrada ? "Encerrada" : "No ar"; }
+  if (f === "pontual" && s === "pauta") return "Solicitação";
+  if ((f === "pontual" || f === "interna") && s === "publicado") return "Entregue";
+  return (STATUS[s] || STATUS.pauta).label;
+}
+const pillP = p => isTask(p) ? `<span class="pill ${p.status === "publicado" ? "t-ok" : p.status === "producao" ? "t-info" : "t-prod"}">${esc(stLabel(p))}</span>` : stLabel(p) === (STATUS[p.status] || {}).label ? pill(p.status) : `<span class="pill t-${(STATUS[p.status] || STATUS.pauta).tone}">${esc(stLabel(p))}</span>`;
 
 /* ================= cores da marca ================= */
 const validHex = h => { const m = String(h || "").trim().match(/^#?([0-9a-f]{6}|[0-9a-f]{3})$/i); if (!m) return ""; let x = m[1]; if (x.length === 3) x = x.split("").map(ch => ch + ch).join(""); return "#" + x.toUpperCase(); };
@@ -1213,7 +1269,9 @@ function mediaHTML(p, k, fit){
 }
 const thumb = p => mediaHTML(p, 0);
 function janela(p){
-  if (["aprovado","publicado"].includes(p.status)) return "";
+  if (p.status === "publicado") return "";
+  if (!isEscopo(p)) { const n = diffDays(pd(p.data), TODAY); return n < 0 ? `<span class="flag">Atrasada</span>` : n === 0 ? `<span class="flag soon">Vence hoje</span>` : n <= 2 ? `<span class="flag soon">Vence em ${n}d</span>` : ""; }
+  if (p.status === "aprovado") return "";
   if (isTask(p)) { const n = diffDays(pd(p.data), TODAY); return n < 0 ? `<span class="flag">Atrasada</span>` : n === 0 ? `<span class="flag soon">Vence hoje</span>` : ""; }
   const c = cli(p.clienteId), dl = deadlineOf(c, periodKey(c, pd(p.data)));
   const prazo = ["pauta","producao"].includes(p.status) ? addDays(dl, -2) : p.status === "revisao" ? dl : pd(p.data);
@@ -1224,6 +1282,16 @@ function janela(p){
   return "";
 }
 const isLate = p => janela(p).includes("Atrasada");
+/* prazo por etapa: alerta de pauta parada (não muda o atraso pela data) */
+const PRAZO_ST = {producao:"Produção / edição", revisao:"Revisão", cliente:"Com o cliente", ajuste:"Ajuste"};
+const prazosCfg = () => Object.assign({producao:3, revisao:1, cliente:3, ajuste:2}, S.cfg.prazos || {});
+function paradaHa(p){
+  const lim = prazosCfg()[p.status]; if (!lim || isTask(p)) return 0;
+  const h = [...(p.hist || [])].reverse().find(x => x.em); if (!h) return 0;
+  const d = diffDays(TODAY, new Date(new Date(h.em).setHours(0,0,0,0)));
+  return d > lim ? d : 0;
+}
+const paradaTag = p => { const d = paradaHa(p); return d ? `<span class="flag soon" title="Prazo da etapa: ${prazosCfg()[p.status]} dias">Parada há ${d}d</span>` : ""; };
 function toast(msg){ const el = $("#toastSlot"); el.innerHTML = `<div class="toast" role="status">${esc(msg)}</div>`; clearTimeout(toast.t); toast.t = setTimeout(() => el.innerHTML = "", 3800); }
 const entry = (acao, extra) => Object.assign({acao, em:nowIso(), por: isClient() || ui.preview ? "cliente" : ui.me}, extra || {});
 const sortP = a => a.slice().sort((x,y) => (x.data||"").localeCompare(y.data||"") || String(x.clienteId).localeCompare(String(y.clienteId)) || (x.tipo||"").localeCompare(y.tipo||""));
@@ -1241,8 +1309,16 @@ function stageNotify(p, st){
   else if (st === "cliente") { ids = atendimentoDe(c); msg = `Com o cliente para aprovação: ${t}`; }
   else if (st === "ajuste") { ids = [r.plan, r.prod]; msg = `Ajuste pedido pelo cliente: ${t}`; }
   else if (st === "aprovado") { ids = (c.squad || {}).social || []; msg = `Aprovada, pronta para publicar: ${t}`; }
+  const f = fluxoOf(p);
+  if (f === "trafego" && st === "aprovado") { ids = [trafOf(p)]; msg = `Criativo aprovado: configure a campanha ${t}`; }
+  if (f === "trafego" && st === "publicado") { ids = [r.plan, ...atendimentoDe(c)]; msg = `Campanha no ar: ${t}`; }
+  if (f === "pontual" && st === "aprovado") { ids = atendimentoDe(c); msg = `Aprovada, pronta para entregar: ${t}`; }
+  if (f === "relatorio") { ids = st === "producao" ? [r.plan] : st === "revisao" ? [diretorOf(p)] : st === "aprovado" ? atendimentoDe(c) : []; msg = `${stLabel(p)}: ${t}`; }
+  if (st === "revisao" && f !== "relatorio" && precisaHead(p)) { ids = ids.concat(ativos().filter(m => m.unidade === unitOf(p) && (m.papeis || []).includes("head")).map(m => m.id)); msg = `Para revisar e validar: ${t}`; }
   if (ids.length) notify(ids, msg, p);
 }
+const precisaHead = p => !!p.clienteId && !!((cli(p.clienteId).regras || {}).validaHead) && !isRel(p);
+const aguardaHead = p => precisaHead(p) && !p.validadoHead;
 function prodBlock(p){
   const b = p.briefing || {};
   if (!(p.resp || {}).prod) return "Defina quem produz antes.";
@@ -1266,6 +1342,17 @@ function archiveHTML(){
     <button type="button" class="btn sm primary" data-act="bulkRestore" ${n ? "" : "disabled"}>Restaurar ${n || ""}</button>
     ${!isDir() ? "" : ui.tmp.bulkDel ? `<button type="button" class="btn sm danger" data-act="bulkDeleteArchGo">Confirmar: apagar ${n} de vez</button>` : `<button type="button" class="btn sm danger" data-act="bulkDeleteArch" ${n ? "" : "disabled"}>Apagar de vez</button>`}</div>
     ${l.length ? `<div class="list">${l.map(p => `<label class="li" style="grid-template-columns:20px 44px minmax(0,1fr) auto;cursor:pointer"><input type="checkbox" data-sela="${esc(p.id)}" ${ui.sel.has(p.id) ? "checked" : ""}><span class="th">${isTask(p) ? `<span class="tkb">✓</span>` : thumb(p)}</span><span style="min-width:0"><span class="t">${esc(titleOf(p))}</span><span class="m">${cliTag(cli(p.clienteId))}<span>${esc(canal(p).label)}</span><span class="tnum">${esc(fmtD(p.data))}</span><span>arquivada ${esc(fmtStamp(p.arquivadaEm))}${p.arquivadaPor ? " por " + esc(mName(p.arquivadaPor)) : ""}</span></span></span>${pillP(p)}</label>`).join("")}</div>` : `<div class="empty"><p>Nada arquivado.</p></div>`}`;
+}
+function gerarRelatorios(){
+  const ym0 = ym(TODAY), vc = visibleClients().filter(c => canEditClient(c) && (c.status || "Ativo") !== "Inativo"); let n = 0;
+  vc.forEach(c => {
+    const id = `rel-${c.id}-${ym0}`; if (S.pecas.some(p => p.id === id) || (S.arquivo || []).some(p => p.id === id)) return;
+    const un = c.unidade, find = r => (ativos().find(m => m.unidade === un && (m.papeis || []).includes(r)) || {}).id;
+    const plan = find("head") || ((c.squad || {}).planejamento || [])[0] || ui.me, prod = find("trafego") || ((c.squad || {}).social || [])[0] || plan;
+    S.pecas.push({id, clienteId:c.id, data: TODAY.getDate() < 10 ? ymd(new Date(TODAY.getFullYear(), TODAY.getMonth(), 10)) : ymd(addDays(TODAY, 5)), tipo:"relatorio", redes:[], status:"pauta", resp:{plan, prod, dir: find("diretoria") || null}, briefing:{headline:`Relatório de resultados · ${monthLabel(firstOfMonth(addDays(firstOfMonth(TODAY), -1)))}`, formatos:[]}, versao:0, midias:[], hist:[entry("pauta")], coments:[], ajusteCom:null, criadoEm:nowIso(), criadoPor:ui.me, v3:true});
+    notify([prod], `Coleta do relatório de resultados: ${c.nome}`, S.pecas[S.pecas.length - 1]); n++;
+  });
+  save(); return n;
 }
 function archivePecas(ids){
   const set = new Set(ids), mv = S.pecas.filter(p => set.has(p.id) && canPlan(p));
@@ -1380,7 +1467,7 @@ function orientHTML(c, edit){
   const head = `<section class="card obhead"><div class="spread"><div><div class="eyebrow">Onboarding do cliente</div><h2>Checklist de iniciação do planejamento</h2><p class="muted" style="font-size:12.5px">Tudo o que a equipe precisa saber antes de pautar, criar ou falar com ${esc(c.nome)}. Preencha junto com o cliente na imersão ou envie o link para ele responder.</p></div>
     ${edit && ui.oriMode !== "fill" ? `<button type="button" class="btn primary" data-act="obFill" data-sec="${Math.max(0, BRIEF.findIndex(s => obCount(o, s.q) < s.q.length))}">${pr.all ? "Continuar preenchendo" : "Preencher na imersão"}</button>` : ""}</div>
     <div class="obprog"><div class="bar"><i style="width:${pr.pct}%;background:${pr.pct === 100 ? "var(--ok)" : "var(--accent)"}"></i></div><span class="tnum"><b>${pr.e}/${BRIEF_ESS.length}</b> essenciais · ${pr.all}/${BRIEF_Q.length} respostas</span><span class="muted" style="font-size:12px">${who}</span></div>
-    ${edit ? `<div class="oblink"><span class="lb">Link para o cliente responder</span>${url ? `<span class="note mono" style="font-size:12px;flex:1;min-width:200px">${esc(url)}</span><button type="button" class="btn sm primary" data-act="obCopy" data-cid="${esc(c.id)}">Copiar link</button><a class="btn sm" href="${esc(url)}" target="_blank" rel="noopener">Abrir</a><button type="button" class="btn sm ghost" data-act="obGen" data-cid="${esc(c.id)}">${ui.tmp.obRegen ? "Confirmar: novo link" : "Gerar novo link"}</button>` : `<span class="muted" style="font-size:12.5px;flex:1">O cliente responde sem login. As respostas aparecem aqui na hora.</span><button type="button" class="btn sm" data-act="obGen" data-cid="${esc(c.id)}">Criar link</button>`}</div>` : ""}</section>`;
+    ${edit && (pr.e < BRIEF_ESS.length || ui.oriMode === "fill") ? `<div class="oblink"><span class="lb">Link para o cliente responder</span>${url ? `<span class="note mono" style="font-size:12px;flex:1;min-width:200px">${esc(url)}</span><button type="button" class="btn sm primary" data-act="obCopy" data-cid="${esc(c.id)}">Copiar link</button><a class="btn sm" href="${esc(url)}" target="_blank" rel="noopener">Abrir</a><button type="button" class="btn sm ghost" data-act="obGen" data-cid="${esc(c.id)}">${ui.tmp.obRegen ? "Confirmar: novo link" : "Gerar novo link"}</button>` : `<span class="muted" style="font-size:12.5px;flex:1">O cliente responde sem login. As respostas aparecem aqui na hora.</span><button type="button" class="btn sm" data-act="obGen" data-cid="${esc(c.id)}">Criar link</button>`}</div>` : ""}</section>`;
   if (ui.oriMode === "fill" && edit) {
     const i = Math.min(Math.max(+ui.oriSec || 0, 0), BRIEF.length - 1), s = BRIEF[i];
     return `${head}<div class="obwrap">${obNavHTML(o, i, "data-obsec")}<section class="card obsec"><div class="spread"><div><div class="eyebrow">Etapa ${i + 1} de ${BRIEF.length}</div><h2>${esc(s.t)}</h2><p class="muted" style="font-size:12.5px">${esc(s.d)}</p></div><span class="hint" id="obsaved">Salvo automaticamente</span></div>
@@ -1468,6 +1555,8 @@ function notify(ids, texto, p, cid){
 function setStatus(p, st, ent, extra){
   const changed = p.status !== st;
   Object.assign(p, extra || {}); p.status = st; if (ent) p.hist.push(ent);
+  if (["pauta","producao","ajuste"].includes(st)) delete p.validadoHead;
+  if (st === "producao" && fluxoOf(p) === "video" && !p.subetapa) p.subetapa = "captacao";
   if (st === "cliente") { const c = cli(p.clienteId), id = pacoteId(c.id, periodKey(c, pd(p.data))); if (!S.pacotes.find(x => x.id === id)) S.pacotes.push({id, clienteId:c.id, enviadoEm: nowIso()}); }
   if (changed) stageNotify(p, st);
   save();
@@ -1594,8 +1683,8 @@ const STEPS = [
 function stepsHTML(){
   const done = STEPS.map(s => s.ok()), n = done.filter(Boolean).length, next = done.indexOf(false);
   let hid = false; try { hid = localStorage.getItem(LSKEY + "-guia") === "1"; } catch(e) {}
-  if (n === STEPS.length && hid) return "";
-  return `<section class="card"><div class="spread"><div><h2>Primeiros passos</h2><p class="muted" style="font-size:12.5px;margin-top:2px">Leve uma peça do cadastro do cliente até a publicação.</p></div><span class="row"><b class="tnum" style="font-size:13px">${n} de ${STEPS.length}</b>${n === STEPS.length ? `<button type="button" class="linkbtn" data-act="hideGuide">Ocultar guia</button>` : ""}</span></div>
+  if (hid) return "";
+  return `<section class="card"><div class="spread"><div><h2>Primeiros passos</h2><p class="muted" style="font-size:12.5px;margin-top:2px">Leve uma peça do cadastro do cliente até a publicação.</p></div><span class="row"><b class="tnum" style="font-size:13px">${n} de ${STEPS.length}</b><button type="button" class="btn sm" data-act="hideGuide">${n === STEPS.length ? "Ocultar guia" : "Concluir primeiros passos"}</button></span></div>
     <div class="progress"><i style="width:${n / STEPS.length * 100}%"></i></div>${n === STEPS.length ? `<div class="okbox">Fluxo completo testado.</div>` : ""}
     <div class="steps-list">${STEPS.map((s, i) => `<div class="stp${done[i] ? " done" : i === next ? " next" : ""}"><span class="ck">${done[i] ? "✓" : i + 1}</span><div><b>${esc(s.t)}</b><p>${esc(s.who)} · ${esc(s.d)}</p></div>${!done[i] && i === next ? `<button type="button" class="btn sm primary" data-step="${i}">Fazer agora</button>` : ""}</div>`).join("")}</div></section>`;
 }
@@ -1607,7 +1696,7 @@ const timeAtLeast = t => "CBA".indexOf(myTime()) >= "CBA".indexOf(t);
 /* data de produção: o campo da pauta ou, vazio, o prazo de envio ao cliente do período (antecedência do cliente) */
 function prodDate(p){
   if (p.dataProducao) return p.dataProducao;
-  if (p.clienteId && !isTask(p) && canal(p).grupo !== "avulsa" && p.data) { const c = cli(p.clienteId); if (c && c.escopo) return ymd(deadlineOf(c, periodKey(c, pd(p.data)))); }
+  if (isEscopo(p) && p.data) { const c = cli(p.clienteId); if (c && c.escopo) return ymd(deadlineOf(c, periodKey(c, pd(p.data)))); }
   return p.data;
 }
 const workerOf = p => isTask(p) ? ((p.resp || {}).prod || (p.resp || {}).plan) : needsArt(p) ? ((p.resp || {}).prod || (p.resp || {}).plan) : (p.resp || {}).plan;
@@ -1738,10 +1827,18 @@ function segurancaHTML(){
     <section class="card"><div class="eyebrow">Acessos</div><h2>Quem vê o quê</h2><div class="vault">${Object.entries({A:"Tudo do Time B, mais Configurações (usuários, unidades, integrações, backup).", B:"Tudo do Time C, mais Publicações e Dashboards, vendo a equipe toda da unidade.", C:"Início, Pauta da equipe (a própria linha), Kanban, Calendário, Aprovações, Captações e Clientes. Vê só o que é seu."}).map(([t, d]) => `<div class="vrow" style="grid-template-columns:minmax(0,1fr) minmax(0,3fr)"><b>${esc(TIMES[t])}</b><span class="muted" style="font-size:12.5px">${esc(d)}</span></div>`).join("")}<div class="vrow" style="grid-template-columns:minmax(0,1fr) minmax(0,3fr)"><b>Time D · Clientes</b><span class="muted" style="font-size:12.5px">Entram só pelos links do portal de aprovação e do onboarding, sem login.</span></div></div>
       <p class="muted" style="font-size:12px">O time vem do papel: Diretoria → A, Head → B, os demais → C. Em Usuários dá para fixar o time de alguém que foge da regra.</p></section>`;
 }
+function fluxosHTML(){
+  const pz = prazosCfg(), cont = f => S.pecas.filter(p => canSee(p) && fluxoOf(p) === f && p.status !== "publicado").length;
+  return `<p class="muted" style="font-size:12.5px;max-width:84ch">Cada tipo de pauta tem o próprio fluxo e um dono por etapa. O sistema reconhece o tipo pelo formato escolhido na criação. Pautas geradas pelo escopo do mês ficam atrasadas pela antecedência do cliente; as demais, só depois da própria data.</p>
+    <div class="tbw"><table class="tb"><thead><tr><th>Tipo</th><th>Etapas</th><th class="num">Em andamento</th></tr></thead><tbody>${Object.entries(FLUXOS).map(([k, f]) => `<tr><td><b>${esc(f.nome)}</b></td><td class="muted">${esc(f.etapas)}</td><td class="num">${cont(k)}</td></tr>`).join("")}</tbody></table></div>
+    <section class="card"><h2>Prazo por etapa</h2><p class="muted" style="font-size:12.5px">Dias corridos que uma pauta pode ficar na mesma etapa. Passou disso, o cartão mostra "Parada há N dias". Não muda o atraso pela data.</p>
+      <div class="form">${Object.entries(PRAZO_ST).map(([k, l]) => `<div class="field"><label for="pz-${k}">${l}</label><input class="inp" type="number" min="1" max="60" id="pz-${k}" data-prazo="${k}" value="${pz[k]}" ${isDirReal() ? "" : "disabled"}></div>`).join("")}</div></section>
+    <section class="card"><h2>Validação do Head</h2><p class="muted" style="font-size:12.5px">Ligada por cliente, em Editar cadastro e escopo. Com ela, a pauta só vai ao cliente depois que um Head validar na revisão. Clientes com validação: ${esc(S.clientes.filter(c => (c.regras || {}).validaHead).map(c => c.nome).join(", ") || "nenhum")}.</p></section>`;
+}
 function configHTML(){
-  const tabs = [["usuarios","Usuários"],["unidades","Unidades"],["integracoes","Integrações"],["seguranca","Segurança e backup"]];
+  const tabs = [["usuarios","Usuários"],["fluxos","Fluxos de pauta"],["unidades","Unidades"],["integracoes","Integrações"],["seguranca","Segurança e backup"]];
   if (!tabs.some(t => t[0] === ui.cfgTab)) ui.cfgTab = "usuarios";
-  const body = ui.cfgTab === "usuarios" ? usuariosHTML() : ui.cfgTab === "unidades" ? unidadesHTML() : ui.cfgTab === "integracoes" ? integracoesHTML() : segurancaHTML();
+  const body = ui.cfgTab === "fluxos" ? fluxosHTML() : ui.cfgTab === "usuarios" ? usuariosHTML() : ui.cfgTab === "unidades" ? unidadesHTML() : ui.cfgTab === "integracoes" ? integracoesHTML() : segurancaHTML();
   return `<div><div class="eyebrow">Time A · Diretoria</div><h1>Configurações</h1></div><div class="tabs" role="group">${tabs.map(([k, l]) => `<button type="button" data-act="cfgTab" data-tab="${k}" aria-pressed="${ui.cfgTab === k}">${l}</button>`).join("")}</div>${body}`;
 }
 
@@ -1826,7 +1923,7 @@ function calendarioHTML(){
     ${planner ? `<p class="muted" style="font-size:12px">Arraste uma peça para outro dia para mudar a data. O + em cada dia cria uma pauta avulsa.</p>` : ""}`;
 }
 function evHTML(p){
-  const c = cli(p.clienteId), s = STATUS[p.status], drag = canPlan(p) && !["aprovado","publicado"].includes(p.status);
+  const c = cli(p.clienteId), s = STATUS[p.status], drag = canPlan(p) && p.status !== "publicado";
   return `<button type="button" class="ev t-${s.tone}" data-open="${esc(p.id)}" ${drag ? 'draggable="true"' : ""} title="${esc(c.nome + " · " + canal(p).label + " · " + s.label)}"><span class="dot" style="background:${esc(c.cor)}"></span><span class="k">${canal(p).k}</span><span class="h">${esc((p.briefing || {}).headline || s.label)}</span></button>`;
 }
 
@@ -1839,7 +1936,7 @@ function pecasHTML(){
 
   if (ui.sf === "minha") ps = mine; else if (STATUS[ui.sf]) ps = ps.filter(p => p.status === ui.sf);
   const nArq = (S.arquivo || []).filter(p => { const u = unitOf(p); return unitScope().includes(u) && (headOfUnit(u) || (p.resp || {}).plan === ui.me || (p.resp || {}).prod === ui.me || p.criadoPor === ui.me); }).length;
-  const head = `<div class="spread"><div><div class="eyebrow">${isHead() ? "Visão de Head · todas as pautas da unidade" : "Pautas atribuídas a você"}</div><h1>${mine.length ? `<em>${mine.length}</em> ${mine.length === 1 ? "pauta pede" : "pautas pedem"} sua ação` : "Nada pendente com você"}</h1></div>${(canPlanAny() || isHead()) ? `<button type="button" class="btn primary" data-act="newPeca">+ Nova pauta</button>` : ""}</div>`;
+  const head = `<div class="spread"><div><div class="eyebrow">${isHead() ? "Visão de Head · todas as pautas da unidade" : "Pautas atribuídas a você"}</div><h1>${mine.length ? `<em>${mine.length}</em> ${mine.length === 1 ? "pauta pede" : "pautas pedem"} sua ação` : "Nada pendente com você"}</h1></div><div class="row">${isHead() ? `<button type="button" class="btn" data-act="relGen" title="Cria um relatório de resultados do mês para cada cliente">Gerar relatórios do mês</button>` : ""}${(canPlanAny() || isHead()) ? `<button type="button" class="btn primary" data-act="newPeca">+ Nova pauta</button>` : ""}</div></div>`;
   if (!vc.length && !S.pecas.some(canSee)) return head + noClients();
   if (!S.pecas.some(canSee) && ui.sf !== "arquivo") return head + (nArq ? `<div><button type="button" class="chip" data-sf="arquivo">Arquivadas (${nArq})</button></div>` : "") + `<div class="empty"><h2>Nenhuma pauta ativa</h2><p>${canPlanAny() ? "Gere as pautas do mês no calendário ou crie uma pauta avulsa aqui, com ou sem cliente: conteúdo, tráfego ou tarefa interna." : "Quando o planejamento enviar uma pauta para você, ela aparece aqui."}</p>${canPlanAny() ? `<button type="button" class="btn primary" data-go="calendario">Ir para o calendário</button>` : ""}</div>`;
   return head + `<div class="row"><button type="button" class="chip" data-sf="minha" aria-pressed="${ui.sf === "minha"}">Minha vez (${mine.length})</button><button type="button" class="chip" data-sf="todas" aria-pressed="${ui.sf === "todas"}">Todas</button>${STATUS[ui.sf] ? `<button type="button" class="chip" aria-pressed="true" data-sf="todas">${esc(STATUS[ui.sf].label)} ×</button>` : ""}${nArq ? `<button type="button" class="chip" data-sf="arquivo" aria-pressed="${ui.sf === "arquivo"}">Arquivadas (${nArq})</button>` : ""}</div>
@@ -1853,7 +1950,7 @@ function kcHTML(p){
 function kcBtn(p){
   const c = cli(p.clienteId), o = owner(p);
   const sm = ui.selMode, can = canPlan(p), on = ui.sel.has(p.id);
-  return `<button type="button" class="kc${myTurn(p) ? " mine" : ""}${isTask(p) ? " task" : ""}${sm ? " selmode" : ""}${on ? " picked" : ""}" ${sm ? (can ? `data-selp="${esc(p.id)}" aria-pressed="${on}"` : `disabled title="Só o planejamento desta pauta pode arquivar ou excluir"`) : `data-open="${esc(p.id)}" draggable="true"`}>${sm ? `<span class="ck${on ? " on" : ""}" aria-hidden="true">${on ? "✓" : ""}</span>` : ""}${isTask(p) ? `<span class="th tk">✓</span>` : isText(p) && !(p.midias || []).length ? `<span class="th tx">Aa</span>` : `<span class="th">${thumb(p)}</span>`}<span style="min-width:0"><span class="t">${esc(titleOf(p))}</span><span class="m">${p.simples ? `<span>Cartão</span>` : cliTag(c)}</span><span class="m"><span>${canal(p).k}</span><span class="tnum">${esc(fmtShort(p.data))}</span>${isTask(p) && p.status === "publicado" ? `<span>Concluída</span>` : janela(p)}${o && o !== "cliente" ? av(o, 18) : ""}</span></span></button>`;
+  return `<button type="button" class="kc${myTurn(p) ? " mine" : ""}${isTask(p) ? " task" : ""}${sm ? " selmode" : ""}${on ? " picked" : ""}" ${sm ? (can ? `data-selp="${esc(p.id)}" aria-pressed="${on}"` : `disabled title="Só o planejamento desta pauta pode arquivar ou excluir"`) : `data-open="${esc(p.id)}" draggable="true"`}>${sm ? `<span class="ck${on ? " on" : ""}" aria-hidden="true">${on ? "✓" : ""}</span>` : ""}${isTask(p) ? `<span class="th tk">✓</span>` : isText(p) && !(p.midias || []).length ? `<span class="th tx">Aa</span>` : `<span class="th">${thumb(p)}</span>`}<span style="min-width:0"><span class="t">${esc(titleOf(p))}</span><span class="m">${p.simples ? `<span>Cartão</span>` : cliTag(c)}</span><span class="m"><span>${canal(p).k}</span><span class="tnum">${esc(fmtShort(p.data))}</span>${isTask(p) && p.status === "publicado" ? `<span>Concluída</span>` : janela(p) || paradaTag(p)}${stLabel(p) !== (STATUS[p.status] || {}).label && !isTask(p) ? `<span class="stx">${esc(stLabel(p))}</span>` : ""}${o && o !== "cliente" ? av(o, 18) : ""}</span></span></button>`;
 }
 function readyToSend(p){
   const b = p.briefing || {}, c = cli(p.clienteId);
@@ -1865,6 +1962,8 @@ function readyToSend(p){
 function moveTo(p, st){
   if (p.status === st) return;
   const b = p.briefing || {}, from = p.status;
+  if (isRel(p)) { if (["cliente","ajuste"].includes(st)) return toast("O relatório não passa pela aprovação do cliente: é apresentado."); if (!canPlan(p) && owner(p) !== ui.me) return toast("Só quem está com o relatório pode movê-lo."); setStatus(p, st, entry("moveu", {texto:`${stLabel(Object.assign({}, p, {status:from}))} → ${stLabel(Object.assign({}, p, {status:st}))}`})); toast(`${titleOf(p)} → ${stLabel(p)}`); return render(); }
+  if (st === "cliente" && aguardaHead(p)) return toast("Este cliente exige a validação de um Head antes de ir ao cliente.");
   if (isTask(p)) {
     if (!["pauta","producao","publicado"].includes(st)) return toast("Tarefas internas vão de A fazer para Fazendo e Concluída.");
     if (!canPlan(p) && !canProduce(p)) return toast("Só o responsável pela tarefa pode movê-la.");
@@ -1886,7 +1985,7 @@ function moveTo(p, st){
   else if (st === "cliente") { if (!canPlan(p)) return toast("Só o planejamento desta pauta pode enviar ao cliente."); if (from !== "revisao") return toast("A pauta passa pela revisão antes de ir ao cliente."); const e = readyToSend(p); if (e) return toast(e); setStatus(p, "cliente", entry("enviou_cliente"), {ajusteCom:null}); }
   else if (st === "aprovado") { if (!canPlan(p)) return toast("Só o planejamento pode registrar a aprovação."); if (from !== "cliente") return toast("A pauta precisa estar com o cliente para ser aprovada."); setStatus(p, "aprovado", entry("registrou", {texto:"Aprovação registrada pelo quadro."})); }
   else if (st === "ajuste") { if (!canPlan(p)) return toast("Só o planejamento pode registrar ajuste."); if (!["cliente","aprovado"].includes(from)) return toast("Ajuste é o pedido do cliente: a pauta precisa estar com o cliente."); ui.openId = p.id; ui.idx = 0; ui.tmp = {reg:"aj"}; fillOverlay(); return toast("Registre o que o cliente pediu."); }
-  else if (st === "publicado") { if (!canPublish(p)) return toast("Só o social media desta pauta pode marcar como publicada."); if (from !== "aprovado") return toast("Só pautas aprovadas podem ser publicadas."); setStatus(p, "publicado", entry("publicou")); }
+  else if (st === "publicado") { const f = fluxoOf(p); if (!canPublish(p)) return toast(f === "trafego" ? "Só o tráfego desta campanha pode marcar como no ar." : f === "pontual" ? "Só o atendimento pode marcar como entregue." : "Só o social media desta pauta pode marcar como publicada."); if (from !== "aprovado") return toast("Só pautas aprovadas avançam para a última etapa."); setStatus(p, "publicado", entry(f === "trafego" ? "no_ar" : f === "pontual" || f === "interna" ? "entregou" : "publicou")); }
   else if (st === "pauta") { if (!canPlan(p)) return toast("Só o planejamento pode voltar a pauta para o início."); setStatus(p, "pauta", entry("moveu", {texto:`${STATUS[from].label} → Pauta`})); }
   toast(`${titleOf(p)} → ${stLabel(p)}`); render();
 }
@@ -2073,7 +2172,7 @@ function drawerHTML(p){
   if (ui.idx >= ms.length) ui.idx = 0;
   const canEd = canPlan(p) || canProduce(p), ed = !!u.edit && canEd;
   const edT = ed && canPlan(p) && ["pauta","producao","revisao"].includes(p.status), edB = ed && canPlan(p) && ["pauta","producao","revisao","ajuste"].includes(p.status), dis = edB ? "" : "disabled";
-  const edFiles = canProduce(p) && ["producao","ajuste","pauta","revisao"].includes(p.status) && !(p.status === "ajuste" && p.ajusteCom === "planejamento");
+  const edFiles = (headOfUnit(unitOf(p)) && ["pauta","producao","revisao","ajuste"].includes(p.status)) || (canProduce(p) && ["producao","ajuste","pauta","revisao"].includes(p.status) && !(p.status === "ajuste" && p.ajusteCom === "planejamento"));
   const unitPpl = ativos().filter(m => m.unidade === c.unidade);
   const opt = (list, sel) => `<option value="">Definir…</option>` + list.map(m => `<option value="${esc(m.id)}" ${sel === m.id ? "selected" : ""}>${esc(m.nome)}</option>`).join("");
   const top = `<div class="d-top"><button type="button" class="x" data-act="close" aria-label="Fechar">×</button><div class="ttl"><b>${esc(titleOf(p))}</b><span>${p.simples ? "Cartão simples" : cliTag(c)}${p.solicitante ? ` · para ${esc(p.solicitante)}` : ""} · ${esc(fmtD(p.data))}${p.simples ? "" : " · " + esc(isTask(p) ? "Tarefa interna" : t.label)}</span></div>${pillP(p)}${canEd ? `<button type="button" class="btn sm${ed ? " primary" : ""}" data-act="pgEdit">${ed ? "Concluir edição" : "Editar"}</button>` : ""}</div>`;
@@ -2089,7 +2188,7 @@ function drawerHTML(p){
       ${actionsHTML(p, c, false)}
       <div class="form"><div class="field full"><label for="f-hl">${p.simples ? "Título" : "Tarefa"}</label><input class="inp" id="f-hl" data-b="headline" value="${esc(b.headline)}" ${ed ? "" : "disabled"}></div>
         <div class="field full"><label for="f-ideia">${p.simples ? "Texto" : "Descrição e checklist"}</label><textarea id="f-ideia" data-b="ideia" rows="${p.simples ? 10 : 6}" placeholder="O que precisa ser feito, links, passos…" ${ed ? "" : "disabled"}>${esc(b.ideia)}</textarea></div>
-        <div class="field"><label for="f-data">${p.simples ? "Data de fim" : "Prazo"}</label><input class="inp" type="date" id="f-data" data-top="data" value="${esc(p.data)}" ${ed ? "" : "disabled"}></div>
+        <div class="field"><label for="f-data">${p.simples ? "Data de fim" : "Prazo"}</label><input class="inp" type="date" id="f-data" data-top="data" value="${esc(p.data)}" ${(canPlan(p) || canProduce(p)) && p.status !== "publicado" ? "" : "disabled"}></div>
         <div class="field"><label for="f-rc">Responsável</label><select class="inp" id="f-rc" data-top="prod" ${ed ? "" : "disabled"}>${opt(p.simples ? ativos().filter(m => unitScope().includes(m.unidade)) : unitPpl, (p.resp || {}).prod)}</select></div>
         ${p.simples ? "" : driveField}</div>${chat}</div></div></aside>`;
   }
@@ -2128,7 +2227,8 @@ function drawerHTML(p){
   const legenda = txt ? "" : `<section class="psec"><h3>${p.tipo === "anuncio" ? "Texto do anúncio" : "Legenda"}</h3><textarea id="f-leg" data-b="legenda" rows="7" ${dis}>${esc(b.legenda)}</textarea><div class="cap-foot"><span class="tnum ${capLen > 2200 ? "over" : ""}" id="capcount">${capLen.toLocaleString("pt-BR")} / 2.200 caracteres</span>${b.legenda ? `<button type="button" class="linkbtn" data-copy="${esc(p.id)}">Copiar</button>` : ""}</div></section>`;
   const midias = !art ? "" : `<section class="psec"><h3>Mídias</h3><div class="viewer pgv">${ms.length ? `<div class="stagebox"><div class="frame" style="aspect-ratio:${t.ratio}">${mediaHTML(p, ui.idx, "play")}</div>${ms.length > 1 ? `<button type="button" class="navb p" data-act="prev" aria-label="Anterior">‹</button><button type="button" class="navb n" data-act="next" aria-label="Próxima">›</button>` : ""}</div>${strip}`
     : `<div class="frame blank" style="aspect-ratio:${t.ratio};max-width:340px">${p.drive ? "Arquivos no Drive" : p.status === "pauta" ? "A arte entra aqui quando a produção anexar." : "Nenhum arquivo anexado ainda."}</div>`}
-    <div class="spec">${esc(t.label)} · ${esc((p.redes || []).join(" + ") || t.net)}${p.versao ? ` · versão ${p.versao}` : ""}</div>${p.drive ? `<a class="btn sm" href="${esc(p.drive)}" target="_blank" rel="noopener">Abrir no Drive</a>` : ""}</div></section>`;
+    <div class="spec">${esc(t.label)} · ${esc((p.redes || []).join(" + ") || t.net)}${p.versao ? ` · versão ${p.versao}` : ""}</div>${p.drive ? `<a class="btn sm" href="${esc(p.drive)}" target="_blank" rel="noopener">Abrir no Drive</a>` : ""}
+    ${edFiles && ed ? `<label class="btn sm" for="upfile2" style="cursor:pointer"><input type="file" id="upfile2" multiple accept="image/png,image/jpeg,image/webp,image/gif,video/mp4,video/webm" hidden>+ Adicionar arquivos</label><span class="hint">Use × embaixo de cada miniatura para remover e ‹ › para reordenar.</span>${u.progress ? `<span class="hint" style="color:var(--accent-fg);font-weight:700">${esc(u.progress)}</span>` : ""}` : ""}</div></section>`;
   const refs = pubLine ? `<section class="psec"><h3>Referências</h3><div class="form"><div class="field full"><label for="f-ref">Referências</label><textarea id="f-ref" data-b="referencias" rows="2" placeholder="Pinterest, Behance, sites…" ${dis}>${esc(b.referencias)}</textarea></div>
         <div class="field full"><label for="f-refig">Link de referência do Instagram</label><div class="row" style="flex-wrap:nowrap"><input class="inp" id="f-refig" data-b="refIg" value="${esc(b.refIg)}" placeholder="https://www.instagram.com/p/…" ${dis}>${/^https?:\/\//.test(b.refIg || "") ? `<a class="btn sm" href="${esc(b.refIg)}" target="_blank" rel="noopener">Abrir</a>` : ""}</div></div></div></section>` : "";
   const pdDef = (() => { const x = Object.assign({}, p, {dataProducao: ""}); return prodDate(x); })();
@@ -2146,11 +2246,13 @@ function drawerHTML(p){
       <section class="psec"><h3>Propriedades</h3><div class="form props">
         <div class="field full"><span class="lb">Cliente</span><div style="min-height:30px;display:flex;align-items:center">${cliTag(c)}${p.solicitante ? `<span class="muted" style="font-size:12px;margin-left:6px">· para ${esc(p.solicitante)}</span>` : ""}</div></div>
         <div class="field full"><span class="lb">${canal(p).grupo === "avulsa" ? "Formato" : "Rede"}</span><div class="row" style="min-height:30px">${redesField}</div></div>
-        <div class="field"><label for="f-data">${canal(p).grupo === "avulsa" ? "Prazo de entrega" : "Data de postagem"}</label><input class="inp" type="date" id="f-data" data-top="data" value="${esc(p.data)}" ${edT ? "" : "disabled"}></div>
-        <div class="field"><label for="f-dprod">Data de produção</label><input class="inp" type="date" id="f-dprod" data-top="dataProducao" value="${esc(p.dataProducao || "")}" ${p.dataProducao ? "" : "data-empty"} ${edT ? "" : "disabled"}><span class="hint">${p.dataProducao ? "Definida na pauta." : `Vazia: ${esc(fmtShort(pdDef))}, pela antecedência do cliente.`}</span></div>
-        <div class="field"><label for="f-rp">Planejamento</label><select class="inp" id="f-rp" data-top="plan" ${edT ? "" : "disabled"}>${opt(planners, (p.resp || {}).plan)}</select></div>
-        ${art ? `<div class="field"><label for="f-rc">${txt ? "Design do card" : "Produção"}</label><select class="inp" id="f-rc" data-top="prod" ${edT ? "" : "disabled"}>${opt(producers, (p.resp || {}).prod)}</select></div>` : `<div class="field"></div>`}
-        <div class="field full"><span class="lb">Formatos de entrega</span><div class="seg">${txt ? `<label><input type="checkbox" data-card ${b.card ? "checked" : ""} ${dis}> Card estático</label>${b.card ? "" : `<span class="hint" style="align-self:center">Marque se o conteúdo leva banner ou card.</span>`}` : (canal(p).grupo === "avulsa" ? FORMATOS_GEN : FORMATOS).map(f => `<label><input type="checkbox" data-fmt value="${esc(f)}" ${(b.formatos || []).includes(f) ? "checked" : ""} ${dis}> ${esc(f)}</label>`).join("")}</div></div>
+        <div class="field"><label for="f-data">${canal(p).grupo === "avulsa" ? "Prazo de entrega" : "Data de postagem"}</label><input class="inp" type="date" id="f-data" data-top="data" value="${esc(p.data)}" ${canPlan(p) && p.status !== "publicado" ? "" : "disabled"}></div>
+        <div class="field"><label for="f-dprod">Data de produção</label><input class="inp" type="date" id="f-dprod" data-top="dataProducao" value="${esc(p.dataProducao || "")}" ${p.dataProducao ? "" : "data-empty"} ${canPlan(p) && p.status !== "publicado" ? "" : "disabled"}><span class="hint">${p.dataProducao ? "Definida na pauta." : isEscopo(p) ? `Vazia: ${esc(fmtShort(pdDef))}, pela antecedência do cliente.` : "Vazia: vale a data da pauta."}</span></div>
+        ${fluxoOf(p) === "trafego" ? `<div class="field full"><label for="f-rt">Tráfego (configura e acompanha)</label><select class="inp" id="f-rt" data-top="traf" ${edT || (canPlan(p) && p.status !== "publicado") ? "" : "disabled"}>${opt(unitPpl.filter(m => (m.papeis || []).includes("trafego") || (m.papeis || []).includes("head")), trafOf(p))}</select></div>` : ""}
+        ${isRel(p) ? `<div class="field"><label for="f-rcol">Coleta</label><select class="inp" id="f-rcol" data-top="prod" ${edT ? "" : "disabled"}>${opt(unitPpl, (p.resp || {}).prod)}</select></div><div class="field"><label for="f-rp">Análise</label><select class="inp" id="f-rp" data-top="plan" ${edT ? "" : "disabled"}>${opt(unitPpl.filter(m => (m.papeis || []).some(r => ["head","diretoria","planejamento"].includes(r))), (p.resp || {}).plan)}</select></div><div class="field full"><label for="f-rdir">Revisão da Diretoria</label><select class="inp" id="f-rdir" data-top="dir" ${edT ? "" : "disabled"}>${opt(unitPpl.filter(m => (m.papeis || []).includes("diretoria")), diretorOf(p))}</select></div>` : `
+        <div class="field"><label for="f-rp">Planejamento</label><select class="inp" id="f-rp" data-top="plan" ${edT ? "" : "disabled"}>${opt(planners, (p.resp || {}).plan)}</select></div>`}
+        ${isRel(p) ? "" : art ? `<div class="field"><label for="f-rc">${txt ? "Design do card" : "Produção"}</label><select class="inp" id="f-rc" data-top="prod" ${edT ? "" : "disabled"}>${opt(producers, (p.resp || {}).prod)}</select></div>` : `<div class="field"></div>`}
+        ${isRel(p) ? "" : `<div class="field full"><span class="lb">Formatos de entrega</span><div class="seg">${txt ? `<label><input type="checkbox" data-card ${b.card ? "checked" : ""} ${dis}> Card estático</label>${b.card ? "" : `<span class="hint" style="align-self:center">Marque se o conteúdo leva banner ou card.</span>`}` : (canal(p).grupo === "avulsa" ? FORMATOS_GEN : FORMATOS).map(f => `<label><input type="checkbox" data-fmt value="${esc(f)}" ${(b.formatos || []).includes(f) ? "checked" : ""} ${dis}> ${esc(f)}</label>`).join("")}</div></div>`}
         ${driveField}
       </div></section>
       ${delRow}
@@ -2166,9 +2268,20 @@ function actionsHTML(p, c, edFiles){
     else out.push(`<div class="note">Responsável: ${esc(mName((p.resp || {}).prod))}</div>`);
     return `<div class="sec" style="display:flex;flex-direction:column;gap:10px"><h3>Próximo passo</h3>${out.join("")}</div>`;
   }
-  const art = needsArt(p);
-  if (p.status === "pauta" && canPlan(p)) out.push(art ? `<div class="actions"><button type="button" class="btn primary" data-act="toProd">Enviar para produção</button></div><div class="muted" style="font-size:12px">Precisa de quem produz, da ideia ou headline e dos formatos de entrega.</div>` : `<div class="actions"><button type="button" class="btn primary" data-act="textReady">Texto pronto: enviar para revisão</button></div><div class="muted" style="font-size:12px">Pauta só de texto: não passa pela produção.</div>`);
-  if (edFiles && art && ["producao","ajuste"].includes(p.status) && !(p.status === "ajuste" && p.ajusteCom === "planejamento")) {
+  if (isRel(p)) {
+    const r = p.resp || {}, me = ui.me, head = headOfUnit(unitOf(p));
+    if (p.status === "pauta" && (r.prod === me || head)) out.push(`<div class="actions"><button type="button" class="btn primary" data-act="relGo" data-st="producao">Dados coletados: enviar para análise</button></div><div class="muted" style="font-size:12px">Coleta: ${esc(mName(r.prod))} exporta os números do mês e anexa no link do Drive.</div>`);
+    if (p.status === "producao" && (r.plan === me || head)) out.push(`<div class="actions"><button type="button" class="btn primary" data-act="relGo" data-st="revisao">Análise pronta: enviar para a Diretoria</button></div><div class="muted" style="font-size:12px">Escreva o diagnóstico e os próximos passos no texto do relatório.</div>`);
+    if (p.status === "revisao" && (isDir() || diretorOf(p) === me)) out.push(`<div class="actions"><button type="button" class="btn primary" data-act="relGo" data-st="aprovado">Aprovar para apresentar</button><button type="button" class="btn" data-act="relGo" data-st="producao">Devolver para a análise</button></div>`);
+    if (p.status === "aprovado" && canPublish(p)) out.push(`<div class="actions"><button type="button" class="btn ok" data-act="relGo" data-st="publicado">Apresentado ao cliente</button></div>`);
+    if (!out.length) out.push(`<div class="note">${p.status === "publicado" ? "Relatório apresentado." : `Agora está com ${esc(mName(owner(p)))}.`}</div>`);
+    return `<div class="sec" style="display:flex;flex-direction:column;gap:10px"><h3>Próximo passo</h3>${out.join("")}</div>`;
+  }
+  const art = needsArt(p), fx = fluxoOf(p);
+  if (p.status === "pauta" && canPlan(p) && fx === "video") out.push(`<div class="actions"><button type="button" class="btn primary" data-act="toProd" data-sub="captacao">Enviar para captação</button><button type="button" class="btn" data-act="toProd" data-sub="edicao">Já tem material: direto para edição</button></div><div class="muted" style="font-size:12px">Roteiro pronto: o audiovisual capta e depois edita. Ligue a pauta a uma captação em Captações.</div>`);
+  else if (p.status === "pauta" && canPlan(p)) out.push(art ? `<div class="actions"><button type="button" class="btn primary" data-act="toProd">Enviar para produção</button></div><div class="muted" style="font-size:12px">Precisa de quem produz, da ideia ou headline e dos formatos de entrega.</div>` : `<div class="actions"><button type="button" class="btn primary" data-act="textReady">Texto pronto: enviar para revisão</button></div><div class="muted" style="font-size:12px">Pauta só de texto: não passa pela produção.</div>`);
+  if (fx === "video" && p.status === "producao" && p.subetapa !== "edicao" && edFiles) out.push(`<div class="box"><b style="font-size:13px">Captação</b><span class="muted" style="font-size:12.5px">Quando o material bruto estiver no Drive, passe para a edição. Marcar a captação ligada como Realizada faz isso sozinho.</span><div class="actions"><button type="button" class="btn primary" data-act="toEdicao">Material captado: ir para edição</button></div></div>`);
+  if (edFiles && art && ["producao","ajuste"].includes(p.status) && !(p.status === "ajuste" && p.ajusteCom === "planejamento") && !(fx === "video" && p.status === "producao" && p.subetapa !== "edicao")) {
     out.push(`<div class="box"><b style="font-size:13px">${p.status === "ajuste" ? "Ajuste na arte" : p.versao ? "Nova versão" : isText(p) ? "Card / banner" : "Arte final"}</b>
       <label class="upl" for="upfile"><input type="file" id="upfile" multiple accept="image/png,image/jpeg,image/webp,image/gif,video/mp4,video/webm" hidden><b>Anexar arquivos</b><br><span class="muted">PNG, JPG, WEBP, MP4 até 20 MB · no carrossel, a ordem segue o nome do arquivo e pode ser ajustada embaixo da prévia · arquivos maiores vão pelo link do Drive</span></label>
       ${u.progress ? `<div class="hint" style="color:var(--accent-fg);font-weight:700">${esc(u.progress)}</div>` : ""}
@@ -2176,23 +2289,27 @@ function actionsHTML(p, c, edFiles){
       <div class="actions"><button type="button" class="btn primary" data-act="toReview">${p.status === "ajuste" ? "Ajuste feito: enviar para revisão" : "Enviar para revisão"}</button></div><div class="muted" style="font-size:12px">A janela fica aberta: confira os arquivos e envie quando estiver pronto.</div></div>`);
   }
   if (p.status === "ajuste" && (p.ajusteCom === "planejamento" || !art) && canPlan(p)) out.push(`<div class="actions"><button type="button" class="btn primary" data-act="ajusteOk">Ajuste concluído: enviar para revisão</button></div><div class="muted" style="font-size:12px">Depois da revisão, a pauta volta para o cliente.</div>`);
+  if (p.status === "revisao" && precisaHead(p)) out.push(p.validadoHead ? `<div class="okbox">Validada pelo Head.</div>` : `<div class="box"><b style="font-size:13px">Aguardando validação do Head</b><span class="muted" style="font-size:12.5px">Este cliente exige a validação de um Head antes de ir para aprovação.</span>${isHead() ? `<div class="actions"><button type="button" class="btn primary" data-act="validarHead">Validar</button></div>` : ""}</div>`);
   if (p.status === "revisao" && canPlan(p)) {
-    out.push(`<div class="actions">${semCli(p) ? `<button type="button" class="btn primary" data-act="approveInternal">Aprovar (sem cliente)</button>` : `<button type="button" class="btn primary" data-act="toClient">Enviar ao cliente</button>`}${art ? `<button type="button" class="btn" data-act="toggleBack">Devolver para produção</button>` : ""}</div>`);
+    out.push(`<div class="actions">${semCli(p) ? `<button type="button" class="btn primary" data-act="approveInternal">Aprovar (sem cliente)</button>` : `<button type="button" class="btn primary" data-act="toClient" ${aguardaHead(p) ? 'disabled title="Aguardando validação do Head"' : ""}>Enviar ao cliente</button>`}${art ? `<button type="button" class="btn" data-act="toggleBack">Devolver para produção</button>` : ""}</div>`);
     if (u.back) out.push(`<div class="box"><label for="backtxt" style="font-weight:700;font-size:12.5px">O que precisa ajustar?</label><textarea id="backtxt" rows="3">${esc(u.backText || "")}</textarea><div class="actions"><button type="button" class="btn primary" data-act="sendBack">Devolver para ${esc(mName((p.resp || {}).prod))}</button></div></div>`);
   }
   if (["cliente","ajuste","aprovado"].includes(p.status) && canPlan(p) && (p.status === "cliente" || u.reg)) {
     out.push(`<div class="box"><b style="font-size:13px">${p.status === "cliente" ? "Com o cliente" : "Registrar resposta do cliente"}</b>${p.status === "cliente" ? `<span class="muted" style="font-size:12.5px">O cliente responde pelo portal. Se respondeu por WhatsApp, registre aqui.</span><div class="actions"><button type="button" class="btn sm" data-act="regApprove">Registrar aprovação</button><button type="button" class="btn sm" data-act="regAdjust">Registrar pedido de ajuste</button><button type="button" class="btn sm" data-act="previewCli" data-cid="${esc(c.id)}">Ver como o cliente vê</button></div>` : ""}
       ${u.reg ? `<textarea id="regtxt" rows="2" placeholder="${u.reg === "aj" ? "O que o cliente pediu" : "Observação (opcional)"}" aria-label="Resposta do cliente">${esc(u.regText || "")}</textarea>${u.reg === "aj" ? adjTipos("regtipo", u.regTipo, p) : ""}<div><button type="button" class="btn sm primary" data-act="regConfirm">Confirmar</button></div>` : ""}</div>`);
   }
-  if (p.status === "aprovado" && canPublish(p)) out.push(`<div class="actions"><button type="button" class="btn ok" data-pub="${esc(p.id)}">Marcar como publicada</button><button type="button" class="btn" data-copy="${esc(p.id)}">Copiar legenda</button></div>`);
-  if (!out.length) { const o = owner(p); out.push(`<div class="note">${p.status === "publicado" ? "Publicada." : o === "cliente" ? "Aguardando o cliente." : o ? `Agora está com ${esc(mName(o))}.` : "Defina os responsáveis desta pauta."}</div>`); }
+  if (p.status === "aprovado" && canPublish(p)) out.push(fx === "trafego" ? `<div class="actions"><button type="button" class="btn ok" data-pub="${esc(p.id)}">Campanha no ar</button><button type="button" class="btn" data-copy="${esc(p.id)}">Copiar texto do anúncio</button></div><div class="muted" style="font-size:12px">Tráfego: ${esc(mName(trafOf(p)))} configura a campanha e marca quando estiver no ar.</div>`
+    : fx === "pontual" || fx === "interna" ? `<div class="actions"><button type="button" class="btn ok" data-pub="${esc(p.id)}">Marcar como entregue</button></div>`
+    : `<div class="actions"><button type="button" class="btn ok" data-pub="${esc(p.id)}">Marcar como publicada</button><button type="button" class="btn" data-copy="${esc(p.id)}">Copiar legenda</button></div>`);
+  if (p.status === "publicado" && fx === "trafego" && !p.encerrada && canPublish(p)) out.push(`<div class="box"><b style="font-size:13px">Campanha no ar</b><textarea id="restxt" rows="2" placeholder="Resultado para o relatório (opcional): investimento, resultados, custo por resultado" aria-label="Resultado da campanha">${esc(u.resText || "")}</textarea><div class="actions"><button type="button" class="btn" data-act="encerrar">Encerrar campanha</button></div></div>`);
+  if (!out.length) { const o = owner(p); out.push(`<div class="note">${p.status === "publicado" ? esc(stLabel(p)) + "." : o === "cliente" ? "Aguardando o cliente." : o ? `Agora está com ${esc(mName(o))}.` : "Defina os responsáveis desta pauta."}</div>`); }
   return `<div class="sec" style="display:flex;flex-direction:column;gap:10px"><h3>Próximo passo</h3>${out.join("")}</div>`;
 }
 /* ================= portal do cliente (mockups por rede) ================= */
 const portalCid = () => isClient() ? ui.me.slice(4) : ui.portal;
 function portalSet(){
   const cid = portalCid(), c = cli(cid), mS = ui.month, mE = endOfMonth(mS);
-  let ps = sortP(S.pecas.filter(p => p.clienteId === cid && !isTask(p) && CLIENT_ST.includes(p.status) && pd(p.data) >= mS && pd(p.data) <= mE));
+  let ps = sortP(S.pecas.filter(p => p.clienteId === cid && !isTask(p) && !isRel(p) && CLIENT_ST.includes(p.status) && pd(p.data) >= mS && pd(p.data) <= mE));
   const weekly = c.aprovacao === "semanal";
   const weeks = weekly ? [...new Set(ps.map(p => ymd(weekStart(pd(p.data)))))].sort() : [];
   if (ui.pweek && !weeks.includes(ui.pweek)) ui.pweek = null;
@@ -2372,7 +2489,7 @@ function clientFormHTML(){
         <div class="field full"><span class="lb">Social media (publica)</span>${box("social", ppl(p => p.includes("social") || p.includes("head")))}</div>
         <div class="field full"><span class="lb">Atendimento <span class="hint">· é avisado quando a pauta vai para o cliente</span></span>${box("atendimento", ppl(p => p.includes("atendimento") || p.includes("head")))}</div>
         <div class="field full"><label for="cf-not">Particularidades</label><textarea id="cf-not" data-cf="notas" rows="3">${esc(d.notas)}</textarea></div>
-        <div class="field full"><div class="seg"><label><input type="checkbox" data-cfr="linkPodcast" ${d.regras.linkPodcast ? "checked" : ""}> Exigir link do YouTube nas pautas que vêm do podcast</label></div></div></div>
+        <div class="field full"><div class="seg"><label><input type="checkbox" data-cfr="validaHead" ${d.regras.validaHead ? "checked" : ""}> Exigir validação de um Head na revisão, antes de enviar ao cliente</label><label><input type="checkbox" data-cfr="linkPodcast" ${d.regras.linkPodcast ? "checked" : ""}> Exigir link do YouTube nas pautas que vêm do podcast</label></div></div></div>
       ${ui.tmp.err ? `<div class="err">${esc(ui.tmp.err)}</div>` : ""}<div class="actions"><button type="submit" class="btn primary">${isNew ? "Cadastrar cliente" : "Salvar"}</button><button type="button" class="btn ghost" data-act="close">Cancelar</button></div>
       ${!isNew && headOfUnit(d.unidade) ? (ui.tmp.delc ? `<div class="row"><span style="font-size:12.5px;color:var(--danger);font-weight:700">Excluir o cliente e todas as peças dele?</span><button type="button" class="btn sm danger" data-act="delClientGo">Excluir</button><button type="button" class="btn sm ghost" data-act="delClient">Cancelar</button></div>` : `<div><button type="button" class="linkbtn" style="color:var(--danger)" data-act="delClient">Excluir cliente</button></div>`) : ""}
     </form></div>`;
@@ -2470,7 +2587,7 @@ function accHistHTML(){
 }
 function notifsHTML(){
   const l = S.notifs.filter(n => n.para === ui.me).sort((a, b) => (b.em || "").localeCompare(a.em || "")).slice(0, 60);
-  return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="ntT"><div class="m-head"><h2 id="ntT">Notificações</h2><div class="row">${l.some(n => !n.lida) ? `<button type="button" class="btn sm" data-act="readAll">Marcar todas como lidas</button>` : ""}<button type="button" class="x" data-act="close" aria-label="Fechar">×</button></div></div>
+  return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="ntT"><div class="m-head"><h2 id="ntT">Notificações</h2><div class="row"><button type="button" class="btn sm ghost" data-act="toggleSom" title="Som ao chegar notificação">${lsGet("alra-som") === "off" ? "Som desligado" : "Som ligado"}</button>${l.some(n => !n.lida) ? `<button type="button" class="btn sm" data-act="readAll">Marcar todas como lidas</button>` : ""}<button type="button" class="x" data-act="close" aria-label="Fechar">×</button></div></div>
     <div class="m-body">${l.length ? `<div class="nlist">${l.map(n => `<button type="button" class="nitem${n.lida ? "" : " unread"}" data-notif="${esc(n.id)}">${n.de === "sistema" ? `<span class="sysav">${LOGO_MARK(20)}</span>` : n.de === "cliente" ? `<span class="av" style="background:${esc(cli(n.clienteId).cor)};width:30px;height:30px">${esc(initials(cli(n.clienteId).nome))}</span>` : av(n.de, 30)}<span style="min-width:0"><b>${esc(fromName(n))}</b><p>${esc(n.texto)}</p></span><small>${esc(fmtStamp(n.em))}</small></button>`).join("")}</div>` : `<div class="empty"><p>Nenhuma notificação. Você é avisado quando uma pauta chega na sua etapa, quando alguém comenta numa pauta sua e quando sai um relatório para você.</p></div>`}</div></div>`;
 }
 function dayAllHTML(day, kind){
@@ -2591,7 +2708,7 @@ document.addEventListener("click", async ev => {
   if (d.dashst !== undefined) { ui.dashSt = d.dashst && ui.dashSt !== d.dashst ? d.dashst : null; render(); return; }
   if (d.selp) { ui.sel.has(d.selp) ? ui.sel.delete(d.selp) : ui.sel.add(d.selp); ui.tmp.bulkDel = false; render(); return; }
   if (d.selcol) { const ids = d.selcol.split(","); const all = ids.every(id => ui.sel.has(id)); ids.forEach(id => all ? ui.sel.delete(id) : ui.sel.add(id)); ui.tmp.bulkDel = false; render(); return; }
-  if (d.open) { if (Date.now() - (window.__dragEnd || 0) < 250) return; ui.openId = d.open; ui.idx = 0; ui.tmp = {}; ui.modal = null; fillOverlay(); return; }
+  if (d.open) { if (Date.now() - (window.__dragEnd || 0) < 250) return; ui.openId = d.open; ui.idx = 0; const op = S.pecas.find(x => x.id === d.open); ui.tmp = {edit: !!op && timeAtLeast("B") && headOfUnit(unitOf(op)) && ["pauta","producao","revisao","ajuste"].includes(op.status)}; ui.modal = null; fillOverlay(); return; }
   if (d.mv !== undefined) { const p = S.pecas.find(x => x.id === ui.openId), i = +d.mv, j = i + Number(d.d); if (p && j >= 0 && j < p.midias.length) { [p.midias[i], p.midias[j]] = [p.midias[j], p.midias[i]]; ui.idx = j; save(); fillOverlay(); } return; }
   if (d.rmf !== undefined) { const p = S.pecas.find(x => x.id === ui.openId); if (p) { p.midias.splice(+d.rmf, 1); ui.idx = 0; save(); fillOverlay(); } return; }
   if (d.idx !== undefined) { ui.idx = Number(d.idx); fillOverlay(); return; }
@@ -2604,7 +2721,7 @@ document.addEventListener("click", async ev => {
   if (d.ntab) { ui.ntab = d.ntab; render(); return; }
   if (d.week !== undefined) { ui.pweek = d.week || null; render(); return; }
   if (d.copy) { const p = S.pecas.find(x => x.id === d.copy); copyText((p.briefing || {}).legenda || "", "Copiado"); return; }
-  if (d.pub) { const p = S.pecas.find(x => x.id === d.pub); setStatus(p, "publicado", entry("publicou")); toast("Marcada como publicada"); render(); return; }
+  if (d.pub) { const p = S.pecas.find(x => x.id === d.pub), f = fluxoOf(p); setStatus(p, "publicado", entry(f === "trafego" ? "no_ar" : f === "pontual" || f === "interna" ? "entregou" : "publicou")); toast(f === "trafego" ? "Campanha no ar" : f === "pontual" || f === "interna" ? "Marcada como entregue" : "Marcada como publicada"); render(); return; }
   if (d.cap) { const x = S.captacoes.find(y => y.id === d.cap); if (!x) return; ui.tmp = {cap: Object.assign(JSON.parse(JSON.stringify(x)), {_exists:true})}; ui.modal = "cap"; fillOverlay(); return; }
   if (d.unit) { ui.unidade = d.unit; ui.view = "inicio"; render(); return; }
   if (d.step !== undefined) { goStep(+d.step); return; }
@@ -2631,6 +2748,7 @@ document.addEventListener("click", async ev => {
     case "wAdd": w.pessoas.push({nome:"", cargo:"", papeis:[]}); render(); setTimeout(() => { const el = document.getElementById("wn" + (w.pessoas.length - 1)); if (el) el.focus(); }, 30); break;
     case "wRm": w.pessoas.splice(+d.i, 1); render(); break;
     case "wFinish": { const un = {id:uid(), nome:w.unidade.trim(), cidade:w.cidade.trim()}; S.unidades.push(un); w.pessoas.forEach(x => S.pessoas.push({id:uid(), nome:x.nome.trim(), cargo:x.cargo.trim(), papeis:x.papeis || [], unidade:un.id})); S.cfg = {rede:(w.rede || "Alra").trim(), setupDone:true, criadoEm:nowIso()}; { const me = S.pessoas[S.pessoas.length - w.pessoas.length + (+d.i)]; if (authUser) me.email = String(authUser.email).toLowerCase(); ui.meAuto = me.id; setMe(me.id); } ui.view = "inicio"; ui.wiz = null; save(); render(); toast("Tudo pronto. Siga os primeiros passos."); break; }
+    case "toggleSom": { const off = lsGet("alra-som") === "off"; try { localStorage.setItem("alra-som", off ? "" : "off"); } catch(e) {} if (off) chime(); fillOverlay(); break; }
     case "hideGuide": try { localStorage.setItem(LSKEY + "-guia", "1"); } catch(e) {} render(); break;
     case "close": ui.modal ? (ui.modal = null) : (ui.openId = null); ui.tmp = {}; fillOverlay(); break;
     case "notifs": ui.modal = "notifs"; ui.tmp = {}; fillOverlay(); break;
@@ -2642,6 +2760,7 @@ document.addEventListener("click", async ev => {
     case "prevM": case "nextM": { const k = d.mk || "month"; ui[k] = new Date(ui[k].getFullYear(), ui[k].getMonth() + (act === "prevM" ? -1 : 1), 1); ui[k + "W"] = null; ui.pweek = null; render(); break; }
     case "prevW": case "nextW": { const k = d.mk || "month", w = addDays(weekOf(k), act === "prevW" ? -7 : 7); ui[k + "W"] = w; ui[k] = firstOfMonth(addDays(w, 3)); render(); break; }
     case "capEqAdd": { const v = (($("#cp-eq") || {}).value || "").trim(); if (!v || !u.cap) break; u.cap.equip = [...new Set([...(u.cap.equip || []), v])]; fillOverlay(); break; }
+    case "relGen": { const n = gerarRelatorios(); toast(n ? `${n} ${n === 1 ? "relatório criado" : "relatórios criados"} em Coleta.` : "Os relatórios deste mês já existem."); render(); break; }
     case "pgEdit": u.edit = !u.edit; fillOverlay(); break;
     case "navMin": ui.navMin = !ui.navMin; try { localStorage.setItem("alra-navmin", ui.navMin ? "1" : ""); } catch(e) {} render(); break;
     case "dbTab": ui.view = "dashboards"; ui.dbTab = d.tab; ui.dbPerson = null; render(); window.scrollTo(0, 0); break;
@@ -2677,10 +2796,14 @@ document.addEventListener("click", async ev => {
     case "wipeGo": wipeAll(); break;
     case "prev": { const n = (p.midias || []).length; if (n) { ui.idx = (ui.idx - 1 + n) % n; fillOverlay(); } break; }
     case "next": { const n = (p.midias || []).length; if (n) { ui.idx = (ui.idx + 1) % n; fillOverlay(); } break; }
-    case "toProd": if (prodBlock(p)) { toast(prodBlock(p)); break; } setStatus(p, "producao", entry("producao"), {retorno:false}); toast(`Enviada para ${mName(p.resp.prod)}`); render(); break;
+    case "toProd": if (prodBlock(p)) { toast(prodBlock(p)); break; } setStatus(p, "producao", entry("producao"), Object.assign({retorno:false}, fluxoOf(p) === "video" ? {subetapa: d.sub || "captacao"} : {})); toast(`Enviada para ${mName(p.resp.prod)}${fluxoOf(p) === "video" ? (p.subetapa === "edicao" ? " (edição)" : " (captação)") : ""}`); render(); break;
+    case "toEdicao": p.subetapa = "edicao"; p.hist.push(entry("captado")); notify([(p.resp || {}).prod, (p.resp || {}).plan], `Material captado, pronto para edição: ${titleOf(p)}`, p); save(); toast("Na edição"); render(); break;
+    case "validarHead": if (!isHead()) break; p.validadoHead = true; p.hist.push(entry("validou")); notify([(p.resp || {}).plan], `Validada pelo Head: ${titleOf(p)}`, p); save(); toast("Validada"); render(); break;
+    case "encerrar": { p.encerrada = true; p.encerradaEm = nowIso(); const tx = (u.resText || "").trim(); if (tx) p.resultado = tx; p.hist.push(entry("encerrou", tx ? {texto:tx} : null)); save(); ui.tmp = {}; toast("Campanha encerrada"); render(); break; }
+    case "relGo": { const st = d.st, ac = {producao: p.status === "revisao" ? "devolveu" : "producao", revisao:"entrega", aprovado:"registrou", publicado:"apresentou"}[st]; setStatus(p, st, entry(ac)); toast(`${titleOf(p)} → ${stLabel(p)}`); render(); break; }
     case "toReview": if (!(p.midias || []).length && !p.drive) { toast("Anexe os arquivos ou preencha o link do Drive antes."); break; } sendToReview(p); ui.tmp = {}; toast("Enviada para revisão do planejamento"); render(); break;
     case "approveInternal": if (!semCli(p) || !canPlan(p)) break; setStatus(p, "aprovado", entry("aprovou_interno")); toast("Aprovada. Quando entregar, marque como concluída."); render(); break;
-    case "toClient": if (readyToSend(p)) { toast(readyToSend(p)); fillOverlay(); break; } if ([...String((p.briefing || {}).legenda || "")].length > 2200) { toast("A legenda passa de 2.200 caracteres, o limite do Instagram."); break; } setStatus(p, "cliente", entry("enviou_cliente"), {ajusteCom:null}); toast("Enviada ao cliente"); render(); break;
+    case "toClient": if (aguardaHead(p)) { toast("Este cliente exige a validação de um Head antes."); break; } if (readyToSend(p)) { toast(readyToSend(p)); fillOverlay(); break; } if ([...String((p.briefing || {}).legenda || "")].length > 2200) { toast("A legenda passa de 2.200 caracteres, o limite do Instagram."); break; } setStatus(p, "cliente", entry("enviou_cliente"), {ajusteCom:null}); toast("Enviada ao cliente"); render(); break;
     case "toggleBack": u.back = !u.back; fillOverlay(); break;
     case "sendBack": { const txt = (u.backText || "").trim(); if (!txt) { toast("Descreva o ajuste para a produção."); break; } setStatus(p, "producao", entry("devolveu", {texto:txt}), {retorno:true}); ui.tmp = {}; toast("Devolvida para a produção"); render(); break; }
     case "regApprove": u.reg = "ap"; fillOverlay(); break;
@@ -2771,7 +2894,7 @@ document.addEventListener("input", ev => {
   if (t.id === "np-tit") { ui.tmp.tit = t.value; return; }
   if (t.id === "drvlink") { ui.tmp.drvLink = t.value; return; }
   if (t.id === "pnome") { ui.pnome = t.value; try { localStorage.setItem("alra-portal-nome", t.value.trim()); } catch(e) {} if (mode === "briefing" && Object.keys(obPend).length) { clearTimeout(obT); obT = setTimeout(() => obSave(false), 1200); } return; }
-  const map = {backtxt:"backText", regtxt:"regText", adjtxt:"adjText", aatxt:"aaText", dnote:"dnote", cmtxt:"cm", ntftxt:"ntfText"};
+  const map = {restxt:"resText", backtxt:"backText", regtxt:"regText", adjtxt:"adjText", aatxt:"aaText", dnote:"dnote", cmtxt:"cm", ntftxt:"ntfText"};
   if (map[t.id]) { ui.tmp[map[t.id]] = t.value; return; }
   if (ui.tmp.cd) { if (t.dataset.cf && t.tagName !== "SELECT") ui.tmp.cd[t.dataset.cf] = t.value; if (t.dataset.cfc) ui.tmp.cd.contato[t.dataset.cfc] = t.value; if (t.dataset.sc && t.type === "text") setPath(ui.tmp.cd.escopo, t.dataset.sc, t.value); }
   if (ui.tmp.pd && t.dataset.pf && t.tagName !== "SELECT") ui.tmp.pd[t.dataset.pf] = t.value;
@@ -2785,6 +2908,7 @@ document.addEventListener("focusout", ev => {
 });
 document.addEventListener("change", async ev => {
   const t = ev.target, p = S.pecas.find(x => x.id === ui.openId);
+  if (t.dataset.prazo && isDirReal()) { const v = Math.max(1, Math.min(60, +t.value || 1)); S.cfg.prazos = Object.assign({}, S.cfg.prazos, {[t.dataset.prazo]: v}); save(); toast("Prazo salvo"); return; }
   if (t.id === "calMode") { ui.calMode = t.value; try { localStorage.setItem("alra-calmode", t.value); } catch(e) {} ["month","capMonth","pubMonth"].forEach(k => ui[k + "W"] = null); render(); return; }
   if (t.id === "fCli") { ui.cf = t.value; render(); return; }
   if (t.id === "fFmt") { ui.tf = t.value; render(); return; }
@@ -2829,7 +2953,8 @@ document.addEventListener("change", async ev => {
   if (t.dataset.ntf !== undefined) { const u = ui.tmp; u.ntf = t.checked ? [...new Set([...(u.ntf || []), t.value])] : (u.ntf || []).filter(x => x !== t.value); return; }
   if (p && t.dataset.top) {
     const k = t.dataset.top;
-    if (k === "plan" || k === "prod") { p.resp = p.resp || {}; p.resp[k] = t.value || null; if (t.value && owner(p) === t.value) notify([t.value], `Peça atribuída a você: ${titleOf(p)}`, p); }
+    if (k === "traf" || k === "dir") { p.resp = p.resp || {}; p.resp[k] = t.value || null; }
+    else if (k === "plan" || k === "prod") { p.resp = p.resp || {}; p.resp[k] = t.value || null; if (t.value && owner(p) === t.value) notify([t.value], `Peça atribuída a você: ${titleOf(p)}`, p); }
     else if (k === "dataProducao") { if (t.value) p.dataProducao = t.value; else delete p.dataProducao; }
     else if (k === "data") { if (t.value && t.value !== p.data) { p.hist.push(entry("data", {texto:`${fmtD(p.data)} → ${fmtD(t.value)}`})); p.data = t.value; } }
     save(); render(); return;
@@ -2838,7 +2963,7 @@ document.addEventListener("change", async ev => {
   if (p && t.dataset.fmt !== undefined) { const b = p.briefing = p.briefing || {}; b.formatos = t.checked ? [...new Set([...(b.formatos || []), t.value])] : (b.formatos || []).filter(x => x !== t.value); save(); return; }
   if (p && t.dataset.pod !== undefined) { p.briefing = p.briefing || {}; p.briefing.pautaPodcast = t.checked; save(); fillOverlay(); return; }
   if (p && t.dataset.b && t.tagName === "SELECT") { p.briefing = p.briefing || {}; p.briefing[t.dataset.b] = t.value; save(); return; }
-  if (t.id === "upfile" && p) { const files = [...t.files].sort((a, b) => a.name.localeCompare(b.name, "pt-BR", {numeric:true})); t.value = ""; if (files.length) uploadFiles(p, files); return; }
+  if ((t.id === "upfile" || t.id === "upfile2") && p) { const files = [...t.files].sort((a, b) => a.name.localeCompare(b.name, "pt-BR", {numeric:true})); t.value = ""; if (files.length) uploadFiles(p, files); return; }
   if (ui.tmp.cd) {
     const cd = ui.tmp.cd;
     if (t.dataset.sc) { const path = t.dataset.sc; if (path.endsWith(".dias")) { const f = getPath(cd.escopo, path.slice(0, -5)), v = +t.value; f.dias = t.checked ? [...new Set([...(f.dias || []).map(Number), v])] : (f.dias || []).map(Number).filter(x => x !== v); } else if (t.type === "checkbox") { setPath(cd.escopo, path, t.checked); fillOverlay(); } else setPath(cd.escopo, path, t.value); return; }
@@ -2882,7 +3007,7 @@ document.addEventListener("submit", async ev => {
   if (id === "npForm") { const u = ui.tmp, cat = u.cat || "conteudo", c = cli(cat === "simples" ? "" : (($("#np-cli") || {}).value || "")), data = $("#np-data").value; if (!data) { toast("Escolha a data."); return; }
     let tp, redes, briefing = {formatos:[]}, resp = {plan:((c.squad || {}).planejamento || []).includes(ui.me) || isHead() ? ui.me : (((c.squad || {}).planejamento || [])[0] || ui.me), prod:null};
     if (cat === "interna" || cat === "simples") { const tit = ($("#np-tit").value || "").trim(); if (!tit) { toast(cat === "simples" ? "Dê um título ao cartão." : "Descreva a tarefa."); return; } tp = "tarefa"; redes = []; briefing.headline = tit; resp.prod = $("#np-resp").value || ui.me; resp.plan = ui.me; }
-    else if (cat === "trafego") { tp = "anuncio"; redes = (u.ads || ["Meta Ads"]); if (!redes.length) { toast("Marque ao menos uma plataforma."); return; } resp.prod = defaultProd(c, "feed"); }
+    else if (cat === "trafego") { tp = "anuncio"; redes = (u.ads || ["Meta Ads"]); if (!redes.length) { toast("Marque ao menos uma plataforma."); return; } resp.prod = defaultProd(c, "feed"); resp.traf = (ativos().find(m => m.unidade === (c.unidade || (ME() || {}).unidade) && (m.papeis || []).includes("trafego")) || {}).id || null; }
     else { tp = $("#np-tipo").value; const gen = GENERICOS.includes(tp); if (gen) { const tit = ($("#np-tit").value || "").trim(); if (!tit) { toast("Descreva o que precisa ser feito."); return; } briefing.headline = tit; }
       redes = gen ? [] : ["feed","stories"].includes(tp) ? (metaRedes(c).length ? metaRedes(c) : ["Instagram","Facebook"]) : [CANAIS[tp].net];
       resp.prod = CANAIS[tp].texto ? null : $("#np-prod") ? ($("#np-prod").value || null) : defaultProd(c, tp); }
@@ -2896,7 +3021,7 @@ document.addEventListener("submit", async ev => {
   if (id === "genForm") {
     const g = ui.tmp.gen, from = pd(g.from); if (!from) return; const to = endOfMonth(from); let n = 0;
     g.cids.forEach(cid => { const c = S.clientes.find(x => x.id === cid); if (!c) return; const have = new Set(S.pecas.concat(S.arquivo || []).filter(p => p.clienteId === c.id).map(p => p.data + "|" + p.tipo));
-      slotsFor(c, from, to).filter(s => !have.has(s.data + "|" + s.tipo)).forEach(s => { const cn = CANAIS[s.tipo]; S.pecas.push({id:uid(), clienteId:c.id, data:s.data, tipo:s.tipo, redes:s.redes, status:"pauta", resp:{plan:((c.squad || {}).planejamento || [])[0] || null, prod:cn.texto ? null : defaultProd(c, s.tipo)}, briefing:{formatos: s.tipo === "stories" ? ["Stories"] : cn.video ? ["Vídeo"] : cn.texto ? [] : ["Post estático"]}, versao:0, midias:[], hist:[entry("pauta")], coments:[], ajusteCom:null, criadoEm:nowIso(), v3:true}); n++; });
+      slotsFor(c, from, to).filter(s => !have.has(s.data + "|" + s.tipo)).forEach(s => { const cn = CANAIS[s.tipo]; S.pecas.push({id:uid(), escopo:true, clienteId:c.id, data:s.data, tipo:s.tipo, redes:s.redes, status:"pauta", resp:{plan:((c.squad || {}).planejamento || [])[0] || null, prod:cn.texto ? null : defaultProd(c, s.tipo)}, briefing:{formatos: s.tipo === "stories" ? ["Stories"] : cn.video ? ["Vídeo"] : cn.texto ? [] : ["Post estático"]}, versao:0, midias:[], hist:[entry("pauta")], coments:[], ajusteCom:null, criadoEm:nowIso(), v3:true}); n++; });
       c.gerado = Object.assign({}, c.gerado, {[ym(from)]: nowIso()}); });
     save(); ui.modal = null; ui.tmp = {}; ui.month = firstOfMonth(from); toast(`${n} ${n === 1 ? "pauta criada" : "pautas criadas"} de ${fmtShort(from)} a ${fmtShort(to)}`); render(); return;
   }
@@ -2937,7 +3062,8 @@ document.addEventListener("submit", async ev => {
     const body = JSON.parse(JSON.stringify(cp)); delete body._exists; if (!body.titulo) body.titulo = "Captação " + cli(cp.clienteId).nome;
     const isNew = !cp._exists; if (cp._exists) { const i = S.captacoes.findIndex(x => x.id === cp.id); S.captacoes[i] = body; } else { body.id = uid(); S.captacoes.push(body); }
     if (body.resp) notify([body.resp], `${isNew ? "Captação agendada" : "Captação atualizada"}: ${cli(body.clienteId).nome}, ${fmtD(body.data)} às ${body.inicio}`, null, body.clienteId);
-    save(); ui.modal = null; ui.tmp = {}; ui.capMonth = firstOfMonth(pd(body.data)); toast("Captação salva"); render(); return; }
+    let nEd = 0; if (body.status === "Realizada") (body.pecas || []).forEach(id => { const x = S.pecas.find(y => y.id === id); if (x && x.status === "producao" && fluxoOf(x) === "video" && x.subetapa !== "edicao") { x.subetapa = "edicao"; x.hist.push(entry("captado", body.driveBruto ? {texto: body.driveBruto} : null)); if (body.driveBruto && !x.drive) x.drive = body.driveBruto; notify([(x.resp || {}).prod, (x.resp || {}).plan], `Material captado, pronto para edição: ${titleOf(x)}`, x); nEd++; } });
+    save(); ui.modal = null; ui.tmp = {}; ui.capMonth = firstOfMonth(pd(body.data)); toast(nEd ? `Captação salva. ${nEd} ${nEd === 1 ? "pauta foi" : "pautas foram"} para a edição.` : "Captação salva"); render(); return; }
   if (id === "matForm") { const n = $("#mt-n").value.trim(); if (!n) { toast("Dê um nome ao material."); return; } S.materiais.push({id:uid(), clienteId:ui.hubId, nome:n, categoria:$("#mt-c").value, origem:$("#mt-o").value, link:$("#mt-l").value.trim(), em:nowIso()}); save(); ui.modal = null; toast("Material adicionado"); render(); return; }
   if (id === "vsForm") { const a = $("#vp1").value, b = $("#vp2").value; if (a.length < 8) { ui.tmp.err = "Use ao menos 8 caracteres."; fillOverlay(); return; } if (a !== b) { ui.tmp.err = "As senhas não conferem."; fillOverlay(); return; }
     const salt = b64e(crypto.getRandomValues(new Uint8Array(16))), key = await deriveKey(a, salt); S.cfg.vault = {salt, check: await encStr(key, "alra-cofre-ok"), criadoEm:nowIso(), por:ui.me}; ui.vaultKey = key; save(); ui.modal = null; ui.tmp = {}; toast("Cofre criado e desbloqueado"); render(); return; }
