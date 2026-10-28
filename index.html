@@ -323,6 +323,9 @@ textarea,.inp{width:100%;border:1px solid var(--line2);border-radius:10px;paddin
 textarea{resize:vertical;field-sizing:content;min-height:3.4em;overflow-y:hidden}
 .clilink{border:0;background:none;padding:0;font:inherit;color:inherit;cursor:pointer;border-radius:6px}.clilink:hover span:nth-child(2),.clilink:focus-visible span:nth-child(2){text-decoration:underline;color:var(--accent-fg)}.clilink .arr{font-size:11px;color:var(--accent-fg);margin-left:2px}.clinks{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;font-size:12px;color:var(--muted)}.clinks .linkbtn{font-size:12px}
 .lock{font-size:10px}
+.netpick .nettraf{border-color:var(--accent)!important;color:var(--accent-fg)}
+.pid{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;font-weight:500;color:var(--muted);letter-spacing:.02em;opacity:.85}
+.anxl{display:grid;gap:6px}.anx{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:7px 10px;border:1px solid var(--line);border-radius:10px;background:var(--raised);font-size:13px}.anx a{font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.anx .muted{font-size:11.5px}.anxi{font-size:9.5px;font-weight:800;letter-spacing:.04em;padding:4px 6px;border-radius:6px;background:var(--surface);color:var(--muted)}
 .privck{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:var(--muted);cursor:pointer;user-select:none}.privck input{accent-color:var(--accent);width:15px;height:15px}.privck:has(input:checked){color:var(--ink)}
 .mlink{display:flex;flex-direction:column;align-items:flex-start;gap:6px;width:100%;max-width:520px}
 .rte{border:1px solid var(--line);border-radius:10px;background:var(--raised);overflow:hidden}.rte.off{border-color:transparent;background:none}.rte:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
@@ -1173,6 +1176,33 @@ function clienteField(p, c){
   const sel = can && ui.tmp.troCli ? `<div class="row" style="flex-wrap:nowrap;gap:6px;margin-top:6px"><select class="inp" id="f-cli"><option value="">Sem cliente · demanda avulsa</option>${vc.map(x => `<option value="${esc(x.id)}" ${p.clienteId === x.id ? "selected" : ""}>${esc(x.nome)}</option>`).join("")}</select></div><span class="hint">A pauta passa para o cliente escolhido; responsáveis e conteúdo continuam.</span>` : "";
   return `<div class="field full"><span class="lb">Cliente</span><div style="min-height:30px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">${p.simples ? `<span class="muted" style="font-size:12.5px">Sem cliente</span>` : cliLink(c)}${p.solicitante ? `<span class="muted" style="font-size:12px">· para ${esc(p.solicitante)}</span>` : ""}${can ? `<button type="button" class="linkbtn" style="font-size:12px" data-act="troCli">${ui.tmp.troCli ? "Cancelar" : "Trocar cliente"}</button>` : ""}</div>${sel}${p.simples ? "" : cliAtalhos(c)}</div>`;
 }
+/* ID curto de cada pauta (derivado do id interno, nunca muda) */
+const codOf = p => "#" + String((p && p.id) || "").replace(/[^a-z0-9]/gi, "").slice(0, 6).toUpperCase();
+const codTag = p => `<span class="pid" title="ID da pauta">${esc(codOf(p))}</span>`;
+const buscaNorm = t => normTxt(t).replace(/^#/, "");
+const buscaMatch = (p, q) => { if (!q) return true; const c = codOf(p).slice(1).toLowerCase(); return c.startsWith(q) || normTxt(titleOf(p)).includes(q) || String(p.id).toLowerCase() === q; };
+/* prioridade no Kanban: URGÊNCIA, depois PRIORIDADE, depois a data mais próxima (fim da produção; se vazia, a postagem) */
+const prioRank = p => { const e = p.etiquetas || []; return e.includes("urgencia") ? 0 : e.includes("prioridade") ? 1 : 2; };
+const dueOf = p => p.dataProducao || p.data || "9999-12-31";
+const sortPrio = a => a.slice().sort((x, y) => prioRank(x) - prioRank(y) || dueOf(x).localeCompare(dueOf(y)) || (x.data || "").localeCompare(y.data || "") || String(x.clienteId).localeCompare(String(y.clienteId)));
+/* materiais de apoio da pauta (qualquer arquivo) */
+const fmtTam = n => !n ? "" : n < 1024 * 1024 ? Math.max(1, Math.round(n / 1024)) + " KB" : (n / 1048576).toFixed(1).replace(".", ",") + " MB";
+const anxIco = (nome, tipo) => /pdf/i.test(tipo || nome) ? "PDF" : /image/i.test(tipo || "") ? "IMG" : /video/i.test(tipo || "") ? "VÍD" : /presentation|powerpoint|\.pptx?$|\.key$/i.test((tipo || "") + nome) ? "PPT" : /sheet|excel|\.xlsx?$|\.csv$/i.test((tipo || "") + nome) ? "XLS" : /word|\.docx?$|text/i.test((tipo || "") + nome) ? "DOC" : "ARQ";
+function anexosHTML(list, can, pre, prog){
+  return `<section class="psec"><h3>Materiais de apoio <span class="hint" style="text-transform:none;letter-spacing:0">· imagens, documentos, apresentações: o que ajudar a entender e produzir a pauta</span></h3>
+    ${list.length ? `<div class="anxl">${list.map((a, i) => `<div class="anx"><span class="anxi">${anxIco(a.nome, a.tipo)}</span><a href="${esc(blobUrl(a.id))}" target="_blank" rel="noopener" download="${esc(a.nome)}">${esc(a.nome)}</a><span class="muted tnum">${esc(fmtTam(a.tam))}${a.por ? " · " + esc(mName(a.por)) : ""}</span>${can ? `<button type="button" class="linkbtn" style="color:var(--danger)" data-act="${pre}AnxDel" data-i="${i}" aria-label="Remover ${esc(a.nome)}">×</button>` : ""}</div>`).join("")}</div>` : `<span class="muted" style="font-size:12.5px">Nenhum material anexado.</span>`}
+    ${can && assets ? `<div class="row" style="margin-top:8px"><label class="btn sm" for="${pre}AnxUp" style="cursor:pointer"><input type="file" id="${pre}AnxUp" multiple hidden>+ Anexar material</label><span class="hint">Até 50 MB por arquivo.</span>${prog ? `<span class="hint" style="color:var(--accent-fg);font-weight:700">${esc(prog)}</span>` : ""}</div>` : ""}</section>`;
+}
+async function subirAnexos(files, onDone){
+  const out = [];
+  for (const [i, f] of files.entries()) {
+    if (f.size > 50 * 1048576) { toast(`${f.name} passa de 50 MB: envie pelo link do Drive.`); continue; }
+    ui.tmp.anxProg = `Enviando ${i + 1} de ${files.length}…`; fillOverlay();
+    try { const r = await assets.upload(f); out.push({id:r.id, nome:f.name, tipo:f.type || r.contentType, tam:f.size, por:ui.me, em:nowIso()}); }
+    catch(e) { toast(`Não foi possível enviar ${f.name}.`); }
+  }
+  ui.tmp.anxProg = ""; onDone(out);
+}
 function visField(p){
   return `<div class="field full"><label class="privck" title="Privada: só a Diretoria, quem criou e os responsáveis veem e editam"><input type="checkbox" id="f-priv" ${p.privado ? "checked" : ""} ${canPriv(p) ? "" : "disabled"}> 🔒 Privado</label></div>`;
 }
@@ -1495,7 +1525,7 @@ function deletePecas(ids, fromArchive){
 function boardHTML(ps){
   const cutoff = addDays(TODAY, -14);
   return `<div class="board">${ORDER.map(k => {
-    let list = sortP(ps.filter(p => p.status === k));
+    let list = sortPrio(ps.filter(p => p.status === k));
     if (k === "publicado") list = list.filter(p => pd(p.data) >= cutoff).reverse();
     const selIds = list.filter(canPlan).map(p => p.id);
     return `<div class="col" data-col="${k}"><div class="col-h"><b><i class="dot" style="background:var(--s-${k})"></i>${STATUS[k].label}</b><span class="row" style="gap:6px">${ui.selMode && selIds.length ? `<button type="button" class="linkbtn" style="font-size:11.5px" data-selcol="${esc(selIds.join(","))}">${selIds.every(id => ui.sel.has(id)) ? "Nenhuma" : "Todas"}</button>` : ""}<span class="tnum">${list.length}</span></span></div>${list.slice(0, 50).map(kcHTML).join("")}${list.length > 50 ? `<span class="muted" style="font-size:11.5px;padding:4px">+${list.length - 50}. Filtre por cliente.</span>` : ""}</div>`;
@@ -1988,7 +2018,7 @@ function calView(key, byDay, item, addAttr, kind){
 const capLi = x => `<button type="button" class="li" data-cap="${esc(x.id)}" style="grid-template-columns:minmax(0,1fr) auto"><span style="min-width:0"><span class="t">${esc(x.titulo || "Captação")}</span><span class="m">${cliTag(cli(x.clienteId))}<span class="tnum">${esc(fmtD(x.data))} · ${esc(x.inicio)} a ${esc(x.fim)}</span><span>${esc(x.local || "Local a definir")}</span>${(x.pecas || []).length ? `<span>${x.pecas.length} pautas ligadas</span>` : ""}</span></span><span class="row">${x.resp ? av(x.resp, 24) : ""}<span class="pill t-prod">${esc(x.status)}</span></span></button>`;
 function liHTML(p){
   const c = cli(p.clienteId);
-  return `<button type="button" class="li" data-open="${esc(p.id)}"><span class="th">${isTask(p) ? `<span class="tkb">✓</span>` : thumb(p)}</span><span style="min-width:0"><span class="t">${esc(titleOf(p))}</span><span class="m">${cliTag(c)}<span>${esc(canal(p).label)}</span>${netBadge(p)}<span class="tnum">${esc(fmtD(p.data))}</span>${janela(p)}</span></span><span class="row">${pillP(p)}</span></button>`;
+  return `<button type="button" class="li" data-open="${esc(p.id)}"><span class="th">${isTask(p) ? `<span class="tkb">✓</span>` : thumb(p)}</span><span style="min-width:0"><span class="t">${esc(titleOf(p))}</span><span class="m">${codTag(p)}${cliTag(c)}<span>${esc(canal(p).label)}</span>${netBadge(p)}<span class="tnum">${esc(fmtD(p.data))}</span>${janela(p)}</span></span><span class="row">${pillP(p)}</span></button>`;
 }
 
 /* ---------- publicação em lista por data ---------- */
@@ -2013,7 +2043,7 @@ function filtersHTML(vc, opts){
   const sem = S.pecas.some(p => semCli(p) && canSee(p));
   const ppl = T === "C" ? [] : ativos().filter(m => unitScope().includes(m.unidade)).sort((a, b) => a.nome.localeCompare(b.nome));
   if (ui.pf && !ppl.some(m => m.id === ui.pf)) ui.pf = "";
-  return `<div class="filters"><label class="selw"><span>Cliente</span><select class="inp sm" id="fCli"><option value="todos">${isHead() ? "Todos os clientes" : "Meus clientes"}</option>${vc.map(c => `<option value="${esc(c.id)}" ${ui.cf === c.id ? "selected" : ""}>${esc(c.nome)}</option>`).join("")}${sem || ui.cf === "_sem" ? `<option value="_sem" ${ui.cf === "_sem" ? "selected" : ""}>Sem cliente</option>` : ""}</select></label>
+  return `<div class="filters">${o.busca ? `<label class="selw"><span>Buscar</span><input class="inp sm" type="search" id="fBusca" placeholder="ID (#A1B2C3) ou título" value="${esc(ui.busca || "")}" autocomplete="off" style="min-width:190px"></label>` : ""}<label class="selw"><span>Cliente</span><select class="inp sm" id="fCli"><option value="todos">${isHead() ? "Todos os clientes" : "Meus clientes"}</option>${vc.map(c => `<option value="${esc(c.id)}" ${ui.cf === c.id ? "selected" : ""}>${esc(c.nome)}</option>`).join("")}${sem || ui.cf === "_sem" ? `<option value="_sem" ${ui.cf === "_sem" ? "selected" : ""}>Sem cliente</option>` : ""}</select></label>
     ${o.fmt === false ? "" : `<label class="selw"><span>Formato</span><select class="inp sm" id="fFmt"><option value="todos">Todos os formatos</option>${Object.keys(GRUPOS).filter(g => grupos.includes(g) || g === "avulsa").map(g => `<option value="${g}" ${ui.tf === g ? "selected" : ""}>${esc(GRUPOS[g])}</option>`).join("")}</select></label>`}
     ${ppl.length && o.pes !== false ? `<label class="selw"><span>Pessoa</span><select class="inp sm" id="fPes"><option value="">Todas as pessoas</option>${ppl.map(m => `<option value="${esc(m.id)}" ${ui.pf === m.id ? "selected" : ""}>${esc(m.nome)}</option>`).join("")}</select></label>` : ""}${(() => { const es = etiquetas(); if (ui.ef && !es.some(e => e.id === ui.ef)) ui.ef = ""; return es.length && o.fmt !== false ? `<label class="selw"><span>Etiqueta</span><select class="inp sm" id="fEtq"><option value="">Todas as etiquetas</option>${es.map(e => `<option value="${esc(e.id)}" ${ui.ef === e.id ? "selected" : ""}>${esc(e.nome)}</option>`).join("")}</select></label>` : ""; })()}${o.extra || ""}</div>`;
 }
@@ -2060,16 +2090,18 @@ function evHTML(p){
 function pecasHTML(){
   const vc = visibleClients();
   if (ui.cf !== "todos" && ui.cf !== "_sem" && !vc.some(c => c.id === ui.cf)) ui.cf = "todos";
-  let ps = S.pecas.filter(canSee).filter(cfMatch).filter(tfMatch).filter(pfMatch);
+  const bq = buscaNorm(ui.busca);
+  let ps = S.pecas.filter(canSee).filter(cfMatch).filter(tfMatch).filter(pfMatch).filter(p => buscaMatch(p, bq));
   const mine = ps.filter(myTurn);
+  const fora = bq && !ps.length ? S.pecas.concat(S.arquivo || []).filter(p => canSeeHub(p) && buscaMatch(p, bq)).slice(0, 8) : [];
 
-  if (ui.sf === "minha") ps = mine; else if (STATUS[ui.sf]) ps = ps.filter(p => p.status === ui.sf);
+  if (ui.sf === "minha" && !bq) ps = mine; else if (STATUS[ui.sf]) ps = ps.filter(p => p.status === ui.sf);
   const nArq = (S.arquivo || []).filter(p => { const u = unitOf(p); return unitScope().includes(u) && (headOfUnit(u) || (p.resp || {}).plan === ui.me || (p.resp || {}).prod === ui.me || p.criadoPor === ui.me); }).length;
   const head = `<div class="spread"><div><div class="eyebrow">${isHead() ? "Visão de Head · todas as pautas da unidade" : "Pautas atribuídas a você"}</div><h1>${mine.length ? `<em>${mine.length}</em> ${mine.length === 1 ? "pauta pede" : "pautas pedem"} sua ação` : "Nada pendente com você"}</h1></div><div class="row">${isHead() ? `<button type="button" class="btn" data-act="relGen" title="Cria um relatório de resultados do mês para cada cliente">Gerar relatórios do mês</button>` : ""}${(canPlanAny() || isHead()) ? `<button type="button" class="btn primary" data-act="newPeca">+ Nova pauta</button>` : !isClient() ? `<button type="button" class="btn primary" data-act="newPeca" title="Crie uma task (to-do) para você ou para alguém do time">+ Nova task</button>` : ""}</div></div>`;
   if (!vc.length && !S.pecas.some(canSee)) return head + noClients();
   if (!S.pecas.some(canSee) && ui.sf !== "arquivo") return head + (nArq ? `<div><button type="button" class="chip" data-sf="arquivo">Arquivadas (${nArq})</button></div>` : "") + `<div class="empty"><h2>Nenhuma pauta ativa</h2><p>${canPlanAny() ? "Gere as pautas do mês no calendário ou crie uma pauta avulsa aqui, com ou sem cliente: conteúdo, tráfego ou tarefa interna." : "Quando o planejamento enviar uma pauta para você, ela aparece aqui."}</p>${canPlanAny() ? `<button type="button" class="btn primary" data-go="calendario">Ir para o calendário</button>` : ""}</div>`;
   return head + `<div class="row"><button type="button" class="chip" data-sf="minha" aria-pressed="${ui.sf === "minha"}">Minha vez (${mine.length})</button><button type="button" class="chip" data-sf="todas" aria-pressed="${ui.sf === "todas"}">Todas</button>${STATUS[ui.sf] ? `<button type="button" class="chip" aria-pressed="true" data-sf="todas">${esc(STATUS[ui.sf].label)} ×</button>` : ""}${nArq ? `<button type="button" class="chip" data-sf="arquivo" aria-pressed="${ui.sf === "arquivo"}">Arquivadas (${nArq})</button>` : ""}</div>
-    <div class="spread">${filtersHTML(vc)}${ui.sf === "arquivo" ? "" : bulkBar()}</div>${ui.sf === "arquivo" ? archiveHTML() : boardHTML(ps)}<p class="muted" style="font-size:12px">Arraste os cartões entre as colunas para mudar a etapa sem abrir. A barra magenta marca as pautas que estão com você. No "···" de cada cartão: excluir (vai para o arquivo) ou selecionar vários.</p>`;
+    <div class="spread">${filtersHTML(vc, {busca:true})}${ui.sf === "arquivo" ? "" : bulkBar()}</div>${fora.length ? `<div class="card"><b style="font-size:13px">Encontradas fora do seu Kanban</b><div class="list">${fora.map(liHTML).join("")}</div></div>` : bq && !ps.length ? `<p class="muted" style="font-size:12.5px">Nenhuma pauta com “${esc(ui.busca)}”.</p>` : ""}${ui.sf === "arquivo" ? archiveHTML() : boardHTML(ps)}<p class="muted" style="font-size:12px">Arraste os cartões entre as colunas para mudar a etapa sem abrir. A barra magenta marca as pautas que estão com você. No "···" de cada cartão: excluir (vai para o arquivo) ou selecionar vários.</p>`;
 }
 function kcHTML(p){
   const sm = ui.selMode, can = canPlan(p), dup = canDup(p);
@@ -2079,7 +2111,7 @@ function kcHTML(p){
 function kcBtn(p){
   const c = cli(p.clienteId), o = owner(p);
   const sm = ui.selMode, can = canPlan(p), on = ui.sel.has(p.id);
-  return `<button type="button" class="kc${myTurn(p) ? " mine" : ""}${isTask(p) ? " task" : ""}${sm ? " selmode" : ""}${on ? " picked" : ""}" ${sm ? (can ? `data-selp="${esc(p.id)}" aria-pressed="${on}"` : `disabled title="Só o planejamento desta pauta pode arquivar ou excluir"`) : `data-open="${esc(p.id)}" draggable="true"`}>${sm ? `<span class="ck${on ? " on" : ""}" aria-hidden="true">${on ? "✓" : ""}</span>` : ""}${isTask(p) ? `<span class="th tk">✓</span>` : isText(p) && !(p.midias || []).length ? `<span class="th tx">Aa</span>` : `<span class="th">${thumb(p)}</span>`}<span style="min-width:0">${etqChips(p)}<span class="t">${p.privado ? `<span class="lock" title="Pauta privada" aria-label="Privada">🔒</span> ` : ""}${esc(titleOf(p))}</span><span class="m">${p.simples ? `<span>Cartão</span>` : cliTag(c)}</span><span class="m"><span>${canal(p).k}</span><span class="tnum">${esc(fmtShort(p.data))}</span>${isTask(p) && p.status === "publicado" ? `<span>Concluída</span>` : janela(p) || paradaTag(p)}${stLabel(p) !== (STATUS[p.status] || {}).label && !isTask(p) ? `<span class="stx">${esc(stLabel(p))}</span>` : ""}${o && o !== "cliente" ? av(o, 18) : ""}</span></span></button>`;
+  return `<button type="button" class="kc${myTurn(p) ? " mine" : ""}${isTask(p) ? " task" : ""}${sm ? " selmode" : ""}${on ? " picked" : ""}" ${sm ? (can ? `data-selp="${esc(p.id)}" aria-pressed="${on}"` : `disabled title="Só o planejamento desta pauta pode arquivar ou excluir"`) : `data-open="${esc(p.id)}" draggable="true"`}>${sm ? `<span class="ck${on ? " on" : ""}" aria-hidden="true">${on ? "✓" : ""}</span>` : ""}${isTask(p) ? `<span class="th tk">✓</span>` : isText(p) && !(p.midias || []).length ? `<span class="th tx">Aa</span>` : `<span class="th">${thumb(p)}</span>`}<span style="min-width:0">${etqChips(p)}${codTag(p)}<span class="t">${p.privado ? `<span class="lock" title="Pauta privada" aria-label="Privada">🔒</span> ` : ""}${esc(titleOf(p))}</span><span class="m">${p.simples ? `<span>Cartão</span>` : cliTag(c)}</span><span class="m"><span>${canal(p).k}</span><span class="tnum">${esc(fmtShort(p.data))}</span>${isTask(p) && p.status === "publicado" ? `<span>Concluída</span>` : janela(p) || paradaTag(p)}${stLabel(p) !== (STATUS[p.status] || {}).label && !isTask(p) ? `<span class="stx">${esc(stLabel(p))}</span>` : ""}${o && o !== "cliente" ? av(o, 18) : ""}</span></span></button>`;
 }
 function readyToSend(p){
   const b = p.briefing || {}, c = cli(p.clienteId);
@@ -2139,7 +2171,7 @@ function aprovacoesHTML(){
     const days = pend && meta.enviadoEm ? Math.max(0, diffDays(TODAY, new Date(new Date(meta.enviadoEm).setHours(0,0,0,0)))) : null;
     const fb = S.feedbacks.filter(f => f.clienteId === c.id && f.k === k).slice(-1)[0];
     return `<tr><td style="min-width:180px">${cliTag(c)}<div class="muted" style="font-size:11.5px">${esc(periodLabel(c, k))}</div></td><td class="tnum">${esc(fmtD(dl))}</td><td>${st}</td><td class="num">${sent}/${ps.length}</td><td class="num">${apr}</td><td class="num">${adj || "—"}</td><td class="num">${days === null ? "—" : days + "d"}</td><td>${fb ? `<span class="pill ${fb.decisao === "total" ? "t-ok" : "t-warn"}" title="${esc(fb.texto)}">${fb.decisao === "total" ? "Aprovou tudo" : fb.decisao === "parcial" ? "Aprovou parte" : "Não aprovou"}</span>` : "—"}</td>
-      <td><div class="row" style="flex-wrap:nowrap">${ready && canEditClient(c) ? `<button type="button" class="btn sm primary" data-act="sendReady" data-cid="${esc(c.id)}" data-k="${k}">Enviar ${ready} ${ready === 1 ? "pronta" : "prontas"}</button>` : ""}<button type="button" class="btn sm" data-act="previewCli" data-cid="${esc(c.id)}" data-k="${k}">Prévia</button><button type="button" class="btn sm" data-act="msg" data-cid="${esc(c.id)}" data-k="${k}">Mensagem</button></div></td></tr>`;
+      <td><div class="row" style="flex-wrap:nowrap">${ready && canEditClient(c) ? `<button type="button" class="btn sm primary" data-act="sendReady" data-cid="${esc(c.id)}" data-k="${k}">Enviar ${ready} ${ready === 1 ? "pronta" : "prontas"}</button>` : ""}<button type="button" class="btn sm" data-act="previewCli" data-cid="${esc(c.id)}" data-k="${k}">Prévia</button><button type="button" class="btn sm" data-act="msg" data-cid="${esc(c.id)}" data-k="${k}">Mensagem</button><button type="button" class="btn sm" data-act="aprLink" data-cid="${esc(c.id)}" title="Link único do cliente: mostra todos os meses, inclusive os anteriores">Link para aprovar</button></div></td></tr>`;
   }).join("");
   return head + `<div class="tbw"><table class="tb"><thead><tr><th>Cliente e período</th><th>Prazo de envio</th><th>Envio</th><th class="num">Enviadas</th><th class="num">Aprovadas</th><th class="num">Ajustes</th><th class="num">Com o cliente há</th><th>Feedback</th><th></th></tr></thead><tbody>${tr}</tbody></table></div>`;
 }
@@ -2300,12 +2332,13 @@ function drawerHTML(p){
   const edFiles = (headOfUnit(unitOf(p)) && ["pauta","pautado","producao","revisao","ajuste"].includes(p.status)) || (canProduce(p) && ["producao","ajuste","pauta","pautado","revisao"].includes(p.status) && !(p.status === "ajuste" && p.ajusteCom === "planejamento"));
   const unitPpl = ativos().filter(m => m.unidade === c.unidade);
   const opt = (list, sel) => `<option value="">Definir…</option>` + list.map(m => `<option value="${esc(m.id)}" ${sel === m.id ? "selected" : ""}>${esc(m.nome)}</option>`).join("");
-  const top = `<div class="d-top"><button type="button" class="x" data-act="close" aria-label="Fechar">×</button><div class="ttl"><b>${esc(titleOf(p))}</b><span>${p.simples ? "Cartão simples" : cliLink(c)}${p.solicitante ? ` · para ${esc(p.solicitante)}` : ""} · ${esc(fmtD(p.data))}${p.simples ? "" : " · " + esc(isTask(p) ? "Pauta" : t.label)}</span></div>${pillP(p)}${canEd ? `<button type="button" class="btn sm${ed ? " primary" : ""}" data-act="pgEdit">${ed ? "Concluir edição" : "Editar"}</button>` : ""}</div>`;
+  const top = `<div class="d-top"><button type="button" class="x" data-act="close" aria-label="Fechar">×</button><div class="ttl"><b>${esc(titleOf(p))}</b><span>${codTag(p)} · ${p.simples ? "Cartão simples" : cliLink(c)}${p.solicitante ? ` · para ${esc(p.solicitante)}` : ""} · ${esc(fmtD(p.data))}${p.simples ? "" : " · " + esc(isTask(p) ? "Pauta" : t.label)}</span></div>${pillP(p)}${canEd ? `<button type="button" class="btn sm${ed ? " primary" : ""}" data-act="pgEdit">${ed ? "Concluir edição" : "Editar"}</button>` : ""}</div>`;
   const comentsSec = `<div class="sec"><h3>Comentários</h3><div class="list">${(p.coments || []).map(m => `<div class="cm">${av(m.por, 26)}<div><div class="s">${esc(mName(m.por))} · ${esc(fmtStamp(m.em))}</div><div class="b">${esc(m.texto)}</div></div></div>`).join("") || `<span class="muted" style="font-size:12.5px">Nenhum comentário. O cliente não vê esta conversa.</span>`}</div>
         <div class="row" style="margin-top:8px;flex-wrap:nowrap"><input class="inp" id="cmtxt" placeholder="Escreva para a equipe… (os responsáveis são avisados)" value="${esc(u.cm || "")}" aria-label="Comentário interno"><button type="button" class="btn sm" data-act="comment">Enviar</button></div></div>`;
   const histSec = `<div class="sec"><h3>Histórico</h3><ul class="hist">${[...(p.hist || [])].reverse().map((h, i) => `<li class="${i === 0 ? "hl" : ""}"><div><div class="a">${esc(ACOES[h.acao] || h.acao)}${h.versao ? ` (v${h.versao})` : ""}</div><div class="s">${esc(h.por === "cliente" && h.nome ? "Cliente · " + h.nome : mName(h.por))} · ${esc(fmtStamp(h.em))}</div>${h.texto ? `<div class="q">${esc(h.texto)}</div>` : ""}</div></li>`).join("")}</ul></div>`;
   const delRow = `${canPlan(p) ? (u.del ? `<div class="row"><span style="font-size:12.5px">Excluir esta pauta? Ela vai para o arquivo e pode ser restaurada.</span><button type="button" class="btn sm danger" data-act="archiveOne">Excluir</button><button type="button" class="btn sm ghost" data-act="toggleDel">Cancelar</button></div>` : `<div class="row"><button type="button" class="linkbtn" style="color:var(--danger)" data-act="toggleDel">Excluir pauta</button></div>`) : ""}`;
   const chat = comentsSec + histSec + delRow;
+  const anexosSec = anexosHTML(p.anexos || [], canEditP(p), "", u.anxProg);
   const dupBtn = canDup(p) ? `<div class="row"><button type="button" class="linkbtn" data-act="dupPeca">Duplicar card</button></div>` : "";
   const driveField = `<div class="field full"><label for="f-drive">Link do Drive <span class="hint">· imagens, vídeos e arquivos abertos da criação</span></label><div class="row" style="flex-wrap:nowrap"><input class="inp" id="f-drive" value="${esc(p.drive || "")}" placeholder="https://drive.google.com/…" ${ed ? "" : "disabled"}>${c.drive ? `<a class="btn sm" href="${esc(c.drive)}" target="_blank" rel="noopener" title="Pasta do cliente no Drive da Alra">${svgi("drive")} Pasta do cliente</a>` : ""}</div></div>`;
 
@@ -2316,6 +2349,7 @@ function drawerHTML(p){
     <div class="d-body pgb"><div class="pgw"><div class="pgmain">
       <section class="psec"><h3>Conteúdo</h3><div class="form"><div class="field full"><label for="f-hl">Título da pauta</label><input class="inp" id="f-hl" data-b="headline" value="${esc(b.headline)}" ${ed ? "" : "disabled"}></div>
         <div class="field full"><label for="f-ideia">Descrição e checklist</label>${rteHTML("f-ideia", "data-rt", "ideia", fmtOf(b, "ideia"), !ed, "O que precisa ser feito, links, passos…", "6em")}</div></div></section>
+      ${anexosSec}
       <section class="psec">${comentsSec}</section>
       <section class="psec">${histSec}</section>
     </div><div class="pgside">
@@ -2377,7 +2411,7 @@ function drawerHTML(p){
     <div class="d-body pgb"><div class="pgw"><div class="pgmain">
       ${showAdj ? `<div class="sec"><h3>${lastAdj.acao === "ajuste" ? `Ajuste pedido pelo cliente${lastAdj.tipo ? " · " + ({arte:"na arte", legenda:"na legenda", ambos:"na arte e na legenda", texto:"no texto"}[lastAdj.tipo] || "") : ""}` : "Ajuste pedido pelo planejamento"}</h3><div class="warnbox">${esc(lastAdj.texto || "Sem detalhes.")}</div></div>` : ""}
       <section class="psec"><h3>Conteúdo</h3>${conteudo}${cardBrief}</section>
-      ${legenda}${midias}${refs}
+      ${legenda}${midias}${refs}${anexosSec}
       <section class="psec">${comentsSec}</section>
       <section class="psec">${histSec}</section>
     </div><div class="pgside">
@@ -2581,6 +2615,7 @@ function newPecaHTML(){
       ${cat === "interna" || texto ? "" : `<section class="psec"><h3>${cat === "trafego" ? "Texto do anúncio" : "Legenda"}</h3>${ta("leg", 4)}</section>`}
       ${texto && card ? `<section class="psec"><h3>Card</h3><div class="form"><div class="field full"><label for="np-cardtx">Texto do card <span class="hint">· frase que vai na arte</span></label>${inp("cardtx")}</div></div></section>` : ""}
       ${cat === "interna" ? "" : `<section class="psec"><h3>Referências</h3><div class="form"><div class="field full"><label for="np-ref">Referências</label>${ta("ref", 2, "Pinterest, Behance, sites…")}</div><div class="field full"><label for="np-refig">Link de referência do Instagram</label>${inp("refig", "https://www.instagram.com/p/…")}</div></div></section>`}
+      ${anexosHTML(u.anexos || [], true, "np", u.anxProg)}
       <p class="muted" style="font-size:12.5px">${cat === "interna" ? "A pauta não vai para o cliente: anda em A fazer, Fazendo e Concluída." : sem ? "Pauta sem cliente: não passa pela aprovação do cliente. Depois da revisão, o planejamento aprova direto." : "A pauta segue o fluxo do tipo escolhido: produção, revisão, validação do Head e aprovação do cliente."}</p>
     </div><div class="pgside">
       <section class="psec"><h3>Propriedades</h3><div class="form props">
@@ -2620,6 +2655,8 @@ function freqRow(path, label, f, canToggle){
     <div class="wd">${[1,2,3,4,5,6,0].map(w => `<label title="${WD[w]}"><input type="checkbox" data-sc="${path}.dias" value="${w}" ${(f.dias || []).map(Number).includes(w) ? "checked" : ""} ${on ? "" : "disabled"} aria-label="${esc(label)}: ${WD[w]}">${WD1[w]}</label>`).join("")}</div>
     <select class="inp" data-sc="${path}.freq" ${on ? "" : "disabled"} aria-label="Periodicidade de ${esc(label)}" style="padding:6px 8px;font-size:12.5px">${Object.entries(FREQ).map(([k, l]) => `<option value="${k}" ${f.freq === k ? "selected" : ""}>${l}</option>`).join("")}</select></div>`;
 }
+const temRede = e => !!(e.meta.instagram || e.meta.facebook || e.tiktok.on || e.youtube.on || e.linkedin.on || e.blog.on);
+const soTrafego = e => !!(e.trafego && e.trafego.on) && !temRede(e);
 function clientFormHTML(){
   const d = ui.tmp.cd, isNew = !d._exists, un = d.unidade, e = d.escopo;
   const ppl = fn => ativos().filter(m => m.unidade === un && fn(m.papeis || []));
@@ -2644,20 +2681,21 @@ function clientFormHTML(){
         <div class="field"><label for="cf-ant">Enviar com quantos dias de antecedência</label><input class="inp" type="number" min="1" max="30" id="cf-ant" data-cf="antecedencia" value="${esc(d.antecedencia)}"></div></div>
       <div class="eyebrow">3 · Redes e escopo</div>
       <p class="muted" style="font-size:12.5px;margin-top:-6px">Marque as redes. As opções de cada uma abrem logo abaixo.</p>
-      <div class="netpick">${net("meta.instagram", "Instagram", e.meta.instagram)}${net("meta.facebook", "Facebook", e.meta.facebook)}${net("tiktok.on", "TikTok", e.tiktok.on)}${net("youtube.on", "YouTube", e.youtube.on)}${net("linkedin.on", "LinkedIn", e.linkedin.on)}${net("blog.on", "Blog", e.blog.on)}</div>
+      <div class="netpick">${net("meta.instagram", "Instagram", e.meta.instagram)}${net("meta.facebook", "Facebook", e.meta.facebook)}${net("tiktok.on", "TikTok", e.tiktok.on)}${net("youtube.on", "YouTube", e.youtube.on)}${net("linkedin.on", "LinkedIn", e.linkedin.on)}${net("blog.on", "Blog", e.blog.on)}<label class="nettraf"><input type="checkbox" data-sc="trafego.on" ${e.trafego.on ? "checked" : ""}> Tráfego pago</label></div>
       ${meta ? `<div class="npanel"><b>Instagram e Facebook <span class="hint">· mesma peça, mesma aprovação</span></b>${freqRow("meta.feed", "Feed", e.meta.feed, false)}${freqRow("meta.stories", "Stories", e.meta.stories, true)}</div>` : ""}
       ${e.tiktok.on ? `<div class="npanel"><b>TikTok</b>${freqRow("tiktok.video", "Vídeos", e.tiktok.video, false)}</div>` : ""}
       ${e.youtube.on ? `<div class="npanel"><b>YouTube</b>${freqRow("youtube.video", "Vídeo na íntegra (público)", e.youtube.video, true)}${freqRow("youtube.shorts", "YouTube Shorts", e.youtube.shorts, true)}</div>` : ""}
       ${e.linkedin.on ? `<div class="npanel"><b>LinkedIn</b>${freqRow("linkedin.post", "Post", e.linkedin.post, true)}${freqRow("linkedin.artigo", "Artigo", e.linkedin.artigo, true)}${freqRow("linkedin.newsletter", "Newsletter", e.linkedin.newsletter, true)}</div>` : ""}
       ${e.blog.on ? `<div class="npanel"><b>Blog</b>${freqRow("blog.post", "Posts", e.blog.post, false)}</div>` : ""}
       <div class="npanel"><label style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;cursor:pointer"><input type="checkbox" data-sc="captacao.on" ${e.captacao.on ? "checked" : ""} style="accent-color:var(--accent)"> Captação incluída no escopo</label>${e.captacao.on ? `<div class="form"><div class="field"><label for="cf-capf">Frequência</label><select class="inp" id="cf-capf" data-sc="captacao.freq">${Object.entries(CAPFREQ).map(([k, l]) => `<option value="${k}" ${e.captacao.freq === k ? "selected" : ""}>${l}</option>`).join("")}</select></div><div class="field"><label for="cf-capo">Observação</label><input class="inp" type="text" id="cf-capo" data-sc="captacao.obs" value="${esc(e.captacao.obs || "")}" placeholder="Ex.: 1 diária por mês, 4 horas"></div></div>` : ""}</div>
-      <div class="npanel"><label style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;cursor:pointer"><input type="checkbox" data-sc="trafego.on" ${e.trafego.on ? "checked" : ""} style="accent-color:var(--accent)"> Gestão de tráfego pago no escopo</label>${e.trafego.on ? `<div class="form"><div class="field full"><label for="cf-trafo">Plataformas e observações</label><input class="inp" type="text" id="cf-trafo" data-sc="trafego.obs" value="${esc(e.trafego.obs || "")}" placeholder="Ex.: Meta Ads, verba mensal definida com o cliente"></div></div>` : ""}</div>
+      ${e.trafego.on ? `<div class="npanel"><b>Tráfego pago</b><div class="form"><div class="field full"><label for="cf-trafo">Plataformas e observações</label><input class="inp" type="text" id="cf-trafo" data-sc="trafego.obs" value="${esc(e.trafego.obs || "")}" placeholder="Ex.: Meta Ads e Google Ads, verba mensal definida com o cliente"></div></div></div>` : ""}
       <div class="eyebrow">4 · Equipe do cliente</div>
-      <div class="form"><div class="field full"><span class="lb">Planejamento</span>${box("planejamento", ppl(p => p.includes("planejamento") || (p.includes("head") && !p.includes("diretoria"))))}</div>
-        <div class="field full"><span class="lb">Produção (design e audiovisual)</span>${box("producao", ppl(p => p.includes("design") || p.includes("audiovisual")))}</div>
-        <div class="field full"><span class="lb">Social media (publica)</span>${box("social", ppl(p => p.includes("social") || p.includes("head")))}</div>
-        <div class="field full"><span class="lb">Atendimento <span class="hint">· é avisado quando a pauta vai para o cliente</span></span>${box("atendimento", ppl(p => p.includes("atendimento") || p.includes("head")))}</div>
-        <div class="field full"><span class="lb">Gestão de tráfego <span class="hint">· configura e acompanha as campanhas do cliente</span></span>${box("trafego", ppl(p => p.includes("trafego") || p.includes("head")))}</div>
+      ${soTrafego(e) ? `<p class="muted" style="font-size:12.5px;margin-top:-6px">Cliente só de tráfego: a equipe é o gestor de tráfego e a criação.</p>` : ""}
+      <div class="form">${soTrafego(e) ? "" : `<div class="field full"><span class="lb">Planejamento</span>${box("planejamento", ppl(p => p.includes("planejamento") || (p.includes("head") && !p.includes("diretoria"))))}</div>`}
+        ${e.trafego.on ? `<div class="field full"><span class="lb">Gestor de tráfego <span class="hint">· configura e acompanha as campanhas do cliente</span></span>${box("trafego", ppl(p => p.includes("trafego") || p.includes("head")))}</div>` : ""}
+        <div class="field full"><span class="lb">${soTrafego(e) ? "Criação (design e audiovisual)" : "Produção (design e audiovisual)"}</span>${box("producao", ppl(p => p.includes("design") || p.includes("audiovisual")))}</div>
+        ${soTrafego(e) ? "" : `<div class="field full"><span class="lb">Social media (publica)</span>${box("social", ppl(p => p.includes("social") || p.includes("head")))}</div>
+        <div class="field full"><span class="lb">Atendimento <span class="hint">· é avisado quando a pauta vai para o cliente</span></span>${box("atendimento", ppl(p => p.includes("atendimento") || p.includes("head")))}</div>`}
         <div class="field full"><label for="cf-not">Particularidades</label><textarea id="cf-not" data-cf="notas" rows="3">${esc(d.notas)}</textarea></div>
         <div class="field full"><div class="seg"><label><input type="checkbox" data-cfr="linkPodcast" ${d.regras.linkPodcast ? "checked" : ""}> Exigir link do YouTube nas pautas que vêm do podcast</label></div></div></div>
       ${ui.tmp.err ? `<div class="err">${esc(ui.tmp.err)}</div>` : ""}<div class="actions"><button type="submit" class="btn primary">${isNew ? "Cadastrar cliente" : "Salvar"}</button><button type="button" class="btn ghost" data-act="close">Cancelar</button></div>
@@ -2787,7 +2825,7 @@ function fillOverlay(){
     const p = S.pecas.find(x => x.id === ui.openId);
     if (!p) ui.openId = null;
     else if (isClient() || ui.preview) html = CLIENT_ST.includes(p.status) ? postModalHTML(p) : "";
-    else html = canSee(p) || (ui.view === "hub" && canSeeHub(p)) ? drawerHTML(p) : "";
+    else html = canSee(p) || canSeeHub(p) ? drawerHTML(p) : "";
   }
   const act = document.activeElement && ov.contains(document.activeElement) ? document.activeElement : null;
   const actId = act && act.id, sel = act && act.selectionStart != null ? [act.selectionStart, act.selectionEnd] : null;
@@ -2861,6 +2899,8 @@ document.addEventListener("click", ev => { if (ui.kmenu && !(ev.target.closest &
 document.addEventListener("click", ev => {
   const rc = ev.target.closest && ev.target.closest("[data-rtc]");
   if (rc) { ev.preventDefault(); ev.stopImmediatePropagation(); const ed = rc.closest(".rte").querySelector(".rted"); if (document.activeElement !== ed) ed.focus(); document.execCommand("styleWithCSS", false, false); document.execCommand(rc.dataset.rtc, false, null); ed.dispatchEvent(new Event("input", {bubbles:true})); return; }
+  const ad = ev.target.closest && ev.target.closest("[data-act=AnxDel],[data-act=npAnxDel]");
+  if (ad) { ev.preventDefault(); ev.stopImmediatePropagation(); const i = +ad.dataset.i; if (ad.dataset.act === "npAnxDel") { (ui.tmp.anexos || []).splice(i, 1); fillOverlay(); return; } const p = S.pecas.find(x => x.id === ui.openId); if (!p || !canEditP(p) || !(p.anexos || [])[i]) return; p.anexos.splice(i, 1); save(); toast("Material removido da pauta."); fillOverlay(); return; }
   const ca = ev.target.closest && ev.target.closest("[data-act=CardAdd],[data-act=CardDel],[data-act=npCardAdd],[data-act=npCardDel]");
   if (ca) { ev.preventDefault(); ev.stopImmediatePropagation(); const a = ca.dataset.act, i = +ca.dataset.i;
     if (a.startsWith("np")) { const u = ui.tmp; u.cards = u.cards || []; if (a === "npCardAdd") u.cards.push({hl:"", sub:""}); else u.cards.splice(i, 1); fillOverlay(); const el = a === "npCardAdd" && $("#npch" + (u.cards.length - 1)); if (el) el.focus(); return; }
@@ -3038,6 +3078,7 @@ document.addEventListener("click", async ev => {
     case "logout": sb.auth.signOut().then(() => location.replace("/")); break;
     case "backFromClient": ui.me = ui.meAuto; ui.view = "inicio"; ui.openId = null; render(); break;
     case "portalGen": { const c = S.clientes.find(x => x.id === d.cid); if (!c) break; if (c.portalToken && !u.regen) { ui.tmp = {regen: true}; render(); break; } const b = crypto.getRandomValues(new Uint8Array(24)); c.portalToken = btoa(String.fromCharCode(...b)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); c.portalCriadoEm = nowIso(); save(); ui.tmp = {}; toast("Link de aprovação gerado. O link anterior parou de funcionar."); render(); break; }
+    case "aprLink": { const c = S.clientes.find(x => x.id === d.cid); if (!c) break; if (!c.portalToken) { if (!canEditClient(c)) { toast("O cliente ainda não tem link. Peça ao planejamento do cliente para gerar."); break; } const b = crypto.getRandomValues(new Uint8Array(24)); c.portalToken = btoa(String.fromCharCode(...b)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); c.portalCriadoEm = nowIso(); save(); } copyText(location.origin + "/c/" + c.portalToken, "Link de aprovação copiado. É o mesmo para todos os meses."); break; }
     case "portalCopy": { const c = cli(d.cid); copyText(location.origin + "/c/" + c.portalToken, "Link copiado"); break; }
     case "textReady": if (!String((p.briefing || {}).corpo || "").trim()) { toast("Escreva o texto completo antes."); break; } setStatus(p, "revisao", entry("entrega"), {retorno:false}); toast("Enviada para revisão"); render(); break;
     case "ajusteOk": setStatus(p, "revisao", entry("ajuste_ok"), {retorno:false}); toast("Ajuste concluído: de volta à revisão"); render(); break;
@@ -3100,6 +3141,7 @@ document.addEventListener("input", ev => {
   if (t.dataset.obp && obPub) { obPub.respostas = obPub.respostas || {}; obPub.respostas[t.dataset.obp] = t.value; obPend[t.dataset.obp] = t.value; t.closest(".obq").classList.toggle("ok", !!t.value.trim()); if (!(obNome() || (ui.pnome || "").trim())) { const el = $("#obsaved"); if (el) el.textContent = "Escreva seu nome no topo para salvar"; return; } clearTimeout(obT); obT = setTimeout(() => obSave(false), 1200); return; }
   if (t.dataset.cri && ui.tmp.cri) { setPath(ui.tmp.cri, t.dataset.cri, t.value); const m = t.dataset.cri.match(/^cores\.(\d+)\.hex$/); if (m) { const el = document.getElementById("rgb" + m[1]); if (el) el.textContent = validHex(t.value) ? hexRgb(t.value) : "RGB automático"; } return; }
   if (t.id === "f-corpo" && t.value !== undefined) { const el = $("#wcount"); if (el) { const n = t.value.trim().split(/\s+/).filter(Boolean).length; el.textContent = `${n} ${n === 1 ? "palavra" : "palavras"}`; } }
+  if (t.id === "fBusca") { ui.busca = t.value; const pos = t.selectionStart; render(); const el = $("#fBusca"); if (el) { el.focus(); try { el.setSelectionRange(pos, pos); } catch(e) {} } return; }
   if (t.id === "cliQ") { ui.cq = t.value; const q = normTxt(t.value); let n = 0; document.querySelectorAll("#cliGrid [data-nome]").forEach(el => { const ok = !q || el.dataset.nome.includes(q); el.hidden = !ok; if (ok) n++; }); const el = $("#cliQn"); if (el) el.textContent = `${n} de ${document.querySelectorAll("#cliGrid [data-nome]").length}`; return; }
   if (t.dataset && t.dataset.rt !== undefined) { const p = S.pecas.find(x => x.id === ui.openId); if (p) { p.briefing = p.briefing || {}; setRt(p.briefing, t.dataset.rt, t); if (t.dataset.rt === "corpo") { const el = $("#wcount"); if (el) { const n = String(p.briefing.corpo || "").trim().split(/\s+/).filter(Boolean).length; el.textContent = `${n} ${n === 1 ? "palavra" : "palavras"}`; } } save(); } return; }
   if (t.dataset && t.dataset.rtn !== undefined) { const u = ui.tmp, f = u.f = u.f || {}, m = t.dataset.rtn.match(/^cards\.(\d+)\.(sub|hl)$/); if (m) { const c = (u.cards || [])[+m[1]]; if (c) { c[m[2]] = rtText(t); c[m[2] + "Fmt"] = cleanFmt(t.innerHTML); } } else { f[t.dataset.rtn] = rtText(t); f[t.dataset.rtn + "Fmt"] = cleanFmt(t.innerHTML); } return; }
@@ -3175,6 +3217,8 @@ document.addEventListener("change", async ev => {
     else if (k === "data") { if (t.value && t.value !== p.data) { p.hist.push(entry("data", {texto:`${fmtD(p.data)} → ${fmtD(t.value)}`})); p.data = t.value; } }
     save(); render(); return;
   }
+  if (t.id === "AnxUp" && p) { const files = [...t.files]; t.value = ""; if (!files.length || !canEditP(p)) return; subirAnexos(files, out => { if (out.length) { p.anexos = (p.anexos || []).concat(out); save(); toast(out.length === 1 ? "Material anexado." : `${out.length} materiais anexados.`); } fillOverlay(); }); return; }
+  if (t.id === "npAnxUp") { const files = [...t.files]; t.value = ""; if (!files.length) return; subirAnexos(files, out => { ui.tmp.anexos = (ui.tmp.anexos || []).concat(out); fillOverlay(); }); return; }
   if (p && t.dataset.mlink !== undefined) { const i = +t.dataset.mlink, v = t.value.trim(); if (v && !safeUrl(v)) { toast("Cole um link começando com https://"); return; } if (i >= 0 && (p.midias || [])[i]) { if (v) p.midias[i].link = v; else delete p.midias[i].link; } else { if (v) p.criacaoLink = v; else delete p.criacaoLink; } save(); toast(v ? "Link da criação salvo." : "Link removido."); fillOverlay(); return; }
   if (p && t.id === "f-cli") { if (!canPlan(p)) return; const de = cli(p.clienteId), para = cli(t.value); if (de.id === para.id) return; p.clienteId = para.id; if (!para.id) p.unidade = p.unidade || unitOf(Object.assign({}, p, {clienteId: de.id})) || (ME() || {}).unidade; else delete p.unidade; delete p.validadoHead; p.hist = [...(p.hist || []), entry("moveu", {texto:`Cliente: ${de.id ? de.nome : "sem cliente"} → ${para.id ? para.nome : "sem cliente"}`})]; save(); ui.tmp.troCli = false; toast(`Pauta agora é de ${para.id ? para.nome : "nenhum cliente"}.`); fillOverlay(); return; }
   if (p && t.id === "f-priv") { if (!canPriv(p)) return; const on = !!t.checked; if (on) p.privado = true; else delete p.privado; p.hist = [...(p.hist || []), entry("moveu", {texto: on ? "Pauta marcada como privada" : "Pauta marcada como pública"})]; save(); toast(on ? "Pauta privada: só a Diretoria, quem criou e os responsáveis veem." : "Pauta pública: o time do cliente vê e edita."); fillOverlay(); return; }
@@ -3236,7 +3280,8 @@ document.addEventListener("submit", async ev => {
     { const map = {ideia:"ideia", obj:"objetivo", pub:"publico", sub:"sub", corpo:"corpo", leg:"legenda", ref:"referencias", refig:"refIg", cardtx:"cardTexto"}; Object.entries(map).forEach(([k, bk]) => { if (v(k)) briefing[bk] = v(k); }); if (v("hl") && !briefing.headline) briefing.headline = v("hl"); if (v("dprod")) np.dataProducao = v("dprod"); if (v("drive")) np.drive = v("drive"); }
     { const f = u.f || {}; ["ideia","hl","sub","corpo"].forEach(k => { const el = document.querySelector(`[data-rtn="${k}"]`); if (!el) return; const txt = rtText(el).trim(), bk = k === "hl" ? "headline" : k; if (txt) { if (bk === "headline" && briefing.headline) return; briefing[bk] = txt; briefing[bk + "Fmt"] = cleanFmt(el.innerHTML); } }); }
     if ((briefing.formatos || []).includes("Carrossel") && u.cards) { briefing.cards = u.cards.map(c => ({hl:(c.hl || "").trim(), hlFmt:c.hlFmt || "", sub:c.sub || "", subFmt:c.subFmt || ""})); if (!briefing.headline && briefing.cards[0].hl) briefing.headline = briefing.cards[0].hl; }
-    const etqs = (u.etqs || []).filter(etqOf); if (etqs.length) np.etiquetas = etqs; if (($("#np-priv") || {}).checked) np.privado = true;
+    const etqs = (u.etqs || []).filter(etqOf); if (etqs.length) np.etiquetas = etqs;
+    if ((u.anexos || []).length) np.anexos = u.anexos.slice(); if (($("#np-priv") || {}).checked) np.privado = true;
     if (resp.prod && resp.prod !== ui.me && (cat === "interna" || GENERICOS.includes(tp))) notify([resp.prod], `${cat === "interna" ? "Pauta" : "Demanda"} para você: ${briefing.headline}${c.id ? " (" + c.nome + ")" : ""}`, np);
     S.pecas.push(np); save(); ui.modal = null; ui.tmp = {}; ui.openId = np.id; ui.idx = 0; ui.month = firstOfMonth(pd(data)); toast("Pauta criada."); render(); return; }
   if (id === "genForm") {
@@ -3251,7 +3296,7 @@ document.addEventListener("submit", async ev => {
     const fail = msg => { ui.tmp.err = msg; fillOverlay(); };
     if (!cd.nome) return fail("Dê um nome ao cliente.");
     const e = cd.escopo;
-    if (!(e.meta.instagram || e.meta.facebook || e.tiktok.on || e.youtube.on || e.linkedin.on || e.blog.on)) return fail("Marque ao menos uma rede no escopo.");
+    if (!temRede(e) && !e.trafego.on) return fail("Marque ao menos uma rede ou o tráfego pago no escopo.");
     const items = [];
     if (e.meta.instagram || e.meta.facebook) { items.push(["Feed", e.meta.feed]); if (e.meta.stories.on) items.push(["Stories", e.meta.stories]); }
     if (e.tiktok.on) items.push(["TikTok", e.tiktok.video]);
@@ -3259,7 +3304,8 @@ document.addEventListener("submit", async ev => {
     if (e.linkedin.on) { if (!["post","artigo","newsletter"].some(k => e.linkedin[k].on)) return fail("No LinkedIn, marque post, artigo ou newsletter."); [["post","Post LinkedIn"],["artigo","Artigo LinkedIn"],["newsletter","Newsletter LinkedIn"]].forEach(([k, l]) => { if (e.linkedin[k].on) items.push([l, e.linkedin[k]]); }); }
     if (e.blog.on) items.push(["Blog", e.blog.post]);
     const semDia = items.find(([, f]) => !(f.dias || []).length); if (semDia) return fail(`Marque os dias de ${semDia[0]}.`);
-    if (!cd.squad.planejamento.length || !cd.squad.producao.length) return fail("Defina ao menos uma pessoa de planejamento e uma de produção na equipe do cliente.");
+    if (soTrafego(e)) { if (!(cd.squad.trafego || []).length || !cd.squad.producao.length) return fail("Defina o gestor de tráfego e ao menos uma pessoa da criação."); }
+    else { if (!cd.squad.planejamento.length || !cd.squad.producao.length) return fail("Defina ao menos uma pessoa de planejamento e uma de produção na equipe do cliente."); if (e.trafego.on && !(cd.squad.trafego || []).length) return fail("Defina o gestor de tráfego do cliente."); }
     const body = JSON.parse(JSON.stringify(cd)); delete body._exists; delete body.err;
     if (cd._exists) { const i = S.clientes.findIndex(c => c.id === cd.id); S.clientes[i] = Object.assign(S.clientes[i], body); toast("Cliente salvo"); }
     else { body.id = uid(); body.inicio = ymd(TODAY); S.clientes.push(body); ui.hubId = body.id; ui.view = "hub"; ui.hubTab = "cadastro"; toast("Cliente cadastrado. Próximo passo: gerar as pautas no calendário."); }
