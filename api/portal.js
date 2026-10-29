@@ -14,12 +14,14 @@ async function clientByToken(t) {
   const r = await db.listCol("clientes", `&data->>portalToken=eq.${encodeURIComponent(t)}`);
   return r[0] ? { id: r[0].id, ...r[0].data } : null;
 }
+const url = u => /^https?:\/\//i.test(String(u || "").trim()) ? String(u).trim().slice(0, 2000) : "";
 function sanitize(id, p) {
   const b = p.briefing || {};
   return {
     id, clienteId: p.clienteId, data: p.data, tipo: p.tipo, redes: p.redes || [], status: p.status,
-    midias: (p.midias || []).filter(m => m.kind === "asset").map(m => ({ kind: "asset", id: m.id, video: !!m.video })),
-    briefing: { headline: b.headline || "", sub: b.sub || "", legenda: b.legenda || "", corpo: b.corpo || "", card: !!b.card, formatos: b.formatos || [] },
+    midias: (p.midias || []).filter(m => m.kind === "asset").map(m => ({ kind: "asset", id: m.id, video: !!m.video, link: url(m.link) })),
+    criacaoLink: url(p.criacaoLink),
+    briefing: { headline: b.headline || "", sub: b.sub || "", legenda: b.legenda || "", corpo: b.corpo || "", card: !!b.card, formatos: b.formatos || [], headlineFmt: b.headlineFmt || "", subFmt: b.subFmt || "", corpoFmt: b.corpoFmt || "" },
     hist: (p.hist || []).filter(h => h.acao === "ajuste").map(h => ({ acao: "ajuste", texto: h.texto || "", tipo: h.tipo || "", em: h.em }))
   };
 }
