@@ -651,13 +651,33 @@ const LOGO_MARK_SRC = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEcAAABgCAY
 /* tema por pessoa (claro/escuro) e Halloween só em 30/10 (ou ?tema=halloween para pré-visualizar) */
 const temaGet = () => { try { return localStorage.getItem("alra-tema") === "dark" ? "dark" : "light"; } catch(e) { return "light"; } };
 const qsTema = new URLSearchParams(location.search).get("tema") || "";
-const halloweenOn = () => { if (qsTema === "halloween") return true; if (qsTema === "normal") return false; try { if (localStorage.getItem("alra-hw-off") === "2026") return false; } catch(e) {} const d = new Date(); return d.getMonth() === 9 && d.getDate() === 30; };
+const halloweenOn = () => { if (qsTema === "halloween") return true; if (qsTema === "normal") return false; try { if (localStorage.getItem("alra-hw-off") === "2026") return false; } catch(e) {} const d = new Date(); return d.getFullYear() === 2026 && d.getMonth() === 9 && (d.getDate() === 30 || d.getDate() === 31); };
 function aplicarTema(){ const r = document.documentElement; r.dataset.theme = qsTema === "dark" ? "dark" : temaGet(); if (halloweenOn()) r.dataset.fest = "halloween"; else delete r.dataset.fest; }
 aplicarTema();
 const BAT = `<svg viewBox="0 0 64 30" aria-hidden="true"><path fill="currentColor" d="M32 9c-1.2-3.4-2.6-5-2.6-5s-.2 2.6-.9 4.2C24 3.4 14.6 1.8 2 6.6c6.4 1.4 9.8 5.4 9.6 10.6 3.6-3 9.2-3.2 11.8.8 1-3.4 4.4-5 6.4-4.6.8 2.6 1.4 4.6 2.2 6.6.8-2 1.4-4 2.2-6.6 2-.4 5.4 1.2 6.4 4.6 2.6-4 8.2-3.8 11.8-.8-.2-5.2 3.2-9.2 9.6-10.6C49.4 1.8 40 3.4 35.5 8.2c-.7-1.6-.9-4.2-.9-4.2S33.2 5.6 32 9z"/></svg>`;
 const WEB = `<svg class="hw-web" viewBox="0 0 150 150" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M150 0L40 150M150 0L0 100M150 0L80 150M150 0L0 40M150 0L120 150"/><path d="M150 30Q128 22 120 0M150 62Q110 48 96 0M150 98Q92 76 70 0M150 136Q74 104 44 0"/></svg>`;
 const hwDeco = () => halloweenOn() ? `<div class="hw-deco" aria-hidden="true">${WEB}<span class="hw-bat b1">${BAT}</span><span class="hw-bat b2">${BAT}</span><span class="hw-bat b3">${BAT}</span></div>` : "";
-const hwBanner = () => halloweenOn() ? `<div class="hw-banner"><span class="big" aria-hidden="true">🎃</span><div><b>Sexta de Halloween na Alra 🦇</b><p>Hoje o sistema está fantasiado. Amanhã ele volta ao normal (as pautas, infelizmente, continuam assombrando o Kanban 👻).</p></div><button type="button" class="linkbtn" data-act="hwOff">Desligar o tema</button></div>` : "";
+const HW_FRASES = {
+  diretoria: "Nenhuma pauta escapa do radar da Diretoria, nem aquela escondida no fim da fila. Revise tudo e chegue à festa com a unidade em dia.",
+  vic4fl6uqpw: "Feitiço bem feito é planejamento aprovado antes do anoitecer. Deixe novembro encaminhado e a noite livre.",
+  mkdub60vzn0: "Na timeline, só cortes limpos. Susto, hoje, só nos filmes da noite.",
+  "5jtq66z0jxz": "Pauta sem briefing é casa mal-assombrada: ninguém quer entrar. Deixe tudo pronto antes de sair.",
+  jpx5qppwxo2: "Arte entregue antes das 18h não vira abóbora. Exporte, suba no Drive e vá para a fantasia.",
+  rsitoecz9id: "Não deixe o Ferntasma te assombrar. Bora finalizar tudo para a festa à noite, sem pauta com teia de aranha.",
+  gm4rmwh1i3b: "Último render do dia, sem travessuras no áudio. Depois, só a trilha da festa.",
+  rm5ptgl2dmx: "Campanha rodando e CPA comportado. O orçamento não vira travessura enquanto você se fantasia."
+};
+function hwFrase(){
+  const m = ME() || {}, pp = m.papeis || [];
+  if (HW_FRASES[m.id]) return HW_FRASES[m.id];
+  if (pp.includes("diretoria")) return HW_FRASES.diretoria;
+  if (pp.includes("trafego")) return HW_FRASES.rm5ptgl2dmx;
+  if (pp.includes("audiovisual")) return HW_FRASES.gm4rmwh1i3b;
+  if (pp.includes("design")) return HW_FRASES.jpx5qppwxo2;
+  if (pp.includes("planejamento") || pp.includes("head")) return HW_FRASES["5jtq66z0jxz"];
+  return "";
+}
+const hwBanner = () => halloweenOn() ? `<div class="hw-banner"><span class="big" aria-hidden="true">🎃</span><div><b>Hoje é Halloween na Alra: feche as pautas antes que elas te assombrem. À noite, a confraternização te espera. 🦇</b>${hwFrase() ? `<p>${esc(hwFrase())}</p>` : ""}</div><button type="button" class="linkbtn" data-act="hwOff">Desligar o tema</button></div>` : "";
 const LOGO_FULL = h => `<img src="${LOGO_FULL_SRC}" alt="Alra" style="height:${h}px;width:auto;display:block">`;
 const LOGO_MARK = h => `<img src="${LOGO_MARK_SRC}" alt="" style="height:${h}px;width:auto;display:block">`;
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
