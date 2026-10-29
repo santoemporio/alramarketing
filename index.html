@@ -740,6 +740,7 @@ function enqueue(fn){
 let rT = null;
 function renderSoon(){ clearTimeout(rT); rT = setTimeout(() => { const a = document.activeElement; const typing = a && (/TEXTAREA|INPUT|SELECT/.test(a.tagName) || a.isContentEditable) && $("#overlay").contains(a); if (typing) { rT = setTimeout(renderSoon, 1500); return; } if (a && a.dataset && a.dataset.ob) { rT = setTimeout(renderSoon, 2000); return; } render(); }, 150); }
 /* ---------- Supabase ---------- */
+let deepP = (location.pathname === "/" && new URLSearchParams(location.search).get("p")) || null;
 let mustSetPwd = false, sb = null, authUser = null, SB_URL = "", isMember = false, isAdmin = false, portalToken = "";
 async function dbSet(col, id, data){ const {error} = await sb.from("docs").upsert({col, id, data, updated_at: new Date().toISOString()}); if (error) throw error; }
 async function dbDel(col, id){ const {error} = await sb.from("docs").delete().eq("col", col).eq("id", id); if (error) throw error; }
@@ -1823,6 +1824,7 @@ function render(){
   if (isClient() || ui.preview) { app.innerHTML = portalHTML(); fillOverlay(); return; }
   const m = ME(), nav = navItems();
   if (OLDVIEW[ui.view]) { const [v, k, t] = OLDVIEW[ui.view]; ui.view = v; ui[k] = t; }
+  if (deepP && S.pecas.length) { const dp = S.pecas.find(x => x.id === deepP) || S.pecas.find(x => codOf(x).slice(1).toLowerCase() === String(deepP).replace(/^#/, "").toLowerCase()); deepP = null; try { history.replaceState(null, "", "/"); } catch(e) {} if (dp) { ui.view = "pecas"; ui.openId = dp.id; ui.idx = 0; ui.tmp = {}; } }
   if (!nav.some(n => n[0] === ui.view) && ui.view !== "hub") ui.view = "inicio";
   const mine = S.pecas.filter(p => canSee(p) && myTurn(p)).length;
   autoReports();
@@ -2352,7 +2354,7 @@ function drawerHTML(p){
   const edFiles = (headOfUnit(unitOf(p)) && ["pauta","planejamento","pautado","producao","revisao","ajuste"].includes(p.status)) || (canProduce(p) && ["producao","ajuste","pauta","planejamento","pautado","revisao"].includes(p.status) && !(p.status === "ajuste" && p.ajusteCom === "planejamento"));
   const unitPpl = ativos().filter(m => m.unidade === c.unidade);
   const opt = (list, sel) => `<option value="">Definir…</option>` + list.map(m => `<option value="${esc(m.id)}" ${sel === m.id ? "selected" : ""}>${esc(m.nome)}</option>`).join("");
-  const top = `<div class="d-top"><button type="button" class="x" data-act="close" aria-label="Fechar">×</button><div class="ttl"><b>${esc(titleOf(p))}</b><span>${codTag(p)} · ${p.simples ? "Cartão simples" : cliLink(c)}${p.solicitante ? ` · para ${esc(p.solicitante)}` : ""} · ${esc(fmtD(p.data))}${p.simples ? "" : " · " + esc(isTask(p) ? "Pauta" : t.label)}</span></div>${pillP(p)}${canEd ? `<button type="button" class="btn sm${ed ? " primary" : ""}" data-act="pgEdit">${ed ? "Concluir edição" : "Editar"}</button>` : ""}</div>`;
+  const top = `<div class="d-top"><button type="button" class="x" data-act="close" aria-label="Fechar">×</button><div class="ttl"><b>${esc(titleOf(p))}</b><span>${codTag(p)} <button type="button" class="linkbtn" style="font-size:11px;font-weight:600" data-act="copyLink" title="Copiar o link direto desta pauta">copiar link</button> · ${p.simples ? "Cartão simples" : cliLink(c)}${p.solicitante ? ` · para ${esc(p.solicitante)}` : ""} · ${esc(fmtD(p.data))}${p.simples ? "" : " · " + esc(isTask(p) ? "Pauta" : t.label)}</span></div>${pillP(p)}${canEd ? `<button type="button" class="btn sm${ed ? " primary" : ""}" data-act="pgEdit">${ed ? "Concluir edição" : "Editar"}</button>` : ""}</div>`;
   const comentsSec = `<div class="sec"><h3>Comentários</h3><div class="list">${(p.coments || []).map(m => `<div class="cm">${av(m.por, 26)}<div><div class="s">${esc(mName(m.por))} · ${esc(fmtStamp(m.em))}</div><div class="b">${esc(m.texto)}</div></div></div>`).join("") || `<span class="muted" style="font-size:12.5px">Nenhum comentário. O cliente não vê esta conversa.</span>`}</div>
         <div class="row" style="margin-top:8px;flex-wrap:nowrap"><input class="inp" id="cmtxt" placeholder="Escreva para a equipe… (os responsáveis são avisados)" value="${esc(u.cm || "")}" aria-label="Comentário interno"><button type="button" class="btn sm" data-act="comment">Enviar</button></div></div>`;
   const histSec = `<div class="sec"><h3>Histórico</h3><ul class="hist">${[...(p.hist || [])].reverse().map((h, i) => `<li class="${i === 0 ? "hl" : ""}"><div><div class="a">${esc(ACOES[h.acao] || h.acao)}${h.versao ? ` (v${h.versao})` : ""}</div><div class="s">${esc(h.por === "cliente" && h.nome ? "Cliente · " + h.nome : mName(h.por))} · ${esc(fmtStamp(h.em))}</div>${h.texto ? `<div class="q">${esc(h.texto)}</div>` : ""}</div></li>`).join("")}</ul></div>`;
@@ -3050,6 +3052,7 @@ document.addEventListener("click", async ev => {
     case "npMulti": { const u = ui.tmp; u.multi = !u.multi; if (u.multi && !(u.mcli || []).length) { const c0 = ($("#np-cli") || {}).value; u.mcli = c0 ? [c0] : []; } fillOverlay(); break; }
     case "mcliAll": { const u = ui.tmp; const vis = [...document.querySelectorAll(".mclil label:not([hidden]) [data-npmc]")].map(x => x.value); u.mcli = [...new Set([...(u.mcli || []), ...vis])]; fillOverlay(); break; }
     case "mcliNone": ui.tmp.mcli = []; fillOverlay(); break;
+    case "copyLink": copyText(location.origin + "/?p=" + encodeURIComponent(ui.openId), "Link da pauta copiado."); break;
     case "kMenu": ui.kmenu = ui.kmenu === d.pid ? null : d.pid; render(); break;
     case "dupPeca": { const x = S.pecas.find(y => y.id === (d.pid || ui.openId)); ui.kmenu = null; if (!x || !canDup(x)) break; const n = duplicarPeca(x); toast("Card duplicado: a cópia está em Pauta."); if (ui.openId) { ui.openId = n.id; ui.idx = 0; ui.tmp = {}; } render(); break; }
     case "archAsk": { const x = S.pecas.find(y => y.id === d.pid); ui.kmenu = null; if (!x) break; ui.tmp = {confirm: {titulo: "Excluir pauta?", texto: `"${titleOf(x)}" vai para o arquivo (Kanban → Arquivadas) e pode ser restaurada.`, ok: "Excluir", ids: [x.id]}}; ui.modal = "confirm"; fillOverlay(); break; }
