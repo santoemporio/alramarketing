@@ -17,7 +17,7 @@
   --ok:#0F7A55; --ok-soft:#DDF3E7; --apv:#0E6E78; --apv-soft:#E2F3F5; --warn:#9A5300; --warn-soft:#FFF2E0;
   --info:#3150B8; --info-soft:#EDF1FD; --plan:#6747B5; --plan-soft:#F1EDFB; --done:#5E5764; --done-soft:#F0EDF1;
   --danger:#C2283A; --danger-soft:#FDEBED;
-  --s-pauta:#7E62C9; --s-pautado:#B05FD6; --s-producao:#A39BA9; --s-revisao:#4A68CF; --s-cliente:#FF0092; --s-ajuste:#D98200; --s-aprovado:#1A93A0; --s-publicado:#13996A;
+  --s-pauta:#7E62C9; --s-planejamento:#9A6BE0; --s-pautado:#B05FD6; --s-producao:#A39BA9; --s-revisao:#4A68CF; --s-cliente:#FF0092; --s-ajuste:#D98200; --s-aprovado:#1A93A0; --s-publicado:#13996A;
   --shadow:0 1px 2px rgba(36,28,41,.04),0 6px 20px rgba(36,28,41,.05); --shadow-lg:0 24px 60px rgba(36,28,41,.16); --scrim:rgba(36,28,41,.32);
   --f:"Montserrat",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 }
@@ -193,7 +193,7 @@ table.tb{width:100%;border-collapse:collapse;font-size:13px}
 .banner{border:1px solid var(--accent);background:var(--accent-soft);border-radius:14px;padding:14px 16px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
 
 /* kanban */
-.board{display:grid;grid-template-columns:repeat(8,minmax(132px,1fr));gap:7px;overflow-x:auto;padding-bottom:8px;align-items:start}
+.board{display:grid;grid-template-columns:repeat(9,minmax(128px,1fr));gap:7px;overflow-x:auto;padding-bottom:8px;align-items:start}
 .col{background:var(--surface);border-radius:14px;padding:8px;display:flex;flex-direction:column;gap:8px;min-width:0;min-height:160px;border:2px solid transparent}
 .col.dropover{border-color:var(--accent);background:var(--accent-soft)}
 .col-h{display:flex;align-items:center;justify-content:space-between;gap:4px 8px;padding:2px 4px 4px;flex-wrap:wrap}
@@ -637,11 +637,11 @@ const GRUPOS = {meta:"Instagram e Facebook", stories:"Stories", ads:"Anúncios",
 const FORMATOS_GEN = ["Arte digital","Impresso","Vídeo","Fotos","Apresentação","Documento","Outro"];
 const FORMATOS = ["Post estático","Carrossel","Reels","Stories","Vídeo","Capa","Banner site","Banner newsletter"];
 const STATUS = {
-  pauta:{label:"Pauta", tone:"plan"}, pautado:{label:"Pautado", tone:"plan"}, producao:{label:"Em produção", tone:"prod"}, revisao:{label:"Em revisão", tone:"info"},
+  pauta:{label:"Pauta", tone:"plan"}, planejamento:{label:"Planejamento", tone:"plan"}, pautado:{label:"Criação", tone:"plan"}, producao:{label:"Em produção", tone:"prod"}, revisao:{label:"Em revisão", tone:"info"},
   cliente:{label:"Com o cliente", tone:"accent"}, ajuste:{label:"Ajuste", tone:"warn"},
   aprovado:{label:"Aprovado", tone:"apv"}, publicado:{label:"Publicado", tone:"ok"}
 };
-const ORDER = ["pauta","pautado","producao","revisao","cliente","ajuste","aprovado","publicado"];
+const ORDER = ["pauta","planejamento","pautado","producao","revisao","cliente","ajuste","aprovado","publicado"];
 const CLIENT_ST = ["cliente","ajuste","aprovado","publicado"];
 const OBJETIVOS = ["Venda","Remarketing","Branding","Reconhecimento","Autoridade","Engajamento","Institucional"];
 const PAPEIS = {diretoria:"Diretoria da rede", head:"Head", planejamento:"Planejamento", design:"Design", audiovisual:"Audiovisual", social:"Social media", trafego:"Tráfego", atendimento:"Atendimento"};
@@ -651,7 +651,7 @@ const FREQ = {semanal:"Toda semana", quinzenal:"A cada 15 dias", mensal:"1× por
 const EQUIP = ["Câmera","Lentes","Tripé","Gimbal","Microfone","Iluminação","Rebatedor","Celular","Drone","Baterias extras","Cartões de memória"];
 const CAPFREQ = {semanal:"Semanal", quinzenal:"Quinzenal", mensal:"Mensal", demanda:"Sob demanda"};
 const ACOES = {
-  pauta:"Pauta criada", pautado:"Pautado: briefing completo, pronto para a criação", producao:"Enviada para produção", arquivos:"Arquivos anexados", entrega:"Enviada para revisão", nova_versao:"Nova versão enviada para revisão",
+  pauta:"Pauta criada", planejamento:"Em planejamento: roteiro e briefing", pautado:"Enviada para a criação", producao:"Enviada para produção", arquivos:"Arquivos anexados", entrega:"Enviada para revisão", nova_versao:"Nova versão enviada para revisão",
   devolveu:"Devolvida para a produção", enviou_cliente:"Enviada ao cliente", aprovou:"Aprovada pelo cliente", aprovou_interno:"Aprovada internamente (pauta sem cliente)", no_ar:"Campanha no ar", encerrou:"Campanha encerrada", entregou:"Entregue", captado:"Material captado: foi para a edição", validou:"Validada pelo Head", apresentou:"Apresentado ao cliente", aprovou_tudo:"Aprovada em \"aprovar todo o planejamento\"",
   ajuste:"Cliente pediu ajuste", registrou:"Aprovação registrada pela equipe", publicou:"Publicada", concluiu:"Tarefa concluída", iniciou:"Tarefa iniciada", reabriu:"Tarefa reaberta", ajuste_ok:"Ajuste concluído, de volta à revisão", data:"Data alterada", moveu:"Etapa alterada no quadro", notificou:"Notificação enviada"
 };
@@ -1012,13 +1012,14 @@ const canSeeHub = p => !isClient() && privOk(p) && unitScope().includes(unitOf(p
 const normTxt = t => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 function owner(p){
   const r = p.resp || {}, f = fluxoOf(p);
-  if (isTask(p)) return ["pauta","pautado","producao"].includes(p.status) ? (r.prod || r.plan) : null;
-  if (f === "relatorio") return {pauta: r.prod || r.plan, pautado: r.prod || r.plan, producao: r.plan, revisao: diretorOf(p), aprovado: (atendimentoDe(cli(p.clienteId))[0] || r.plan)}[p.status] || null;
+  if (isTask(p)) return ["pauta","planejamento","pautado","producao"].includes(p.status) ? (r.prod || r.plan) : null;
+  if (f === "relatorio") return {pauta: r.prod || r.plan, planejamento: r.plan, pautado: r.prod || r.plan, producao: r.plan, revisao: diretorOf(p), aprovado: (atendimentoDe(cli(p.clienteId))[0] || r.plan)}[p.status] || null;
   if (f === "trafego" && p.status === "aprovado") return trafOf(p);
   if (f === "trafego" && p.status === "publicado") return p.encerrada ? null : trafOf(p);
   if (f === "pontual" && p.status === "aprovado") return atendimentoDe(cli(p.clienteId))[0] || r.plan;
   switch (p.status) {
     case "pauta": case "revisao": return r.plan;
+    case "planejamento": return r.plan || p.criadoPor;
     case "pautado": case "producao": return r.prod;
     case "cliente": return "cliente";
     case "ajuste": return p.ajusteCom === "planejamento" ? r.plan : r.prod;
@@ -1113,7 +1114,7 @@ const etqOf = id => etiquetas().find(e => e.id === id);
 const etqChips = p => { const l = (p.etiquetas || []).map(etqOf).filter(Boolean); return l.length ? `<span class="etqs">${l.map(e => `<span class="etq" style="--c:${esc(e.cor)}">${esc(e.nome)}</span>`).join("")}</span>` : ""; };
 const canEtq = p => !isClient() && privOk(p) && (canEditP(p) || timeAtLeast("B"));
 function stepperHTML(p){
-  const ord = isTask(p) ? ["pauta","pautado","producao","publicado"] : etapasDe(p), sj = ord.indexOf(p.status), can = canMove(p);
+  const ord = isTask(p) ? ["pauta","producao","publicado"].concat(["planejamento","pautado"].includes(p.status) ? [p.status] : []).sort((a, b) => ORDER.indexOf(a) - ORDER.indexOf(b)) : etapasDe(p), sj = ord.indexOf(p.status), can = canMove(p);
   const lb = k => isTask(p) ? (TASK_ST[k] || STATUS[k].label) : semCli(p) && k === "publicado" ? "Entregue" : STATUS[k].label;
   return `<div class="stepw"><div class="stepbar" style="grid-template-columns:repeat(${ord.length},1fr)">${ord.map((k, i) => `<div class="${i === sj ? "on" : i < sj && k !== "ajuste" ? "past" : ""}"></div>`).join("")}</div><div class="stepl" style="grid-template-columns:repeat(${ord.length},1fr)">${ord.map((k, i) => can && i !== sj ? `<button type="button" class="stepgo" data-mvst="${k}" title="Mover para ${esc(lb(k))}">${esc(lb(k))}</button>` : `<span class="${i === sj ? "on" : ""}">${esc(lb(k))}</span>`).join("")}</div>${can ? `<span class="hint" style="display:block;margin-top:4px">Clique numa etapa para mover a pauta.</span>` : ""}</div>`;
 }
@@ -1243,7 +1244,7 @@ const diretorOf = p => (p.resp || {}).dir || (ativos().find(m => m.unidade === u
 const isText = p => !!(CANAIS[p.tipo] || {}).texto;
 const needsArt = p => !isTask(p) && (!isText(p) || !!(p.briefing || {}).card);
 const catOf = p => isTask(p) ? "interna" : p.tipo === "anuncio" ? "trafego" : "conteudo";
-const TASK_ST = {pauta:"A fazer", pautado:"Pautado", producao:"Fazendo", publicado:"Concluída"};
+const TASK_ST = {pauta:"A fazer", planejamento:"Planejamento", pautado:"Criação", producao:"Fazendo", publicado:"Concluída"};
 function stLabel(p){
   const f = fluxoOf(p), s = p.status;
   if (f === "tarefa") return TASK_ST[s] || (STATUS[s] || STATUS.pauta).label;
@@ -1335,7 +1336,7 @@ function buildDaily(u, day){
     secoes:[
       {titulo:"O que avançou ontem", itens: advanced.length ? advanced.map(([n, l]) => ({t:`${n} ${l}`})).concat(ev.filter(x => ["enviou_cliente","aprovou","aprovou_tudo","publicou","ajuste"].includes(x.h.acao)).slice(-8).map(x => ({t:`${cli(x.p.clienteId).nome} · ${titleOf(x.p)}`, sub:ACOES[x.h.acao] || x.h.acao, pecaId:x.p.id}))) : [{t:"Nenhuma movimentação registrada ontem."}]},
       {titulo:"Pendente agora", itens:[
-        {t:`${ps.filter(p => p.status === "pauta" && !isTask(p)).length} pautas aguardando briefing`}, {t:`${ps.filter(p => p.status === "pautado" && !isTask(p)).length} pautadas, prontas para a criação`}, {t:`${ps.filter(p => p.status === "producao" && !isTask(p)).length} em produção`}, {t:`${ps.filter(p => p.status === "revisao").length} em revisão`},
+        {t:`${ps.filter(p => p.status === "pauta" && !isTask(p)).length} pautas aguardando briefing`}, {t:`${ps.filter(p => p.status === "planejamento" && !isTask(p)).length} em planejamento`}, {t:`${ps.filter(p => p.status === "pautado" && !isTask(p)).length} na fila da criação`}, {t:`${ps.filter(p => p.status === "producao" && !isTask(p)).length} em produção`}, {t:`${ps.filter(p => p.status === "revisao").length} em revisão`},
         {t:`${ps.filter(p => p.status === "cliente").length} com o cliente`}, {t:`${ps.filter(p => p.status === "ajuste").length} em ajuste`}, {t:`${pubHoje.length} aprovadas para publicar até hoje`}, {t:`${ps.filter(p => isTask(p) && p.status !== "publicado").length} tarefas internas abertas`}]},
       {titulo:"Travado", itens: late.slice(0, 10).map(p => Object.assign(linePeca(p), {alerta:true})).concat(stuck.slice(0, 6).map(p => Object.assign(linePeca(p), {sub:`Sem movimento há ${diffDays(TODAY, new Date(lastMove(p)))} dias · ${stLabel(p)}`}))).concat(tasksLate.slice(0, 5).map(p => Object.assign(linePeca(p), {sub:`Tarefa com prazo vencido · ${mName((p.resp || {}).prod)}`, alerta:true})))},
       {titulo:"Por cliente", itens: porCli}
@@ -1426,7 +1427,7 @@ function janela(p){
   if (p.status === "aprovado") return "";
   if (isTask(p)) { const n = diffDays(pd(p.data), TODAY); return n < 0 ? `<span class="flag">Atrasada</span>` : n === 0 ? `<span class="flag soon">Vence hoje</span>` : ""; }
   const c = cli(p.clienteId), dl = deadlineOf(c, periodKey(c, pd(p.data)));
-  const prazo = ["pauta","pautado","producao"].includes(p.status) ? addDays(dl, -2) : p.status === "revisao" ? dl : pd(p.data);
+  const prazo = ["pauta","planejamento","pautado","producao"].includes(p.status) ? addDays(dl, -2) : p.status === "revisao" ? dl : pd(p.data);
   const n = diffDays(prazo, TODAY);
   if (n < 0) return `<span class="flag">Atrasada</span>`;
   if (n === 0) return `<span class="flag soon">Vence hoje</span>`;
@@ -1454,17 +1455,25 @@ function atendimentoDe(c){
 }
 /* Notificações relevantes: só avisa quem passa a ser o responsável pela etapa (e nunca quem fez a mudança).
    Pautado: avisa quem produz (design, audiovisual ou, em pautas só de texto, o planejamento). */
+/* Criação: vídeo, reels, roteiro de vídeo e áudio ficam com o Audiovisual; estático (card, carrossel, banner, MIV, impresso) com o Design. */
+const ehAudiovisual = p => { const b = p.briefing || {}, f = (b.formatos || []).join(" "); return isVideoP(p) || !!canal(p).video || /reels|vídeo|video|corte|podcast|shorts|áudio|audio/i.test(f + " " + (b.headline || "")); };
+function timeCriacao(p){
+  if (isTask(p) || !needsArt(p)) return (p.resp || {}).prod || null;
+  const papel = ehAudiovisual(p) ? "audiovisual" : "design", r = p.resp || {}, cur = person(r.prod);
+  if (cur && !cur.excluido && (cur.papeis || []).includes(papel)) return cur.id;
+  const c = cli(p.clienteId), sq = ((c.squad || {}).producao || []).map(person).filter(m => m && !m.excluido);
+  const m = sq.find(x => (x.papeis || []).includes(papel)) || ativos().find(x => x.unidade === unitOf(p) && (x.papeis || []).includes(papel));
+  return m ? m.id : (r.prod || null);
+}
 function produtorDe(p){
-  const r = p.resp || {}; if (r.prod) return r.prod;
-  if (!needsArt(p)) return r.plan;
-  const c = cli(p.clienteId), vid = isVideoP(p) || canal(p).video, sq = ((c.squad || {}).producao || []).map(person).filter(m => m && !m.excluido);
-  const m = sq.find(x => (x.papeis || []).includes(vid ? "audiovisual" : "design")) || sq[0];
-  return m ? m.id : r.plan;
+  const r = p.resp || {};
+  if (!needsArt(p)) return r.prod || r.plan;
+  return timeCriacao(p) || r.prod || r.plan;
 }
 function stageNotify(p, st){
   const c = cli(p.clienteId), t = `${titleOf(p)}${c.id ? " (" + c.nome + ")" : ""}`, f = fluxoOf(p);
   let ids = [], msg = "";
-  if (st === "pautado") { ids = [produtorDe(p)]; msg = `Pautado para você: ${t}`; }
+  if (st === "pautado") { ids = [produtorDe(p)]; msg = `Na criação com você: ${t}`; }
   else {
     const o = owner(p);
     if (o && o !== "cliente") {
@@ -1720,7 +1729,7 @@ function notify(ids, texto, p, cid){
 function setStatus(p, st, ent, extra){
   const changed = p.status !== st;
   Object.assign(p, extra || {}); p.status = st; if (ent) p.hist.push(ent);
-  if (["pauta","pautado","producao","ajuste"].includes(st)) delete p.validadoHead;
+  if (["pauta","planejamento","pautado","producao","ajuste"].includes(st)) delete p.validadoHead;
   if (st === "producao" && fluxoOf(p) === "video" && !p.subetapa) p.subetapa = "captacao";
   if (st === "cliente") { const c = cli(p.clienteId), id = pacoteId(c.id, periodKey(c, pd(p.data))); if (!S.pacotes.find(x => x.id === id)) S.pacotes.push({id, clienteId:c.id, enviadoEm: nowIso()}); }
   if (changed) stageNotify(p, st);
@@ -1890,7 +1899,7 @@ function resumoDiaHTML(){
 function inicioHTML(){
   const m = ME(), T = myTime(), all = S.pecas.filter(canSee), base = T === "C" ? all.filter(involved) : all;
   const queue = sortP(all.filter(myTurn)), first = m.nome.split(" ")[0], vc = visibleClients(), tk = ymd(TODAY);
-  const andamento = base.filter(p => !["pauta","pautado","publicado"].includes(p.status)), late = base.filter(isLate), comCli = base.filter(p => p.status === "cliente"), ajuste = base.filter(p => p.status === "ajuste"), hoje = base.filter(p => p.data === tk && p.status !== "publicado" && !isTask(p));
+  const andamento = base.filter(p => !["pauta","planejamento","pautado","publicado"].includes(p.status)), late = base.filter(isLate), comCli = base.filter(p => p.status === "cliente"), ajuste = base.filter(p => p.status === "ajuste"), hoje = base.filter(p => p.data === tk && p.status !== "publicado" && !isTask(p));
   const k = (n, l, cls, a) => `<button type="button" class="kpi ${cls}" ${a}><b>${n}</b><span>${l}</span></button>`;
   const caps = S.captacoes.filter(x => (x.resp === ui.me || (T !== "C" && headOfUnit(cli(x.clienteId).unidade))) && !["Realizada","Cancelada"].includes(x.status) && diffDays(pd(x.data), TODAY) >= 0 && diffDays(pd(x.data), TODAY) <= 7).sort((a, b) => (a.data + a.inicio).localeCompare(b.data + b.inicio));
   const un = isDir() && ui.unidade === "todas" && S.unidades.length > 1 ? "todas as unidades" : S.unidades.length === 1 ? S.unidades[0].nome : unidade(isDir() && ui.unidade !== "todas" ? ui.unidade : m.unidade).nome;
@@ -2146,7 +2155,8 @@ function moveTo(p, st){
   }
   else if (st === "ajuste" && ["cliente","aprovado"].includes(from) && canPlan(p)) { ui.openId = p.id; ui.idx = 0; ui.tmp = {reg:"aj"}; fillOverlay(); return toast("Registre o que o cliente pediu."); }
   else if (isTask(p)) setStatus(p, st, entry(st === "publicado" ? "concluiu" : st === "producao" ? "iniciou" : from === "publicado" ? "reabriu" : "moveu", {texto:`${lbl(from)} → ${lbl(st)}`}));
-  else if (st === "pautado") setStatus(p, "pautado", entry("pautado", {texto:`${lbl(from)} → Pautado`}));
+  else if (st === "planejamento") setStatus(p, "planejamento", entry("planejamento", {texto:`${lbl(from)} → Planejamento`}));
+  else if (st === "pautado") { const quem = timeCriacao(p); if (quem && quem !== (p.resp || {}).prod) { p.resp = Object.assign({}, p.resp, {prod: quem}); } setStatus(p, "pautado", entry("pautado", {texto:`${lbl(from)} → Criação${quem ? " · " + mName(quem) : ""}`})); }
   else if (st === "producao") { const back = ORDER.indexOf(from) > ORDER.indexOf("producao"); setStatus(p, "producao", entry(back ? "devolveu" : "producao", {texto:`${lbl(from)} → ${lbl("producao")}`}), {retorno: back}); }
   else if (st === "revisao" && ["producao","ajuste"].includes(from) && needsArt(p) && (p.midias || []).length) sendToReview(p);
   else if (st === "aprovado" && from === "cliente") setStatus(p, "aprovado", entry("registrou", {texto:"Aprovação registrada pelo quadro."}));
@@ -2168,7 +2178,7 @@ function aprovacoesHTML(){
   const rows = [];
   vc.filter(c => ui.cf === "todos" || ui.cf === c.id).forEach(c => {
     const keys = new Set();
-    S.pecas.filter(p => p.clienteId === c.id && !["pauta","pautado"].includes(p.status) && pd(p.data) >= addDays(TODAY, -35)).forEach(p => keys.add(periodKey(c, pd(p.data))));
+    S.pecas.filter(p => p.clienteId === c.id && !["pauta","planejamento","pautado"].includes(p.status) && pd(p.data) >= addDays(TODAY, -35)).forEach(p => keys.add(periodKey(c, pd(p.data))));
     [...keys].sort().forEach(k => { const [a, b] = periodRange(c, k), ps = S.pecas.filter(p => p.clienteId === c.id && pd(p.data) >= a && pd(p.data) <= b); if (ps.some(p => p.status !== "publicado")) rows.push({c, k, ps, meta:S.pacotes.find(x => x.id === pacoteId(c.id, k)) || {}}); });
   });
   if (!rows.length) return head + `<div class="empty"><h2>Nenhum pacote em andamento</h2><p>Um pacote aparece aqui assim que a primeira peça do período sai da pauta.</p></div>`;
@@ -2339,7 +2349,7 @@ function drawerHTML(p){
   if (ui.idx >= ms.length) ui.idx = 0;
   const canEd = canEditP(p), ed = !!u.edit && canEd;
   const edT = ed, edB = ed, dis = edB ? "" : "disabled";
-  const edFiles = (headOfUnit(unitOf(p)) && ["pauta","pautado","producao","revisao","ajuste"].includes(p.status)) || (canProduce(p) && ["producao","ajuste","pauta","pautado","revisao"].includes(p.status) && !(p.status === "ajuste" && p.ajusteCom === "planejamento"));
+  const edFiles = (headOfUnit(unitOf(p)) && ["pauta","planejamento","pautado","producao","revisao","ajuste"].includes(p.status)) || (canProduce(p) && ["producao","ajuste","pauta","planejamento","pautado","revisao"].includes(p.status) && !(p.status === "ajuste" && p.ajusteCom === "planejamento"));
   const unitPpl = ativos().filter(m => m.unidade === c.unidade);
   const opt = (list, sel) => `<option value="">Definir…</option>` + list.map(m => `<option value="${esc(m.id)}" ${sel === m.id ? "selected" : ""}>${esc(m.nome)}</option>`).join("");
   const top = `<div class="d-top"><button type="button" class="x" data-act="close" aria-label="Fechar">×</button><div class="ttl"><b>${esc(titleOf(p))}</b><span>${codTag(p)} · ${p.simples ? "Cartão simples" : cliLink(c)}${p.solicitante ? ` · para ${esc(p.solicitante)}` : ""} · ${esc(fmtD(p.data))}${p.simples ? "" : " · " + esc(isTask(p) ? "Pauta" : t.label)}</span></div>${pillP(p)}${canEd ? `<button type="button" class="btn sm${ed ? " primary" : ""}" data-act="pgEdit">${ed ? "Concluir edição" : "Editar"}</button>` : ""}</div>`;
@@ -2464,8 +2474,10 @@ function actionsHTML(p, c, edFiles){
     return `<div class="sec" style="display:flex;flex-direction:column;gap:10px"><h3>Próximo passo</h3>${out.join("")}</div>`;
   }
   const art = needsArt(p), fx = fluxoOf(p);
-  if (p.status === "pauta" && canPlan(p) && fx === "video") out.push(`<div class="actions"><button type="button" class="btn primary" data-mvst="pautado">Roteiro completo: Pautado</button><button type="button" class="btn" data-act="toProd" data-sub="captacao">Enviar para captação</button><button type="button" class="btn" data-act="toProd" data-sub="edicao">Já tem material: direto para edição</button></div><div class="muted" style="font-size:12px">Roteiro pronto: o audiovisual capta e depois edita. Ligue a pauta a uma captação em Captações.</div>`);
-  else if (p.status === "pauta" && canPlan(p) && art) out.push(`<div class="actions"><button type="button" class="btn primary" data-mvst="pautado">Briefing completo: marcar como Pautado</button><button type="button" class="btn" data-act="toProd">Direto para produção</button></div><div class="muted" style="font-size:12px">Pautado = a pauta está completa e a criação já pode pegar. A criação move para Em produção quando começar.</div>`);
+  if (p.status === "pauta" && canPlan(p) && fx === "video") out.push(`<div class="actions"><button type="button" class="btn primary" data-mvst="planejamento">Iniciar planejamento</button><button type="button" class="btn" data-mvst="pautado">Roteiro pronto: enviar para a criação</button><button type="button" class="btn" data-act="toProd" data-sub="captacao">Enviar para captação</button><button type="button" class="btn" data-act="toProd" data-sub="edicao">Já tem material: direto para edição</button></div><div class="muted" style="font-size:12px">Roteiro pronto: o audiovisual capta e depois edita. Ligue a pauta a uma captação em Captações.</div>`);
+  else if (p.status === "pauta" && canPlan(p) && art) out.push(`<div class="actions"><button type="button" class="btn primary" data-mvst="planejamento">Iniciar planejamento</button><button type="button" class="btn" data-mvst="pautado">Briefing pronto: enviar para a criação</button></div><div class="muted" style="font-size:12px">Planejamento: quem pautou monta roteiro e briefing. Criação: o design (estático) ou o audiovisual (vídeo) assume a pauta.</div>`);
+  if (p.status === "planejamento" && (canPlan(p) || p.criadoPor === ui.me) && (art || fx === "video")) out.push(`<div class="actions"><button type="button" class="btn primary" data-mvst="pautado">Briefing pronto: enviar para a criação</button></div><div class="muted" style="font-size:12px">Vai para ${ehAudiovisual(p) ? "o Audiovisual" : "o Design"}${timeCriacao(p) ? " · " + esc(mName(timeCriacao(p))) : ""}. A criação move para Em produção quando começar.</div>`);
+  if (p.status === "planejamento" && (canPlan(p) || p.criadoPor === ui.me) && !art && fx !== "video") out.push(`<div class="actions"><button type="button" class="btn primary" data-act="textReady">Texto pronto: enviar para revisão</button></div><div class="muted" style="font-size:12px">Pauta só de texto: não passa pela criação.</div>`);
   if (p.status === "pautado" && (canProduce(p) || canPlan(p)) && fx !== "video") out.push(`<div class="actions"><button type="button" class="btn primary" data-mvst="producao">Iniciar produção</button></div><div class="muted" style="font-size:12px">Ao iniciar, começa a contar o tempo de criação desta peça.</div>`);
   if (p.status === "pautado" && (canProduce(p) || canPlan(p)) && fx === "video") out.push(`<div class="actions"><button type="button" class="btn primary" data-act="toProd" data-sub="captacao">Iniciar captação</button><button type="button" class="btn" data-act="toProd" data-sub="edicao">Já tem material: edição</button></div>`);
   else if (p.status === "pauta" && canPlan(p) && !art) out.push(art ? `<div class="actions"><button type="button" class="btn primary" data-act="toProd">Enviar para produção</button></div><div class="muted" style="font-size:12px">Precisa de quem produz, da ideia ou headline e dos formatos de entrega.</div>` : `<div class="actions"><button type="button" class="btn primary" data-act="textReady">Texto pronto: enviar para revisão</button></div><div class="muted" style="font-size:12px">Pauta só de texto: não passa pela produção.</div>`);
