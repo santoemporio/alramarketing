@@ -323,6 +323,7 @@ textarea,.inp{width:100%;border:1px solid var(--line2);border-radius:10px;paddin
 textarea{resize:vertical;field-sizing:content;min-height:3.4em;overflow-y:hidden}
 .clilink{border:0;background:none;padding:0;font:inherit;color:inherit;cursor:pointer;border-radius:6px}.clilink:hover span:nth-child(2),.clilink:focus-visible span:nth-child(2){text-decoration:underline;color:var(--accent-fg)}.clilink .arr{font-size:11px;color:var(--accent-fg);margin-left:2px}.clinks{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;font-size:12px;color:var(--muted)}.clinks .linkbtn{font-size:12px}
 .lock{font-size:10px}
+.mcli{display:grid;gap:8px;margin-top:4px}.mclil{display:grid;gap:2px;max-height:240px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:6px 8px;background:var(--raised)}.mclil label{display:flex;gap:8px;align-items:center;font-size:13px;padding:3px 2px;cursor:pointer}.mclil input{accent-color:var(--accent)}
 .netpick .nettraf{border-color:var(--accent)!important;color:var(--accent-fg)}
 .pid{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;font-weight:500;color:var(--muted);letter-spacing:.02em;opacity:.85}
 .anxl{display:grid;gap:6px}.anx{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:7px 10px;border:1px solid var(--line);border-radius:10px;background:var(--raised);font-size:13px}.anx a{font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.anx .muted{font-size:11.5px}.anxi{font-size:9.5px;font-weight:800;letter-spacing:.04em;padding:4px 6px;border-radius:6px;background:var(--surface);color:var(--muted)}
@@ -737,7 +738,7 @@ function enqueue(fn){
   });
 }
 let rT = null;
-function renderSoon(){ clearTimeout(rT); rT = setTimeout(() => { const a = document.activeElement; const typing = a && /TEXTAREA|INPUT/.test(a.tagName) && $("#overlay").contains(a); if (typing) return; if (a && a.dataset && a.dataset.ob) { rT = setTimeout(renderSoon, 2000); return; } render(); }, 150); }
+function renderSoon(){ clearTimeout(rT); rT = setTimeout(() => { const a = document.activeElement; const typing = a && (/TEXTAREA|INPUT|SELECT/.test(a.tagName) || a.isContentEditable) && $("#overlay").contains(a); if (typing) { rT = setTimeout(renderSoon, 1500); return; } if (a && a.dataset && a.dataset.ob) { rT = setTimeout(renderSoon, 2000); return; } render(); }, 150); }
 /* ---------- Supabase ---------- */
 let mustSetPwd = false, sb = null, authUser = null, SB_URL = "", isMember = false, isAdmin = false, portalToken = "";
 async function dbSet(col, id, data){ const {error} = await sb.from("docs").upsert({col, id, data, updated_at: new Date().toISOString()}); if (error) throw error; }
@@ -1359,6 +1360,13 @@ function buildBriefing(m, day){
     kpis:[{n:mine.length, l:"pautas com você"}, {n:mine.filter(isLate).length, l:"já atrasadas", bad:mine.some(isLate)}, {n:caps.length, l:"captações"}], secoes};
 }
 let autoDone = "";
+/* houve movimentação na unidade desde a data? (pauta criada ou movida, comentário, captação) */
+function houveMov(un, desde){
+  const t0 = desde.getTime(), rec = em => em && new Date(em).getTime() >= t0;
+  const ps = S.pecas.concat(S.arquivo || []).filter(p => unitOf(p) === un);
+  if (ps.some(p => rec(p.criadoEm) || (p.hist || []).some(h => rec(h.em)) || (p.coments || []).some(c => rec(c.em)))) return true;
+  return (S.captacoes || []).some(c => cli(c.clienteId).unidade === un && (rec(c.criadoEm) || rec(c.atualizadoEm)));
+}
 function autoReports(){
   if (!S.cfg.setupDone || !S.pessoas.length || mode === "loading") return;
   const d = ymd(TODAY); if (autoDone === d) return; autoDone = d;
@@ -1367,10 +1375,12 @@ function autoReports(){
   let n = 0;
   S.unidades.forEach(u => {
     const id = "diario-" + d + "-" + u.id; if (has_(id)) return;
+    const ant = S.relatorios.filter(r => r.tipo === "diario" && r.unidade === u.id).map(r => r.criadoEm || r.data).sort().pop(), desde = ant ? new Date(ant) : addDays(TODAY, -1);
+    if (!houveMov(u.id, desde)) return;
     S.relatorios.push(buildDaily(u, TODAY)); n++;
     ativos().filter(m => (m.papeis || []).includes("diretoria") || ((m.papeis || []).includes("head") && m.unidade === u.id)).forEach(m => sysNotify(m.id, `Resumo do dia de ${fmtD(TODAY,{day:"2-digit", month:"short"})} pronto: pendências, avanços e o que está travado.`, id));
   });
-  if (TODAY.getDay() === 1) ativos().forEach(m => { const id = "briefing-" + d + "-" + m.id; if (has_(id)) return; S.relatorios.push(buildBriefing(m, TODAY)); n++; sysNotify(m.id, "Seu briefing da semana chegou: o que está pautado para você" + ((m.papeis || []).includes("head") || (m.papeis || []).includes("diretoria") ? " e para o time." : "."), id); });
+  if (TODAY.getDay() === 1) ativos().forEach(m => { const id = "briefing-" + d + "-" + m.id; if (has_(id)) return; if (!S.pecas.some(p => p.status !== "publicado" && [(p.resp || {}).plan, (p.resp || {}).prod, (p.resp || {}).traf].includes(m.id))) return; S.relatorios.push(buildBriefing(m, TODAY)); n++; sysNotify(m.id, "Seu briefing da semana chegou: o que está pautado para você" + ((m.papeis || []).includes("head") || (m.papeis || []).includes("diretoria") ? " e para o time." : "."), id); });
   const cut = ymd(addDays(TODAY, -45));
   S.relatorios = S.relatorios.filter(r => r.tipo === "semanal" || r.data >= cut);
   if (n) save();
@@ -2422,7 +2432,7 @@ function drawerHTML(p){
         <div class="field full"><span class="lb">${canal(p).grupo === "avulsa" ? "Formato" : "Rede"}</span><div class="row" style="min-height:30px">${redesField}</div></div>
         <div class="field"><label for="f-data">${canal(p).grupo === "avulsa" ? "Prazo de entrega" : "Data de postagem"}</label><input class="inp" type="date" id="f-data" data-top="data" value="${esc(p.data)}" ${canEditP(p) ? "" : "disabled"}></div>
         <div class="field"><label for="f-dprod">Data de produção</label><input class="inp" type="date" id="f-dprod" data-top="dataProducao" value="${esc(p.dataProducao || "")}" ${p.dataProducao ? "" : "data-empty"} ${canEditP(p) ? "" : "disabled"}><span class="hint">${p.dataProducao ? "Definida na pauta." : isEscopo(p) ? `Vazia: ${esc(fmtShort(pdDef))}, pela antecedência do cliente.` : "Vazia: vale a data da pauta."}</span></div>
-        ${fluxoOf(p) === "trafego" ? `<div class="field full"><label for="f-rt">Tráfego (configura e acompanha)</label><select class="inp" id="f-rt" data-top="traf" ${edT || canEditP(p) ? "" : "disabled"}>${opt(unitPpl.filter(m => (m.papeis || []).includes("trafego") || (m.papeis || []).includes("head")), trafOf(p))}</select></div>` : ""}
+        ${fluxoOf(p) === "trafego" ? `<div class="field full"><label for="f-rt">Tráfego (configura e acompanha)</label><select class="inp" id="f-rt" data-top="traf" ${edT || canEditP(p) ? "" : "disabled"}>${opt(unitPpl.filter(m => (m.papeis || []).includes("trafego") || m.id === trafOf(p)), trafOf(p))}</select></div>` : ""}
         ${isRel(p) ? `<div class="field"><label for="f-rcol">Coleta</label><select class="inp" id="f-rcol" data-top="prod" ${edT ? "" : "disabled"}>${opt(unitPpl, (p.resp || {}).prod)}</select></div><div class="field"><label for="f-rp">Análise</label><select class="inp" id="f-rp" data-top="plan" ${edT ? "" : "disabled"}>${opt(unitPpl.filter(m => (m.papeis || []).some(r => ["head","diretoria","planejamento"].includes(r))), (p.resp || {}).plan)}</select></div><div class="field full"><label for="f-rdir">Revisão da Diretoria</label><select class="inp" id="f-rdir" data-top="dir" ${edT ? "" : "disabled"}>${opt(unitPpl.filter(m => (m.papeis || []).includes("diretoria")), diretorOf(p))}</select></div>` : `
         <div class="field"><label for="f-rp">Planejamento</label><select class="inp" id="f-rp" data-top="plan" ${edT ? "" : "disabled"}>${opt(planners, (p.resp || {}).plan)}</select></div>`}
         ${isRel(p) ? "" : art ? `<div class="field"><label for="f-rc">${txt ? "Design do card" : "Produção"}</label><select class="inp" id="f-rc" data-top="prod" ${edT ? "" : "disabled"}>${opt(producers, (p.resp || {}).prod)}</select></div>` : `<div class="field"></div>`}
@@ -2583,7 +2593,7 @@ function newPecaHTML(){
   const has = (m, rs) => (m.papeis || []).some(r => rs.includes(r));
   const planners = people.filter(m => has(m, ["planejamento","head","diretoria"]) || m.id === ui.me);
   const producers = people.filter(m => has(m, ["design","audiovisual"]));
-  const trafs = people.filter(m => has(m, ["trafego","head"]));
+  const trafs = people.filter(m => has(m, ["trafego"]));
   const planDef = ((c.squad || {}).planejamento || []).includes(ui.me) || isHead() || sem ? ui.me : (((c.squad || {}).planejamento || [])[0] || ui.me);
   const prodDef = sem || generico ? "" : defaultProd(c, cat === "trafego" ? "feed" : tipoSel) || "";
   const trafDef = ((c.squad || {}).trafego || [])[0] || (people.find(m => (m.papeis || []).includes("trafego")) || {}).id || "";
@@ -2620,7 +2630,11 @@ function newPecaHTML(){
     </div><div class="pgside">
       <section class="psec"><h3>Propriedades</h3><div class="form props">
         ${soTask() ? "" : `<div class="field full"><span class="lb">Tipo de pauta</span><div class="seg">${Object.entries(CATS).map(([k, l]) => `<label><input type="radio" name="npcat" value="${k}" ${cat === k ? "checked" : ""}> ${l}</label>`).join("")}</div></div>`}
-        <div class="field full"><label for="np-cli">Cliente</label><select class="inp" id="np-cli"><option value="" ${sem ? "selected" : ""}>Sem cliente · demanda avulsa</option>${vc.map(x => `<option value="${esc(x.id)}" ${cid === x.id ? "selected" : ""}>${esc(x.nome)}</option>`).join("")}</select></div>
+        <div class="field full"><div class="spread"><label for="np-cli">${u.multi ? "Clientes" : "Cliente"}</label>${cat !== "interna" || !soTask() ? `<button type="button" class="linkbtn" style="font-size:11.5px;font-weight:600;opacity:.8" data-act="npMulti">${u.multi ? "Só um cliente" : "Selecionar vários"}</button>` : ""}</div>
+          <select class="inp" id="np-cli" ${u.multi ? "hidden" : ""}><option value="" ${sem ? "selected" : ""}>Sem cliente · demanda avulsa</option>${vc.map(x => `<option value="${esc(x.id)}" ${cid === x.id ? "selected" : ""}>${esc(x.nome)}</option>`).join("")}</select>
+          ${u.multi ? `<div class="mcli"><div class="row" style="gap:6px"><input class="inp sm" style="flex:1;min-width:120px" type="search" id="mcliQ" placeholder="Filtrar (ex.: sorri)" autocomplete="off" value="${esc(u.mcq || "")}"><button type="button" class="btn sm" data-act="mcliAll">Marcar visíveis</button><button type="button" class="btn sm ghost" data-act="mcliNone">Limpar</button></div>
+            <div class="mclil">${vc.slice().sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")).map(x => `<label data-mn="${esc(normTxt(x.nome))}" ${u.mcq && !normTxt(x.nome).includes(normTxt(u.mcq)) ? "hidden" : ""}><input type="checkbox" data-npmc value="${esc(x.id)}" ${(u.mcli || []).includes(x.id) ? "checked" : ""}> ${esc(x.nome)}</label>`).join("")}</div>
+            <span class="hint" id="mcliN">${(u.mcli || []).length} selecionados · cria uma pauta igual para cada cliente, cada uma com a própria aprovação.</span></div>` : ""}</div>
         ${redeField}
         <div class="field"><label for="np-data">${cat === "interna" ? "Data de fim" : generico && cat === "conteudo" ? "Prazo de entrega" : cat === "trafego" ? "Data de início" : "Data de postagem"}</label><input class="inp" type="date" id="np-data" value="${esc(val("data", ymd(addDays(TODAY, 3))))}"></div>
         ${cat !== "interna" ? `<div class="field"><label for="np-dprod">Data de produção ${opc}</label><input class="inp" type="date" id="np-dprod" value="${esc(val("dprod"))}"></div>` : ""}
@@ -2692,7 +2706,7 @@ function clientFormHTML(){
       <div class="eyebrow">4 · Equipe do cliente</div>
       ${soTrafego(e) ? `<p class="muted" style="font-size:12.5px;margin-top:-6px">Cliente só de tráfego: a equipe é o gestor de tráfego e a criação.</p>` : ""}
       <div class="form">${soTrafego(e) ? "" : `<div class="field full"><span class="lb">Planejamento</span>${box("planejamento", ppl(p => p.includes("planejamento") || (p.includes("head") && !p.includes("diretoria"))))}</div>`}
-        ${e.trafego.on ? `<div class="field full"><span class="lb">Gestor de tráfego <span class="hint">· configura e acompanha as campanhas do cliente</span></span>${box("trafego", ppl(p => p.includes("trafego") || p.includes("head")))}</div>` : ""}
+        ${e.trafego.on ? `<div class="field full"><span class="lb">Gestor de tráfego <span class="hint">· configura e acompanha as campanhas do cliente</span></span>${box("trafego", ppl(p => p.includes("trafego")))}</div>` : ""}
         <div class="field full"><span class="lb">${soTrafego(e) ? "Criação (design e audiovisual)" : "Produção (design e audiovisual)"}</span>${box("producao", ppl(p => p.includes("design") || p.includes("audiovisual")))}</div>
         ${soTrafego(e) ? "" : `<div class="field full"><span class="lb">Social media (publica)</span>${box("social", ppl(p => p.includes("social") || p.includes("head")))}</div>
         <div class="field full"><span class="lb">Atendimento <span class="hint">· é avisado quando a pauta vai para o cliente</span></span>${box("atendimento", ppl(p => p.includes("atendimento") || p.includes("head")))}</div>`}
@@ -2828,12 +2842,15 @@ function fillOverlay(){
     else html = canSee(p) || canSeeHub(p) ? drawerHTML(p) : "";
   }
   const act = document.activeElement && ov.contains(document.activeElement) ? document.activeElement : null;
-  const actId = act && act.id, sel = act && act.selectionStart != null ? [act.selectionStart, act.selectionEnd] : null;
+  const actId = act && act.id, sel = act && act.selectionStart != null ? [act.selectionStart, act.selectionEnd] : null, car = act && act.isContentEditable ? caretGet(act) : null;
   const sc = ov.querySelector(".d-body, .modal, .post"), top0 = sc ? sc.scrollTop : 0;
   ov.innerHTML = html ? `<div class="scrim" data-act="close"></div>${html}` : "";
   const ns = ov.querySelector(".d-body, .modal, .post"); if (ns) ns.scrollTop = top0;
-  if (actId) { const a = document.getElementById(actId); if (a) { a.focus(); if (sel && a.setSelectionRange) { try { a.setSelectionRange(sel[0], sel[1]); } catch(e) {} } } }
+  if (actId) { const a = document.getElementById(actId); if (a) { a.focus(); if (sel && a.setSelectionRange) { try { a.setSelectionRange(sel[0], sel[1]); } catch(e) {} } if (car !== null && a.isContentEditable) caretSet(a, car); } }
 }
+/* posição do cursor em caixas de texto com formatação (contada em caracteres) */
+function caretGet(el){ const s = window.getSelection(); if (!s || !s.rangeCount) return null; const r = s.getRangeAt(0); if (!el.contains(r.endContainer)) return null; const pre = r.cloneRange(); pre.selectNodeContents(el); pre.setEnd(r.endContainer, r.endOffset); return pre.toString().length; }
+function caretSet(el, n){ const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); let node, left = n; while ((node = w.nextNode())) { if (left <= node.length) { const r = document.createRange(); r.setStart(node, left); r.collapse(true); const s = window.getSelection(); s.removeAllRanges(); s.addRange(r); return; } left -= node.length; } const r = document.createRange(); r.selectNodeContents(el); r.collapse(false); const s = window.getSelection(); s.removeAllRanges(); s.addRange(r); }
 
 /* ================= ações ================= */
 function nextPending(p, msg){
@@ -3018,6 +3035,9 @@ document.addEventListener("click", async ev => {
     case "epAll": ui.epPeople = []; render(); break;
     case "epMe": ui.epPeople = [ui.me]; render(); break;
     case "troCli": ui.tmp.troCli = !ui.tmp.troCli; fillOverlay(); break;
+    case "npMulti": { const u = ui.tmp; u.multi = !u.multi; if (u.multi && !(u.mcli || []).length) { const c0 = ($("#np-cli") || {}).value; u.mcli = c0 ? [c0] : []; } fillOverlay(); break; }
+    case "mcliAll": { const u = ui.tmp; const vis = [...document.querySelectorAll(".mclil label:not([hidden]) [data-npmc]")].map(x => x.value); u.mcli = [...new Set([...(u.mcli || []), ...vis])]; fillOverlay(); break; }
+    case "mcliNone": ui.tmp.mcli = []; fillOverlay(); break;
     case "kMenu": ui.kmenu = ui.kmenu === d.pid ? null : d.pid; render(); break;
     case "dupPeca": { const x = S.pecas.find(y => y.id === (d.pid || ui.openId)); ui.kmenu = null; if (!x || !canDup(x)) break; const n = duplicarPeca(x); toast("Card duplicado: a cópia está em Pauta."); if (ui.openId) { ui.openId = n.id; ui.idx = 0; ui.tmp = {}; } render(); break; }
     case "archAsk": { const x = S.pecas.find(y => y.id === d.pid); ui.kmenu = null; if (!x) break; ui.tmp = {confirm: {titulo: "Excluir pauta?", texto: `"${titleOf(x)}" vai para o arquivo (Kanban → Arquivadas) e pode ser restaurada.`, ok: "Excluir", ids: [x.id]}}; ui.modal = "confirm"; fillOverlay(); break; }
@@ -3142,6 +3162,7 @@ document.addEventListener("input", ev => {
   if (t.dataset.cri && ui.tmp.cri) { setPath(ui.tmp.cri, t.dataset.cri, t.value); const m = t.dataset.cri.match(/^cores\.(\d+)\.hex$/); if (m) { const el = document.getElementById("rgb" + m[1]); if (el) el.textContent = validHex(t.value) ? hexRgb(t.value) : "RGB automático"; } return; }
   if (t.id === "f-corpo" && t.value !== undefined) { const el = $("#wcount"); if (el) { const n = t.value.trim().split(/\s+/).filter(Boolean).length; el.textContent = `${n} ${n === 1 ? "palavra" : "palavras"}`; } }
   if (t.id === "fBusca") { ui.busca = t.value; const pos = t.selectionStart; render(); const el = $("#fBusca"); if (el) { el.focus(); try { el.setSelectionRange(pos, pos); } catch(e) {} } return; }
+  if (t.id === "mcliQ") { ui.tmp.mcq = t.value; const q = normTxt(t.value); document.querySelectorAll(".mclil [data-mn]").forEach(el => el.hidden = !!q && !el.dataset.mn.includes(q)); return; }
   if (t.id === "cliQ") { ui.cq = t.value; const q = normTxt(t.value); let n = 0; document.querySelectorAll("#cliGrid [data-nome]").forEach(el => { const ok = !q || el.dataset.nome.includes(q); el.hidden = !ok; if (ok) n++; }); const el = $("#cliQn"); if (el) el.textContent = `${n} de ${document.querySelectorAll("#cliGrid [data-nome]").length}`; return; }
   if (t.dataset && t.dataset.rt !== undefined) { const p = S.pecas.find(x => x.id === ui.openId); if (p) { p.briefing = p.briefing || {}; setRt(p.briefing, t.dataset.rt, t); if (t.dataset.rt === "corpo") { const el = $("#wcount"); if (el) { const n = String(p.briefing.corpo || "").trim().split(/\s+/).filter(Boolean).length; el.textContent = `${n} ${n === 1 ? "palavra" : "palavras"}`; } } save(); } return; }
   if (t.dataset && t.dataset.rtn !== undefined) { const u = ui.tmp, f = u.f = u.f || {}, m = t.dataset.rtn.match(/^cards\.(\d+)\.(sub|hl)$/); if (m) { const c = (u.cards || [])[+m[1]]; if (c) { c[m[2]] = rtText(t); c[m[2] + "Fmt"] = cleanFmt(t.innerHTML); } } else { f[t.dataset.rtn] = rtText(t); f[t.dataset.rtn + "Fmt"] = cleanFmt(t.innerHTML); } return; }
@@ -3185,6 +3206,7 @@ document.addEventListener("change", async ev => {
   if (t.name === "aadec") { ui.tmp.dec = t.value; fillOverlay(); return; }
   if (t.name === "cfcor" && ui.tmp.cd) { ui.tmp.cd.cor = t.value; fillOverlay(); return; }
   if (t.dataset.sela !== undefined) { t.checked ? ui.sel.add(t.dataset.sela) : ui.sel.delete(t.dataset.sela); ui.tmp.bulkDel = false; render(); return; }
+  if (t.dataset.npmc !== undefined) { const u = ui.tmp; u.mcli = u.mcli || []; u.mcli = t.checked ? [...new Set([...u.mcli, t.value])] : u.mcli.filter(x => x !== t.value); if (u.mcli.length && u.cid !== u.mcli[0]) { u.cid = u.mcli[0]; } const el = $("#mcliN"); if (el) el.textContent = `${u.mcli.length} selecionados · cria uma pauta igual para cada cliente, cada uma com a própria aprovação.`; return; }
   if (t.closest && t.closest("#npForm")) { const u = ui.tmp, f = u.f = u.f || {};
     if (t.name === "npcat") { u.cat = t.value; fillOverlay(); return; }
     if (t.id === "np-cli") { u.cid = t.value; u.tipo = null; u.redesM = null; ["plan","prod","traf","resp"].forEach(k => delete f[k]); fillOverlay(); return; }
@@ -3283,6 +3305,15 @@ document.addEventListener("submit", async ev => {
     const etqs = (u.etqs || []).filter(etqOf); if (etqs.length) np.etiquetas = etqs;
     if ((u.anexos || []).length) np.anexos = u.anexos.slice(); if (($("#np-priv") || {}).checked) np.privado = true;
     if (resp.prod && resp.prod !== ui.me && (cat === "interna" || GENERICOS.includes(tp))) notify([resp.prod], `${cat === "interna" ? "Pauta" : "Demanda"} para você: ${briefing.headline}${c.id ? " (" + c.nome + ")" : ""}`, np);
+    if (u.multi) {
+      const ids = (u.mcli || []).filter(id => S.clientes.some(x => x.id === id));
+      if (!ids.length) { toast("Marque ao menos um cliente."); return; }
+      const grupo = uid(), ff = u.f || {}, prodSel = ff.prod !== undefined ? v("prod") : "", trafSel = ff.traf !== undefined ? v("traf") : "";
+      ids.forEach(id => { const cc = cli(id), x = JSON.parse(JSON.stringify(np)); x.id = uid(); x.clienteId = id; x.grupo = grupo; x.grupoN = ids.length; delete x.unidade; delete x.solicitante;
+        x.resp = Object.assign({}, x.resp); if (cat !== "interna" && !prodSel && x.resp.prod !== null) x.resp.prod = defaultProd(cc, cat === "trafego" ? "feed" : tp) || x.resp.prod; if (cat === "trafego" && !trafSel) x.resp.traf = ((cc.squad || {}).trafego || [])[0] || x.resp.traf || null;
+        x.hist = [entry("pauta", {texto: `Criada para ${ids.length} clientes de uma vez`})]; S.pecas.push(x); });
+      save(); ui.modal = null; ui.tmp = {}; ui.month = firstOfMonth(pd(data)); toast(`${ids.length} pautas criadas, uma para cada cliente.`); render(); return;
+    }
     S.pecas.push(np); save(); ui.modal = null; ui.tmp = {}; ui.openId = np.id; ui.idx = 0; ui.month = firstOfMonth(pd(data)); toast("Pauta criada."); render(); return; }
   if (id === "genForm") {
     const g = ui.tmp.gen, from = pd(g.from); if (!from) return; const to = endOfMonth(from); let n = 0;
