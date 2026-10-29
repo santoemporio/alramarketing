@@ -17,7 +17,7 @@
   --ok:#0F7A55; --ok-soft:#DDF3E7; --apv:#0E6E78; --apv-soft:#E2F3F5; --warn:#9A5300; --warn-soft:#FFF2E0;
   --info:#3150B8; --info-soft:#EDF1FD; --plan:#6747B5; --plan-soft:#F1EDFB; --done:#5E5764; --done-soft:#F0EDF1;
   --danger:#C2283A; --danger-soft:#FDEBED;
-  --s-pauta:#7E62C9; --s-planejamento:#9A6BE0; --s-pautado:#B05FD6; --s-producao:#A39BA9; --s-revisao:#4A68CF; --s-cliente:#FF0092; --s-ajuste:#D98200; --s-aprovado:#1A93A0; --s-publicado:#13996A;
+  --s-pauta:#7E62C9; --s-planejamento:#9A6BE0; --s-pautado:#B05FD6; --s-producao:#A39BA9; --s-revisao:#4A68CF; --s-cliente:#FF0092; --s-ajuste:#D98200; --s-pausado:#8C8296; --s-aprovado:#1A93A0; --s-publicado:#13996A;
   --shadow:0 1px 2px rgba(36,28,41,.04),0 6px 20px rgba(36,28,41,.05); --shadow-lg:0 24px 60px rgba(36,28,41,.16); --scrim:rgba(36,28,41,.32);
   --f:"Montserrat",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 }
@@ -193,7 +193,7 @@ table.tb{width:100%;border-collapse:collapse;font-size:13px}
 .banner{border:1px solid var(--accent);background:var(--accent-soft);border-radius:14px;padding:14px 16px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
 
 /* kanban */
-.board{display:grid;grid-template-columns:repeat(9,minmax(128px,1fr));gap:7px;overflow-x:auto;padding-bottom:8px;align-items:start}
+.board{display:grid;grid-template-columns:repeat(10,minmax(124px,1fr));gap:7px;overflow-x:auto;padding-bottom:8px;align-items:start}
 .col{background:var(--surface);border-radius:14px;padding:8px;display:flex;flex-direction:column;gap:8px;min-width:0;min-height:160px;border:2px solid transparent}
 .col.dropover{border-color:var(--accent);background:var(--accent-soft)}
 .col-h{display:flex;align-items:center;justify-content:space-between;gap:4px 8px;padding:2px 4px 4px;flex-wrap:wrap}
@@ -323,6 +323,8 @@ textarea,.inp{width:100%;border:1px solid var(--line2);border-radius:10px;paddin
 textarea{resize:vertical;field-sizing:content;min-height:3.4em;overflow-y:hidden}
 .clilink{border:0;background:none;padding:0;font:inherit;color:inherit;cursor:pointer;border-radius:6px}.clilink:hover span:nth-child(2),.clilink:focus-visible span:nth-child(2){text-decoration:underline;color:var(--accent-fg)}.clilink .arr{font-size:11px;color:var(--accent-fg);margin-left:2px}.clinks{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;font-size:12px;color:var(--muted)}.clinks .linkbtn{font-size:12px}
 .lock{font-size:10px}
+.rtlink{display:inline-flex;gap:6px;align-items:center;margin-left:6px;flex:1;min-width:200px}.rtlink .inp{flex:1;min-width:140px}.rtebar{flex-wrap:wrap;align-items:center}
+.rted a,.doctxt a,.docsub a,.rte.off a{color:var(--accent-fg);text-decoration:underline;text-underline-offset:2px}
 .aprtop{gap:10px;align-items:flex-end;flex-wrap:wrap}.pname{display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}.pname .inp{min-width:220px;text-transform:none;letter-spacing:0;font-size:14px;font-weight:600;color:var(--fg)}
 .tilew{position:relative;display:block}.tilew>button{width:100%}.vlink{position:absolute;right:8px;bottom:8px;z-index:4;background:rgba(20,14,24,.78);color:#fff;font-size:11px;font-weight:800;padding:4px 9px;border-radius:99px;text-decoration:none}.vlink:hover{background:var(--accent)}
 .vwrap{display:block;position:relative;width:100%;height:100%;color:inherit;text-decoration:none}.vfull{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:4;background:var(--accent);color:#fff;font-weight:800;font-size:13px;padding:8px 14px;border-radius:99px;text-decoration:none;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.25)}
@@ -580,6 +582,7 @@ textarea:disabled,.inp:disabled{background:var(--surface);opacity:1;border-color
 .docw{padding:28px clamp(18px,5vw,48px) 22px;display:flex;flex-direction:column;gap:12px;align-items:flex-start}
 .docimg{position:relative;width:100%;border-radius:12px;overflow:hidden;background:var(--surface)}
 .docimg .media{object-fit:contain;max-height:420px;background:var(--surface)}
+.docimg.nlb{aspect-ratio:1200/644}.docimg.nlb .media{object-fit:cover;max-height:none;height:100%}
 .doch{font-size:clamp(22px,3vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.2}
 .docsub{font-size:16px;color:var(--muted);font-weight:600;line-height:1.45}
 .doctxt{white-space:pre-wrap;font-size:15px;line-height:1.75;max-width:66ch}
@@ -697,7 +700,7 @@ const CANAIS = {
   shorts:{label:"YouTube Shorts", k:"SHORTS", grupo:"youtube", ratio:"9 / 16", net:"YouTube", video:true},
   li_post:{label:"Post LinkedIn", k:"LI", grupo:"linkedin", ratio:"4 / 5", net:"LinkedIn"},
   artigo:{label:"Artigo LinkedIn", k:"ARTIGO", grupo:"linkedin", ratio:"1.91 / 1", net:"LinkedIn", texto:true},
-  newsletter:{label:"Newsletter LinkedIn", k:"NEWS", grupo:"linkedin", ratio:"1.91 / 1", net:"LinkedIn", texto:true},
+  newsletter:{label:"Newsletter LinkedIn", k:"NEWS", grupo:"linkedin", ratio:"1200 / 644", net:"LinkedIn", texto:true},
   blog:{label:"Post do blog", k:"BLOG", grupo:"blog", ratio:"1.91 / 1", net:"Blog", texto:true},
   anuncio:{label:"Anúncio", k:"ADS", grupo:"ads", ratio:"4 / 5", net:"Tráfego pago"},
   tarefa:{label:"Pauta", k:"PAUTA", grupo:"interna", ratio:"4 / 5", net:"Interna"},
@@ -717,9 +720,9 @@ const FORMATOS = ["Post estático","Carrossel","Reels","Stories","Vídeo","Capa"
 const STATUS = {
   pauta:{label:"Pauta", tone:"plan"}, planejamento:{label:"Planejamento", tone:"plan"}, pautado:{label:"Criação", tone:"plan"}, producao:{label:"Em produção", tone:"prod"}, revisao:{label:"Em revisão", tone:"info"},
   cliente:{label:"Com o cliente", tone:"accent"}, ajuste:{label:"Ajuste", tone:"warn"},
-  aprovado:{label:"Aprovado", tone:"apv"}, publicado:{label:"Publicado", tone:"ok"}
+  pausado:{label:"Pausado", tone:"done"}, aprovado:{label:"Aprovado", tone:"apv"}, publicado:{label:"Publicado", tone:"ok"}
 };
-const ORDER = ["pauta","planejamento","pautado","producao","revisao","cliente","ajuste","aprovado","publicado"];
+const ORDER = ["pauta","planejamento","pautado","producao","revisao","cliente","ajuste","pausado","aprovado","publicado"];
 const CLIENT_ST = ["cliente","ajuste","aprovado","publicado"];
 const OBJETIVOS = ["Venda","Remarketing","Branding","Reconhecimento","Autoridade","Engajamento","Institucional"];
 const PAPEIS = {diretoria:"Diretoria da rede", head:"Head", planejamento:"Planejamento", design:"Design", audiovisual:"Audiovisual", social:"Social media", trafego:"Tráfego", atendimento:"Atendimento"};
@@ -729,7 +732,7 @@ const FREQ = {semanal:"Toda semana", quinzenal:"A cada 15 dias", mensal:"1× por
 const EQUIP = ["Câmera","Lentes","Tripé","Gimbal","Microfone","Iluminação","Rebatedor","Celular","Drone","Baterias extras","Cartões de memória"];
 const CAPFREQ = {semanal:"Semanal", quinzenal:"Quinzenal", mensal:"Mensal", demanda:"Sob demanda"};
 const ACOES = {
-  pauta:"Pauta criada", planejamento:"Em planejamento: roteiro e briefing", pautado:"Enviada para a criação", producao:"Enviada para produção", arquivos:"Arquivos anexados", entrega:"Enviada para revisão", nova_versao:"Nova versão enviada para revisão",
+  pauta:"Pauta criada", pausou:"Pausada: depende do cliente", planejamento:"Em planejamento: roteiro e briefing", pautado:"Enviada para a criação", producao:"Enviada para produção", arquivos:"Arquivos anexados", entrega:"Enviada para revisão", nova_versao:"Nova versão enviada para revisão",
   devolveu:"Devolvida para a produção", enviou_cliente:"Enviada ao cliente", aprovou:"Aprovada pelo cliente", aprovou_interno:"Aprovada internamente (pauta sem cliente)", no_ar:"Campanha no ar", encerrou:"Campanha encerrada", entregou:"Entregue", captado:"Material captado: foi para a edição", validou:"Validada pelo Head", apresentou:"Apresentado ao cliente", aprovou_tudo:"Aprovada em \"aprovar todo o planejamento\"",
   ajuste:"Cliente pediu ajuste", registrou:"Aprovação registrada pela equipe", publicou:"Publicada", concluiu:"Tarefa concluída", iniciou:"Tarefa iniciada", reabriu:"Tarefa reaberta", ajuste_ok:"Ajuste concluído, de volta à revisão", data:"Data alterada", moveu:"Etapa alterada no quadro", notificou:"Notificação enviada"
 };
@@ -1207,6 +1210,7 @@ function cleanFmt(html){
     if (c.nodeType !== 1) return "";
     if (c.tagName === "BR") return "<br>";
     let inner = walk(c);
+    if (c.tagName === "A") { const h = (c.getAttribute("href") || "").trim(); return /^https?:\/\//i.test(h) ? `<a href="${esc(h)}" target="_blank" rel="noopener">${inner}</a>` : inner; }
     if (c.tagName === "SPAN" && c.style) { const st = c.style; if (/line-through/.test(st.textDecoration || st.textDecorationLine || "")) inner = `<s>${inner}</s>`; if (/underline/.test(st.textDecoration || st.textDecorationLine || "")) inner = `<u>${inner}</u>`; if (st.fontStyle === "italic") inner = `<i>${inner}</i>`; if (+st.fontWeight >= 600 || st.fontWeight === "bold") inner = `<b>${inner}</b>`; return inner; }
     return T[c.tagName] ? `<${T[c.tagName]}>${inner}</${T[c.tagName]}>` : inner;
   }).join("");
@@ -1215,7 +1219,7 @@ function cleanFmt(html){
 const plainHTML = t => esc(t || "").replace(/\n/g, "<br>");
 const fmtOf = (o, k) => o && o[k + "Fmt"] ? cleanFmt(o[k + "Fmt"]) : plainHTML((o || {})[k]);
 function rteHTML(id, attr, path, html, dis, ph, min){
-  return `<div class="rte${dis ? " off" : ""}">${dis ? "" : `<div class="rtebar" role="toolbar" aria-label="Formatação do texto"><button type="button" data-rtc="bold" title="Negrito (Ctrl+B)" aria-label="Negrito"><b>B</b></button><button type="button" data-rtc="italic" title="Itálico (Ctrl+I)" aria-label="Itálico"><i>I</i></button><button type="button" data-rtc="underline" title="Sublinhado (Ctrl+U)" aria-label="Sublinhado"><u>U</u></button><button type="button" data-rtc="strikeThrough" title="Tachado" aria-label="Tachado"><s>S</s></button></div>`}<div class="rted" id="${id}" ${attr}="${esc(path)}" ${dis ? "" : `contenteditable="true" role="textbox" aria-multiline="true"`} data-ph="${esc(ph || "")}" style="min-height:${min || "3.2em"}">${html}</div></div>`;
+  return `<div class="rte${dis ? " off" : ""}">${dis ? "" : `<div class="rtebar" role="toolbar" aria-label="Formatação do texto"><button type="button" data-rtc="bold" title="Negrito (Ctrl+B)" aria-label="Negrito"><b>B</b></button><button type="button" data-rtc="italic" title="Itálico (Ctrl+I)" aria-label="Itálico"><i>I</i></button><button type="button" data-rtc="underline" title="Sublinhado (Ctrl+U)" aria-label="Sublinhado"><u>U</u></button><button type="button" data-rtc="strikeThrough" title="Tachado" aria-label="Tachado"><s>S</s></button><button type="button" data-rtc="link" title="Adicionar link ao trecho selecionado" aria-label="Link">🔗</button></div>`}<div class="rted" id="${id}" ${attr}="${esc(path)}" ${dis ? "" : `contenteditable="true" role="textbox" aria-multiline="true"`} data-ph="${esc(ph || "")}" style="min-height:${min || "3.2em"}">${html}</div></div>`;
 }
 const rtText = el => el.innerText.replace(/\n+$/, "");
 function setRt(obj, path, el){
@@ -1321,7 +1325,8 @@ const isEscopo = p => p.escopo === true || (!p.criadoPor && !!p.clienteId && !is
 const trafOf = p => (p.resp || {}).traf || (((cli(p.clienteId).squad || {}).trafego || []).find(id => ativos().some(m => m.id === id))) || (ativos().find(m => m.unidade === unitOf(p) && (m.papeis || []).includes("trafego")) || {}).id || (p.resp || {}).plan;
 const diretorOf = p => (p.resp || {}).dir || (ativos().find(m => m.unidade === unitOf(p) && (m.papeis || []).includes("diretoria")) || ativos().find(m => (m.papeis || []).includes("diretoria")) || {}).id;
 const isText = p => !!(CANAIS[p.tipo] || {}).texto;
-const needsArt = p => !isTask(p) && (!isText(p) || !!(p.briefing || {}).card);
+const temBanner = p => p.tipo === "newsletter";
+const needsArt = p => !isTask(p) && (!isText(p) || !!(p.briefing || {}).card || temBanner(p));
 const catOf = p => isTask(p) ? "interna" : p.tipo === "anuncio" ? "trafego" : "conteudo";
 const TASK_ST = {pauta:"A fazer", planejamento:"Planejamento", pautado:"Criação", producao:"Fazendo", publicado:"Concluída"};
 function stLabel(p){
@@ -1511,7 +1516,7 @@ function videoPrev(p, k){
   return src && m.video ? `${body}<a class="vfull" href="${esc(l)}" target="_blank" rel="noopener">▶ Abrir o vídeo final</a>` : `<a class="vwrap" href="${esc(l)}" target="_blank" rel="noopener" aria-label="Assistir ao vídeo final">${body}<span class="vfull">▶ Abrir o vídeo final</span></a>`;
 }
 function janela(p){
-  if (p.status === "publicado") return "";
+  if (p.status === "publicado" || p.status === "pausado") return "";
   if (!isEscopo(p)) { const n = diffDays(pd(p.data), TODAY); return n < 0 ? `<span class="flag">Atrasada</span>` : n === 0 ? `<span class="flag soon">Vence hoje</span>` : n <= 2 ? `<span class="flag soon">Vence em ${n}d</span>` : ""; }
   if (p.status === "aprovado") return "";
   if (isTask(p)) { const n = diffDays(pd(p.data), TODAY); return n < 0 ? `<span class="flag">Atrasada</span>` : n === 0 ? `<span class="flag soon">Vence hoje</span>` : ""; }
@@ -1804,7 +1809,7 @@ const ajusteComOf = (p, tp) => (!needsArt(p) || ["legenda","texto"].includes(tp)
 
 /* ---------- nova pauta ---------- */
 function docCard(p){
-  const b = p.briefing || {}, has = b.card && (p.midias || []).length;
+  const b = p.briefing || {}, has = (b.card || temBanner(p)) && (p.midias || []).length;
   return `<button type="button" class="doccard" data-open="${esc(p.id)}">${has ? `<span class="dimg">${mediaHTML(p, 0)}</span>` : ""}<span class="dbody"><span class="row" style="gap:6px"><span class="netb">${esc(canal(p).label)}</span><span class="muted" style="font-size:12px">${esc(fmtD(p.data))}</span></span><b>${esc(b.headline || "Sem título")}</b>${b.sub ? `<span class="muted">${esc(b.sub)}</span>` : ""}<span class="dex">${esc(String(b.corpo || "").slice(0, 220))}${String(b.corpo || "").length > 220 ? "…" : ""}</span>${stbIn(p)}</span></button>`;
 }
 const stbIn = p => `<span class="pill ${p.status === "cliente" ? "t-accent" : p.status === "ajuste" ? "t-warn" : p.status === "aprovado" ? "t-apv" : "t-ok"}">${{cliente:"Aguardando você", ajuste:"Em ajuste", aprovado:"Aprovado", publicado:"Publicado"}[p.status]}</span>`;
@@ -2220,7 +2225,7 @@ function kcHTML(p){
 function kcBtn(p){
   const c = cli(p.clienteId), o = owner(p);
   const sm = ui.selMode, can = canPlan(p), on = ui.sel.has(p.id);
-  return `<button type="button" class="kc${myTurn(p) ? " mine" : ""}${isTask(p) ? " task" : ""}${sm ? " selmode" : ""}${on ? " picked" : ""}" ${sm ? (can ? `data-selp="${esc(p.id)}" aria-pressed="${on}"` : `disabled title="Só o planejamento desta pauta pode arquivar ou excluir"`) : `data-open="${esc(p.id)}" draggable="true"`}>${sm ? `<span class="ck${on ? " on" : ""}" aria-hidden="true">${on ? "✓" : ""}</span>` : ""}${isTask(p) ? `<span class="th tk">✓</span>` : isText(p) && !(p.midias || []).length ? `<span class="th tx">Aa</span>` : `<span class="th">${thumb(p)}</span>`}<span style="min-width:0">${etqChips(p)}${codTag(p)}<span class="t">${p.privado ? `<span class="lock" title="Pauta privada" aria-label="Privada">🔒</span> ` : ""}${esc(titleOf(p))}</span><span class="m">${p.simples ? `<span>Cartão</span>` : cliTag(c)}</span><span class="m"><span>${canal(p).k}</span><span class="tnum">${esc(fmtShort(p.data))}</span>${isTask(p) && p.status === "publicado" ? `<span>Concluída</span>` : janela(p) || paradaTag(p)}${stLabel(p) !== (STATUS[p.status] || {}).label && !isTask(p) ? `<span class="stx">${esc(stLabel(p))}</span>` : ""}${o && o !== "cliente" ? av(o, 18) : ""}</span></span></button>`;
+  return `<button type="button" class="kc${myTurn(p) ? " mine" : ""}${isTask(p) ? " task" : ""}${sm ? " selmode" : ""}${on ? " picked" : ""}" ${sm ? (can ? `data-selp="${esc(p.id)}" aria-pressed="${on}"` : `disabled title="Só o planejamento desta pauta pode arquivar ou excluir"`) : `data-open="${esc(p.id)}" draggable="true"`}>${sm ? `<span class="ck${on ? " on" : ""}" aria-hidden="true">${on ? "✓" : ""}</span>` : ""}${isTask(p) ? `<span class="th tk">✓</span>` : isText(p) && !(p.midias || []).length ? `<span class="th tx">Aa</span>` : `<span class="th">${thumb(p)}</span>`}<span style="min-width:0">${etqChips(p)}${codTag(p)}<span class="t">${p.privado ? `<span class="lock" title="Pauta privada" aria-label="Privada">🔒</span> ` : ""}${esc(titleOf(p))}</span><span class="m">${p.simples ? `<span>Cartão</span>` : cliTag(c)}</span><span class="m"><span>${canal(p).k}</span><span class="tnum">${esc(fmtShort(p.data))}</span>${isTask(p) && p.status === "publicado" ? `<span>Concluída</span>` : p.status === "pausado" ? `<span class="stx" title="${esc(p.pausaMotivo || "Aguardando o cliente")}">⏸ cliente</span>` : janela(p) || paradaTag(p)}${stLabel(p) !== (STATUS[p.status] || {}).label && !isTask(p) ? `<span class="stx">${esc(stLabel(p))}</span>` : ""}${o && o !== "cliente" ? av(o, 18) : ""}</span></span></button>`;
 }
 function readyToSend(p){
   const b = p.briefing || {}, c = cli(p.clienteId);
@@ -2245,6 +2250,7 @@ function moveTo(p, st){
   }
   else if (st === "ajuste" && ["cliente","aprovado"].includes(from) && canPlan(p)) { ui.openId = p.id; ui.idx = 0; ui.tmp = {reg:"aj"}; fillOverlay(); return toast("Registre o que o cliente pediu."); }
   else if (isTask(p)) setStatus(p, st, entry(st === "publicado" ? "concluiu" : st === "producao" ? "iniciou" : from === "publicado" ? "reabriu" : "moveu", {texto:`${lbl(from)} → ${lbl(st)}`}));
+  else if (st === "pausado") setStatus(p, "pausado", entry("pausou", {texto:`${lbl(from)} → Pausado`}), {pausadoDe: from, pausadoEm: nowIso()});
   else if (st === "planejamento") setStatus(p, "planejamento", entry("planejamento", {texto:`${lbl(from)} → Planejamento`}));
   else if (st === "pautado") { const quem = timeCriacao(p); if (quem && quem !== (p.resp || {}).prod) { p.resp = Object.assign({}, p.resp, {prod: quem}); } setStatus(p, "pautado", entry("pautado", {texto:`${lbl(from)} → Criação${quem ? " · " + mName(quem) : ""}`})); }
   else if (st === "producao") { const back = ORDER.indexOf(from) > ORDER.indexOf("producao"); setStatus(p, "producao", entry(back ? "devolveu" : "producao", {texto:`${lbl(from)} → ${lbl("producao")}`}), {retorno: back}); }
@@ -2507,9 +2513,9 @@ function drawerHTML(p){
         ${carrOn(b) ? cardsHTML(b.cards, !!dis, "") : `<div class="field full"><label for="f-hl">Headline</label>${rteHTML("f-hl", "data-rt", "headline", fmtOf(b, "headline"), !!dis, "", "2.4em")}</div>
         <div class="field full"><label for="f-sub">Sub-headline${(b.formatos || []).includes("Carrossel") ? ` <span class="hint">· uma linha por lâmina no carrossel</span>` : ""}</label>${rteHTML("f-sub", "data-rt", "sub", fmtOf(b, "sub"), !!dis, "", "3.2em")}</div>`}
         ${c.regras && c.regras.linkPodcast ? `<div class="field full"><div class="seg"><label><input type="checkbox" data-pod ${b.pautaPodcast ? "checked" : ""} ${dis}> Pauta vem do podcast</label></div>${b.pautaPodcast ? `<span class="hint">A legenda ou o texto precisa ter o link do YouTube antes de ir ao cliente.</span>` : ""}</div>` : ""}</div>`;
-  const cardBrief = txt && b.card ? `<div class="form" style="margin-top:12px"><div class="field full"><label for="f-ideia">Ideia do card</label>${rteHTML("f-ideia", "data-rt", "ideia", fmtOf(b, "ideia"), !!dis, "", "3.2em")}</div><div class="field full"><label for="f-cardhl">Texto do card <span class="hint">· frase que vai na arte</span></label><input class="inp" id="f-cardhl" data-b="cardTexto" value="${esc(b.cardTexto)}" ${dis}></div></div>` : "";
+  const cardBrief = txt && (b.card || temBanner(p)) ? `<div class="form" style="margin-top:12px"><div class="field full"><label for="f-ideia">${temBanner(p) ? "Ideia do banner (1200 × 644)" : "Ideia do card"}</label>${rteHTML("f-ideia", "data-rt", "ideia", fmtOf(b, "ideia"), !!dis, "", "3.2em")}</div><div class="field full"><label for="f-cardhl">${temBanner(p) ? "Texto do banner" : "Texto do card"} <span class="hint">· frase que vai na arte</span></label><input class="inp" id="f-cardhl" data-b="cardTexto" value="${esc(b.cardTexto)}" ${dis}></div></div>` : "";
   const legenda = txt ? "" : `<section class="psec"><h3>${p.tipo === "anuncio" ? "Texto do anúncio" : "Legenda"}</h3><textarea id="f-leg" data-b="legenda" rows="7" ${dis}>${esc(b.legenda)}</textarea><div class="cap-foot"><span class="tnum ${capLen > 2200 ? "over" : ""}" id="capcount">${capLen.toLocaleString("pt-BR")} / 2.200 caracteres</span>${b.legenda ? `<button type="button" class="linkbtn" data-copy="${esc(p.id)}">Copiar</button>` : ""}</div></section>`;
-  const midias = !art ? "" : `<section class="psec"><h3>Mídias</h3><div class="viewer pgv">${ms.length ? `<div class="stagebox"><div class="frame" style="aspect-ratio:${t.ratio}">${mediaHTML(p, ui.idx, "play")}</div>${ms.length > 1 ? `<button type="button" class="navb p" data-act="prev" aria-label="Anterior">‹</button><button type="button" class="navb n" data-act="next" aria-label="Próxima">›</button>` : ""}</div>${strip}`
+  const midias = !art ? "" : `<section class="psec"><h3>${temBanner(p) ? `Banner da newsletter <span class="hint" style="text-transform:none;letter-spacing:0">· 1200 × 644, aparece acima do texto no LinkedIn</span>` : "Mídias"}</h3><div class="viewer pgv">${ms.length ? `<div class="stagebox"><div class="frame" style="aspect-ratio:${t.ratio}">${mediaHTML(p, ui.idx, "play")}</div>${ms.length > 1 ? `<button type="button" class="navb p" data-act="prev" aria-label="Anterior">‹</button><button type="button" class="navb n" data-act="next" aria-label="Próxima">›</button>` : ""}</div>${strip}`
     : `<div class="frame blank" style="aspect-ratio:${t.ratio};max-width:340px">${p.drive ? "Arquivos no Drive" : p.status === "pauta" ? "A arte entra aqui quando a produção anexar." : "Nenhum arquivo anexado ainda."}</div>`}
     <div class="spec">${esc(t.label)} · ${esc((p.redes || []).join(" + ") || t.net)}${p.versao ? ` · versão ${p.versao}` : ""}</div>${mlinkHTML(p)}${p.drive ? `<a class="btn sm" href="${esc(p.drive)}" target="_blank" rel="noopener">Pasta da pauta no Drive</a>` : ""}
     ${ed ? `<label class="btn sm" for="upfile2" style="cursor:pointer"><input type="file" id="upfile2" multiple accept="image/png,image/jpeg,image/webp,image/gif,video/mp4,video/webm" hidden>+ Adicionar arquivos</label><span class="hint">Use × embaixo de cada miniatura para remover e ‹ › para reordenar.</span>${u.progress ? `<span class="hint" style="color:var(--accent-fg);font-weight:700">${esc(u.progress)}</span>` : ""}` : ""}</div></section>`;
@@ -2536,7 +2542,7 @@ function drawerHTML(p){
         ${isRel(p) ? `<div class="field"><label for="f-rcol">Coleta</label><select class="inp" id="f-rcol" data-top="prod" ${edT ? "" : "disabled"}>${opt(unitPpl, (p.resp || {}).prod)}</select></div><div class="field"><label for="f-rp">Análise</label><select class="inp" id="f-rp" data-top="plan" ${edT ? "" : "disabled"}>${opt(unitPpl.filter(m => (m.papeis || []).some(r => ["head","diretoria","planejamento"].includes(r))), (p.resp || {}).plan)}</select></div><div class="field full"><label for="f-rdir">Revisão da Diretoria</label><select class="inp" id="f-rdir" data-top="dir" ${edT ? "" : "disabled"}>${opt(unitPpl.filter(m => (m.papeis || []).includes("diretoria")), diretorOf(p))}</select></div>` : `
         <div class="field"><label for="f-rp">Planejamento</label><select class="inp" id="f-rp" data-top="plan" ${edT ? "" : "disabled"}>${opt(planners, (p.resp || {}).plan)}</select></div>`}
         ${isRel(p) ? "" : art ? `<div class="field"><label for="f-rc">${txt ? "Design do card" : "Produção"}</label><select class="inp" id="f-rc" data-top="prod" ${edT ? "" : "disabled"}>${opt(producers, (p.resp || {}).prod)}</select></div>` : `<div class="field"></div>`}
-        ${isRel(p) ? "" : `<div class="field full"><span class="lb">Formatos de entrega</span><div class="seg">${txt ? `<label><input type="checkbox" data-card ${b.card ? "checked" : ""} ${dis}> Card estático</label>${b.card ? "" : `<span class="hint" style="align-self:center">Marque se o conteúdo leva banner ou card.</span>`}` : (canal(p).grupo === "avulsa" ? FORMATOS_GEN : FORMATOS).map(f => `<label><input type="checkbox" data-fmt value="${esc(f)}" ${(b.formatos || []).includes(f) ? "checked" : ""} ${dis}> ${esc(f)}</label>`).join("")}</div></div>`}
+        ${isRel(p) ? "" : `<div class="field full"><span class="lb">Formatos de entrega</span><div class="seg">${txt ? (temBanner(p) ? `<label><input type="checkbox" checked disabled> Banner da newsletter (1200 × 644)</label>` : `<label><input type="checkbox" data-card ${b.card ? "checked" : ""} ${dis}> Card estático</label>${b.card ? "" : `<span class="hint" style="align-self:center">Marque se o conteúdo leva banner ou card.</span>`}`) : (canal(p).grupo === "avulsa" ? FORMATOS_GEN : FORMATOS).map(f => `<label><input type="checkbox" data-fmt value="${esc(f)}" ${(b.formatos || []).includes(f) ? "checked" : ""} ${dis}> ${esc(f)}</label>`).join("")}</div></div>`}
         ${visField(p)}
         ${etqField(p.etiquetas || [], canEtq(p), "data-etq")}
         ${driveField}
@@ -2546,6 +2552,12 @@ function drawerHTML(p){
 }
 function actionsHTML(p, c, edFiles){
   const b = p.briefing || {}, u = ui.tmp, out = [];
+  if (p.status === "pausado") {
+    const de = p.pausadoDe && STATUS[p.pausadoDe] ? p.pausadoDe : "pauta", can = canMove(p);
+    return `<div class="sec" style="display:flex;flex-direction:column;gap:10px"><h3>Pausada</h3><div class="note">Aguardando o cliente${p.pausadoEm ? ` desde ${esc(fmtShort(p.pausadoEm.slice(0, 10)))}` : ""}. Não conta como atraso nem fica com ninguém da equipe.</div>
+      <div class="field full"><label for="f-pausa">Motivo da pausa</label><textarea id="f-pausa" rows="2" placeholder="Ex.: cliente ainda não enviou as fotos, aguardando aprovação do sócio…" ${can ? "" : "disabled"}>${esc(p.pausaMotivo || "")}</textarea></div>
+      ${can ? `<div class="actions"><button type="button" class="btn primary" data-mvst="${de}">Retomar: voltar para ${esc(stLabel(Object.assign({}, p, {status: de})))}</button></div>` : ""}</div>`;
+  }
   if (isTask(p)) {
     const ed = canPlan(p) || canProduce(p);
     if (ed && p.status === "pauta") out.push(`<div class="actions"><button type="button" class="btn primary" data-act="taskStart">Iniciar tarefa</button><button type="button" class="btn ok" data-act="taskDone">Concluir</button></div>`);
@@ -2651,7 +2663,7 @@ function postModalHTML(p){
   const close = `<button type="button" class="pclose" data-act="close" aria-label="Fechar">×</button>`;
   const lbl = esc(titleOf(p));
   if (isText(p)) return `<div class="post wide doc" role="dialog" aria-modal="true" aria-label="${lbl}">${close}<article class="docw"><span class="netb">${esc(t.label)}${t.grupo === "linkedin" ? " · LinkedIn" : ""}</span>
-    ${b.card && n ? `<div class="docimg">${mediaHTML(p, ui.idx, "play")}${nav}</div>` : ""}
+    ${(b.card || temBanner(p)) && n ? `<div class="docimg${temBanner(p) ? " nlb" : ""}">${mediaHTML(p, ui.idx, "play")}${nav}</div>` : ""}
     <h1 class="doch">${esc(b.headline || "Sem título")}</h1>${b.sub ? `<p class="docsub">${fmtOf(b, "sub")}</p>` : ""}<div class="doctxt">${b.corpo ? fmtOf(b, "corpo") : "Texto ainda não escrito."}</div></article>${approvalPanel(p)}</div>`;
   if (t.grupo === "meta" || t.grupo === "ads") return `<div class="post igpost" role="dialog" aria-modal="true" aria-label="${lbl}">${close}<div class="phd"><i></i><span style="display:flex;flex-direction:column;gap:4px"><span class="sk" style="width:110px"></span>${t.grupo === "ads" ? `<small style="font-size:11px;color:var(--muted)">Patrocinado · ${esc((p.redes || []).join(", "))}</small>` : ""}</span></div>
     <div class="igmedia" style="aspect-ratio:${ehVideoPeca(p) ? "9 / 16;max-height:70vh;margin:0 auto" : "4 / 5"}">${ehVideoPeca(p) ? videoPrev(p, ui.idx) : mediaHTML(p, ui.idx, "play")}${nav}</div>
@@ -2688,7 +2700,7 @@ function newPecaHTML(){
   const redesTodas = Object.keys(CANAIS).filter(k => !["anuncio","tarefa","relatorio"].includes(k) && !GENERICOS.includes(k));
   const tipoSel = u.tipo && CANAIS[u.tipo] ? u.tipo : (sem ? "arte" : (escopo.find(k => redesTodas.includes(k)) || "feed")), generico = GENERICOS.includes(tipoSel);
   const tipoNow = cat === "interna" ? "tarefa" : cat === "trafego" ? "anuncio" : tipoSel, texto = !!(CANAIS[tipoNow] || {}).texto;
-  const card = texto && !!val("card", false), art = cat !== "interna" && (!texto || card);
+  const card = texto && (tipoNow === "newsletter" || !!val("card", false)), art = cat !== "interna" && (!texto || card);
   const lbl = k => CANAIS[k].grupo === "meta" ? "Instagram e Facebook · Feed" : CANAIS[k].grupo === "stories" ? "Instagram e Facebook · Stories" : CANAIS[k].label;
   const unidade = c.unidade || (ME() || {}).unidade;
   const people = (sem ? ativos().filter(m => unitScope().includes(m.unidade)) : ativos().filter(m => m.unidade === unidade)).sort((a, b) => a.nome.localeCompare(b.nome));
@@ -2745,7 +2757,7 @@ function newPecaHTML(){
           : `<div class="field"><label for="np-plan">Planejamento</label>${sel("plan", planners, val("plan", planDef))}</div>
         ${art ? `<div class="field"><label for="np-prod">${texto ? "Design do card" : "Produção"}</label>${sel("prod", producers, val("prod", prodDef), "Definir depois")}</div>` : `<div class="field"></div>`}
         ${cat === "trafego" ? `<div class="field full"><label for="np-traf">Tráfego (configura e acompanha)</label>${sel("traf", trafs, val("traf", trafDef), "Definir depois")}</div>` : ""}
-        <div class="field full"><span class="lb">Formatos de entrega</span><div class="seg">${texto ? `<label><input type="checkbox" id="np-card" ${card ? "checked" : ""}> Card estático</label>` : (generico ? FORMATOS_GEN : FORMATOS).map(x => `<label><input type="checkbox" data-npfmt value="${esc(x)}" ${fmts.includes(x) ? "checked" : ""}> ${esc(x)}</label>`).join("")}</div></div>`}
+        <div class="field full"><span class="lb">Formatos de entrega</span><div class="seg">${texto ? (tipoNow === "newsletter" ? `<label><input type="checkbox" id="np-card" checked disabled> Banner da newsletter (1200 × 644)</label>` : `<label><input type="checkbox" id="np-card" ${card ? "checked" : ""}> Card estático</label>`) : (generico ? FORMATOS_GEN : FORMATOS).map(x => `<label><input type="checkbox" data-npfmt value="${esc(x)}" ${fmts.includes(x) ? "checked" : ""}> ${esc(x)}</label>`).join("")}</div></div>`}
         <div class="field full"><label class="privck" title="Privada: só a Diretoria, quem criou e os responsáveis veem e editam"><input type="checkbox" id="np-priv" ${val("priv") === true ? "checked" : ""}> 🔒 Privado</label></div>
         ${etqField(u.etqs || [], true, "data-npetq")}
         <div class="field full"><label for="np-drive">Link do Drive ${opc}</label>${inp("drive", "https://drive.google.com/…")}</div>
@@ -3017,6 +3029,19 @@ function openCap(pre){
 document.addEventListener("click", ev => { if (ui.kmenu && !(ev.target.closest && ev.target.closest(".kcw"))) { ui.kmenu = null; const m = document.querySelector(".kmenu"); if (m) m.remove(); } }, true);
 document.addEventListener("click", ev => {
   const rc = ev.target.closest && ev.target.closest("[data-rtc]");
+  if (rc && rc.dataset.rtc === "link") { ev.preventDefault(); ev.stopImmediatePropagation(); const bar = rc.closest(".rtebar"), ed = rc.closest(".rte").querySelector(".rted"), sel = window.getSelection();
+    if (!sel.rangeCount || !ed.contains(sel.anchorNode) || sel.isCollapsed) { const a0 = sel.anchorNode && (sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement); if (!(a0 && a0.closest && a0.closest(".rted a"))) { toast("Selecione o trecho do texto que vai virar link."); return; } }
+    window.__rteRange = sel.getRangeAt(0).cloneRange(); window.__rteEd = ed;
+    const a = (sel.anchorNode && (sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement) || {}).closest ? (sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement).closest("a") : null;
+    let box = bar.querySelector(".rtlink"); if (box) box.remove();
+    box = document.createElement("span"); box.className = "rtlink"; box.innerHTML = `<input class="inp sm" type="url" placeholder="https://…" value="${esc(a ? a.getAttribute("href") : "")}" aria-label="Endereço do link"><button type="button" class="btn sm primary" data-rtlok>OK</button>${a ? `<button type="button" class="btn sm ghost" data-rtlrm>Tirar link</button>` : ""}`;
+    bar.appendChild(box); const inp = box.querySelector("input"); inp.focus(); inp.select(); return; }
+  const rl = ev.target.closest && ev.target.closest("[data-rtlok],[data-rtlrm]");
+  if (rl) { ev.preventDefault(); ev.stopImmediatePropagation(); const box = rl.closest(".rtlink"), ed = window.__rteEd, r = window.__rteRange; if (!ed || !r) { box.remove(); return; }
+    let url = (box.querySelector("input").value || "").trim(); if (url && !/^https?:\/\//i.test(url)) url = "https://" + url;
+    ed.focus(); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+    if (rl.dataset.rtlrm !== undefined || !url) document.execCommand("unlink", false, null); else document.execCommand("createLink", false, url);
+    box.remove(); ed.dispatchEvent(new Event("input", {bubbles:true})); return; }
   if (rc) { ev.preventDefault(); ev.stopImmediatePropagation(); const ed = rc.closest(".rte").querySelector(".rted"); if (document.activeElement !== ed) ed.focus(); document.execCommand("styleWithCSS", false, false); document.execCommand(rc.dataset.rtc, false, null); ed.dispatchEvent(new Event("input", {bubbles:true})); return; }
   const ad = ev.target.closest && ev.target.closest("[data-act=AnxDel],[data-act=npAnxDel]");
   if (ad) { ev.preventDefault(); ev.stopImmediatePropagation(); const i = +ad.dataset.i; if (ad.dataset.act === "npAnxDel") { (ui.tmp.anexos || []).splice(i, 1); fillOverlay(); return; } const p = S.pecas.find(x => x.id === ui.openId); if (!p || !canEditP(p) || !(p.anexos || [])[i]) return; p.anexos.splice(i, 1); save(); toast("Material removido da pauta."); fillOverlay(); return; }
@@ -3045,6 +3070,7 @@ document.addEventListener("click", ev => {
     u.etqNova = false; u.etqNome = ""; save(); toast(`Etiqueta ${nome} criada.`); return redraw(); }
 });
 document.addEventListener("mousedown", ev => { if (ev.target.closest && ev.target.closest("[data-rtc]")) ev.preventDefault(); });
+document.addEventListener("keydown", ev => { if (ev.key === "Enter" && ev.target.closest && ev.target.closest(".rtlink")) { ev.preventDefault(); const ok = ev.target.closest(".rtlink").querySelector("[data-rtlok]"); if (ok) ok.click(); } if (ev.key === "Escape" && ev.target.closest && ev.target.closest(".rtlink")) ev.target.closest(".rtlink").remove(); });
 document.addEventListener("paste", ev => { const ed = ev.target.closest && ev.target.closest(".rted[contenteditable]"); if (!ed) return; ev.preventDefault(); const txt = (ev.clipboardData || window.clipboardData).getData("text/plain"); document.execCommand("insertText", false, txt); });
 /* caixas de texto crescem com o conteúdo */
 const FS_OK = window.CSS && CSS.supports && CSS.supports("field-sizing", "content");
@@ -3266,6 +3292,7 @@ document.addEventListener("input", ev => {
   if (t.dataset.obp && obPub) { obPub.respostas = obPub.respostas || {}; obPub.respostas[t.dataset.obp] = t.value; obPend[t.dataset.obp] = t.value; t.closest(".obq").classList.toggle("ok", !!t.value.trim()); if (!(obNome() || (ui.pnome || "").trim())) { const el = $("#obsaved"); if (el) el.textContent = "Escreva seu nome no topo para salvar"; return; } clearTimeout(obT); obT = setTimeout(() => obSave(false), 1200); return; }
   if (t.dataset.cri && ui.tmp.cri) { setPath(ui.tmp.cri, t.dataset.cri, t.value); const m = t.dataset.cri.match(/^cores\.(\d+)\.hex$/); if (m) { const el = document.getElementById("rgb" + m[1]); if (el) el.textContent = validHex(t.value) ? hexRgb(t.value) : "RGB automático"; } return; }
   if (t.id === "f-corpo" && t.value !== undefined) { const el = $("#wcount"); if (el) { const n = t.value.trim().split(/\s+/).filter(Boolean).length; el.textContent = `${n} ${n === 1 ? "palavra" : "palavras"}`; } }
+  if (t.id === "f-pausa") { const p = S.pecas.find(x => x.id === ui.openId); if (p && canMove(p)) { p.pausaMotivo = t.value; save(); } return; }
   if (t.id === "fBusca") { ui.busca = t.value; const pos = t.selectionStart; render(); const el = $("#fBusca"); if (el) { el.focus(); try { el.setSelectionRange(pos, pos); } catch(e) {} } return; }
   if (t.id === "mcliQ") { ui.tmp.mcq = t.value; const q = normTxt(t.value); document.querySelectorAll(".mclil [data-mn]").forEach(el => el.hidden = !!q && !el.dataset.mn.includes(q)); return; }
   if (t.id === "cliQ") { ui.cq = t.value; const q = normTxt(t.value); let n = 0; document.querySelectorAll("#cliGrid [data-nome]").forEach(el => { const ok = !q || el.dataset.nome.includes(q); el.hidden = !ok; if (ok) n++; }); const el = $("#cliQn"); if (el) el.textContent = `${n} de ${document.querySelectorAll("#cliGrid [data-nome]").length}`; return; }
