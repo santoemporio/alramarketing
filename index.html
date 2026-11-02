@@ -645,6 +645,31 @@ textarea:disabled,.inp:disabled{background:var(--surface);opacity:1;border-color
 :root[data-fest="halloween"] .kc:hover{box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 45%,transparent),0 6px 18px color-mix(in srgb,var(--accent) 18%,transparent)}
 :root[data-fest="halloween"] .empty h2::before{content:"👻 "}
 @media (prefers-reduced-motion:reduce){.hw-bat,.hw-bat svg{animation:none}.hw-bat{display:none}}
+/* comercial */
+.cm-days{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.cm-list{display:flex;flex-direction:column}
+.cm-li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 2px;border:0;border-top:1px solid var(--line);background:none;text-align:left;width:100%;color:var(--fg)}
+.cm-li:first-child{border-top:0}
+.cm-g{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}.cm-g .muted{font-size:12.5px}
+.cm-fun{display:flex;flex-direction:column;gap:7px}
+.cm-fr{display:grid;grid-template-columns:150px minmax(0,1fr) 34px;gap:10px;align-items:center;font-size:13px}.cm-fr b{text-align:right}
+.cm-fb{height:16px;background:var(--surface);border-radius:4px;overflow:hidden}.cm-fb i{display:block;height:100%;background:var(--accent);opacity:.85}
+.cm-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px;align-items:start}
+@media (max-width:520px){.cm-cards{grid-template-columns:minmax(0,1fr)}.cm-fr{grid-template-columns:110px minmax(0,1fr) 30px}}
+.cm-card{gap:10px}.cm-card.p1{border-left:4px solid var(--accent)}.cm-card.done{background:var(--surface)}
+.cm-hd{display:flex;gap:10px;align-items:flex-start}
+.cm-num{flex:none;width:26px;height:26px;border-radius:50%;background:var(--surface);display:grid;place-items:center;font-weight:800;font-size:12px}
+.cm-card.p1 .cm-num{background:var(--accent);color:#fff}
+.cm-tags{display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+.cm-gancho{font-size:13px;line-height:1.5}
+.cm-msg{border:1px dashed var(--line2);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;background:var(--bg)}.cm-msg p{font-size:13px;line-height:1.5}
+.cm-det summary{font-size:12.5px;font-weight:700;color:var(--accent-fg);cursor:pointer}.cm-det p{font-size:12.5px;color:var(--muted);white-space:pre-line;margin-top:6px}
+.cm-res{font-size:12.5px;color:var(--muted)}
+.cm-acts{display:flex;gap:6px;flex-wrap:wrap}.cm-acts>*{flex:1 1 80px;text-align:center;justify-content:center}
+.cm-script summary{cursor:pointer}.cm-script ol{padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:13px;margin-top:8px}
+.cm-tr{cursor:pointer}.cm-tr:hover td{background:var(--surface)}
+.cm-opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}@media (max-width:520px){.cm-opts{grid-template-columns:minmax(0,1fr)}}
+.cm-opts label{display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:9px 10px;font-size:13px;font-weight:600;cursor:pointer}
 </style>
 
 </head><body><div id="app"><div class="center"><div class="wiz"><div class="row"><b>Sistema Alra</b></div><p class="muted">Carregando…</p></div></div></div>
@@ -758,6 +783,7 @@ const ICONS = {
   drive:'<path d="M8.5 3h7l6 10.5-3.5 6h-12L2.5 13.5z"/><path d="M8.5 3l6.5 11.5M15.5 3L9 14.5M2.5 13.5h19"/>',
   carr:'<rect x="7" y="3" width="14" height="14" rx="2"/><path d="M3 7v12a2 2 0 0 0 2 2h12"/>',
   equipePauta:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v16"/><circle cx="5.5" cy="13" r=".6"/><circle cx="5.5" cy="17" r=".6"/>',
+  comercial:'<path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/>',
   dashboards:'<path d="M4 20V11M10 20V5M16 20v-6M22 20H2"/>',
   config:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'
 };
@@ -782,8 +808,8 @@ function monthLabel(d){ const s = d.toLocaleDateString("pt-BR",{month:"long", ye
 const nowIso = () => new Date().toISOString();
 
 /* ================= estado + sincronização ================= */
-const COLS = ["unidades","pessoas","clientes","pecas","captacoes","materiais","acessos","feedbacks","pacotes","notifs","relatorios","arquivo"];
-const EMPTY = () => ({cfg:{}, unidades:[], pessoas:[], clientes:[], pecas:[], captacoes:[], materiais:[], acessos:[], feedbacks:[], pacotes:[], notifs:[], relatorios:[], arquivo:[]});
+const COLS = ["unidades","pessoas","clientes","pecas","captacoes","materiais","acessos","feedbacks","pacotes","notifs","relatorios","arquivo","comercial"];
+const EMPTY = () => ({cfg:{}, unidades:[], pessoas:[], clientes:[], pecas:[], captacoes:[], materiais:[], acessos:[], feedbacks:[], pacotes:[], notifs:[], relatorios:[], arquivo:[], comercial:[]});
 let S = EMPTY();
 let db = null, assets = null, mode = "loading";
 const cache = {}; COLS.concat(["cfg"]).forEach(c => cache[c] = {});
@@ -1898,6 +1924,7 @@ function navItems(){
   const it = [["inicio","Início"],["equipePauta","Pauta da equipe"],["pecas","Kanban"],["calendario","Calendário"],["aprovacoes","Aprovações"]];
   if (timeAtLeast("B")) it.push(["publicacao","Publicações"]);
   it.push(["captacoes","Captações"],["clientes","Clientes"]);
+  if (timeAtLeast("A")) it.push(["comercial","Comercial"]);
   if (timeAtLeast("B")) it.push(["dashboards","Dashboards"]);
   if (timeAtLeast("A")) it.push(["config","Configurações"]);
   return it;
@@ -1923,7 +1950,7 @@ function render(){
   autoReports();
   const unread = S.notifs.filter(n => n.para === ui.me && !n.lida).length;
   const unreadRel = S.notifs.filter(n => n.para === ui.me && !n.lida && n.relId).length;
-  const V = {inicio:inicioHTML, equipePauta:equipePautaHTML, calendario:calendarioHTML, pecas:pecasHTML, aprovacoes:aprovacoesHTML, publicacao:publicacaoHTML, captacoes:captacoesHTML, clientes:clientesHTML, hub:hubHTML, dashboards:dashboardsHTML, config:configHTML};
+  const V = {inicio:inicioHTML, equipePauta:equipePautaHTML, calendario:calendarioHTML, pecas:pecasHTML, aprovacoes:aprovacoesHTML, publicacao:publicacaoHTML, captacoes:captacoesHTML, clientes:clientesHTML, hub:hubHTML, dashboards:dashboardsHTML, config:configHTML, comercial:comercialHTML};
   const opt = (v, l) => `<option value="${esc(v)}" ${ui.me === v ? "selected" : ""}>${esc(l)}</option>`;
   const sc = window.scrollY;
   app.innerHTML = `<div class="shell${ui.navMin ? " min" : ""}"><aside class="side">
@@ -1937,6 +1964,219 @@ function render(){
   window.scrollTo(0, sc);
   fillOverlay();
 }
+
+/* ================= comercial (prospecção, pipeline e campo) ================= */
+const COM_ETAPAS = ["Mapeado","Abordado","Respondeu","Reunião agendada","Reunião feita","Diagnóstico vendido","Proposta enviada","Ganho","Perdido","Nutrição"];
+const COM_ATIVAS = COM_ETAPAS.slice(0, 7);
+const COM_NICHOS = ["Academia/Box","Studio","Clínica/Saúde","Food service saudável","Loja/empório natural","Beleza e bem-estar","Marca esportiva","Evento/Prova","Assessoria esportiva","Varejo","Serviços","Indústria","Educação","Outro"];
+const COM_PLANOS = ["MOVE","PERFORM","ECOSYSTEM","Diagnóstico","Projeto","Outro"];
+const COM_FEE = {MOVE:2800, PERFORM:5500, ECOSYSTEM:9500};
+const COM_LEADLOVERS = 297;
+const COM_ORIGENS = ["Outbound","Visita presencial","Indicação","Inbound/Ads","Evento","Parceiro","Conteúdo orgânico"];
+const COM_MOTIVOS = ["","Preço","Timing","Já tem agência","Sem verba de mídia","Sem resposta","Não é ICP","Outro"];
+const COM_RES = [
+  {k:"conversa", l:"Conversei com o decisor", etapa:"Respondeu"},
+  {k:"reuniao", l:"Reunião marcada", etapa:"Reunião agendada"},
+  {k:"diagnostico", l:"Diagnóstico vendido", etapa:"Diagnóstico vendido"},
+  {k:"dono_ausente", l:"Dono ausente, deixei recado", etapa:"Abordado"},
+  {k:"fechado", l:"Fechado ou sem atendimento", etapa:null},
+  {k:"sem_fit", l:"Sem fit", etapa:"Nutrição"},
+  {k:"nao_visitei", l:"Não deu para visitar", etapa:null}];
+const comRes = k => COM_RES.find(r => r.k === k) || {l:k};
+const comFee = c => Number(c.fee) || COM_FEE[c.plano] || 0;
+const comDigits = s => String(s || "").replace(/\D/g, "");
+const comWa = (n, t) => { let d = comDigits(n); if (!d) return ""; if (d.length <= 11) d = "55" + d; return `https://wa.me/${d}?text=${encodeURIComponent(t || "")}`; };
+const comMaps = c => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([c.empresa, c.endereco || c.bairro, c.cidade || ""].filter(Boolean).join(", "))}`;
+const comPill = e => e === "Ganho" ? "t-ok" : e === "Perdido" ? "t-bad" : e === "Nutrição" ? "t-prod" : ["Reunião agendada","Reunião feita","Diagnóstico vendido","Proposta enviada"].includes(e) ? "t-apv" : e === "Mapeado" ? "t-prod" : "t-accent";
+function comScope(){ const us = unitScope(); return S.comercial.filter(c => !c.excluido && us.includes(c.unidade)); }
+function comUnitDefault(){ return isDir() ? (ui.unidade !== "todas" ? ui.unidade : (S.unidades.length === 1 ? S.unidades[0].id : null)) : (ME() || {}).unidade; }
+function comMsgDepois(c){ const v = c.visita || {}, n = String(v.falou_com || "").trim().split(/\s+/)[0]; return `Oi${n ? ", " + n : ""}! Aqui é o Pablo, da Alra Wellness. Obrigado pela conversa hoje no ${c.empresa}. Como combinamos, te mando o raio-x de 1 página até amanhã. Se fizer sentido, sentamos 30 minutos para eu te mostrar o plano. Qual dia funciona para ti?`; }
+function comLog(c, para){ if (!para || para === c.etapa) return; c.log = (c.log || []).slice(-29).concat([{de:c.etapa || "", para, em:nowIso(), por:ui.me}]); c.etapa = para; }
+
+function comercialHTML(){
+  const L = comScope(), tab = ui.comTab || "hoje";
+  const dias = [...new Set(L.filter(c => c.campo && c.campo.dia).map(c => c.campo.dia))].sort();
+  const tabs = [["hoje","Hoje"]].concat(dias.length ? [["campo","Campo"]] : []).concat([["pipeline","Pipeline"]]);
+  const t = tabs.some(x => x[0] === tab) ? tab : "hoje";
+  const un = isDir() && ui.unidade === "todas" ? "todas as unidades" : unidade(isDir() ? ui.unidade : (ME() || {}).unidade).nome;
+  const body = t === "campo" ? comCampoHTML(L, dias) : t === "pipeline" ? comPipelineHTML(L) : comHojeHTML(L);
+  return `<div class="spread"><div><div class="eyebrow">Comercial · ${esc(un)}</div><h1>Prospecção e pipeline</h1></div><button type="button" class="btn primary" data-com="new">+ Nova empresa</button></div>
+    <div class="tabs" role="group">${tabs.map(([k, l]) => `<button type="button" data-com="tab" data-tab="${k}" aria-pressed="${t === k}">${l}</button>`).join("")}</div>${body}`;
+}
+function comHojeHTML(L){
+  const td = ymd(TODAY), lim = ymd(addDays(TODAY, 3));
+  const ativas = L.filter(c => COM_ATIVAS.includes(c.etapa));
+  const mrr = L.filter(c => c.etapa === "Ganho").reduce((s, c) => s + comFee(c), 0);
+  const prev = L.filter(c => c.campo && c.campo.dia >= td && c.msg_previa && !c.msg_enviada_em);
+  const vis = L.filter(c => c.visita && c.visita.resultado && c.visita.resultado !== "nao_visitei");
+  const cnt = k => L.filter(c => c.visita && c.visita.resultado === k).length;
+  const fups = L.filter(c => c.data_proxima && c.data_proxima <= lim && COM_ATIVAS.includes(c.etapa)).sort((a, b) => a.data_proxima.localeCompare(b.data_proxima));
+  const n = Object.fromEntries(COM_ETAPAS.map(e => [e, L.filter(c => c.etapa === e).length])), mx = Math.max(1, ...COM_ATIVAS.concat("Ganho").map(e => n[e]));
+  if (!L.length) return `<div class="empty"><b>Nenhuma empresa nesta unidade ainda</b><p>Cadastre as empresas que podem ser prospectadas: nome, contato, WhatsApp e o próximo passo. Elas entram no pipeline em "Mapeado".</p><button type="button" class="btn primary" data-com="new">+ Nova empresa</button></div>`;
+  return `<div class="kpis">
+    <div class="kpi"><span>Empresas no funil</span><b>${ativas.length}</b><small>${L.length} cadastradas</small></div>
+    <div class="kpi ${prev.length ? "hot" : ""}"><span>Mensagens prévias a enviar</span><b>${prev.length}</b><small>antes das próximas visitas</small></div>
+    <div class="kpi"><span>Visitas feitas</span><b>${vis.length}</b><small>${cnt("conversa") + cnt("reuniao") + cnt("diagnostico")} com o decisor</small></div>
+    <div class="kpi good"><span>Reuniões · diagnósticos</span><b>${n["Reunião agendada"] + n["Reunião feita"]} · ${n["Diagnóstico vendido"]}</b><small>reuniões agendadas e diagnósticos vendidos</small></div>
+    <div class="kpi"><span>MRR contratado</span><b>R$ ${mrr.toLocaleString("pt-BR")}</b><small>${n["Ganho"]} contrato${n["Ganho"] === 1 ? "" : "s"} (sem a licença Leadlovers)</small></div></div>
+    <div class="grid2"><section class="card"><h2>Follow-ups: atrasados e próximos 3 dias</h2>${fups.length ? `<div class="cm-list">${fups.slice(0, 30).map(c => { const late = c.data_proxima < td, hoje = c.data_proxima === td; return `<button type="button" class="cm-li" data-com="open" data-id="${esc(c.id)}"><span class="cm-g"><b>${esc(c.empresa)}</b><span class="muted">${esc(c.proxima_acao || "Definir próxima ação")}${c.dono ? " · " + esc(c.dono) : ""}</span></span><span class="${late ? "flag" : hoje ? "flag soon" : "muted"} tnum">${late ? "Atrasado · " : hoje ? "Hoje · " : ""}${fmtD(c.data_proxima, {day:"2-digit", month:"2-digit"})}</span></button>`; }).join("")}</div>` : `<p class="muted">Nada atrasado nem nos próximos 3 dias.</p>`}</section>
+    <section class="card"><h2>Funil</h2><div class="cm-fun">${COM_ATIVAS.concat("Ganho").map(e => `<div class="cm-fr"><span>${esc(e)}</span><span class="cm-fb"><i style="width:${n[e] / mx * 100}%"></i></span><b class="tnum">${n[e]}</b></div>`).join("")}</div></section></div>`;
+}
+function comCampoHTML(L, dias){
+  const td = ymd(TODAY);
+  if (!dias.includes(ui.comDia)) ui.comDia = dias.find(d => d >= td) || dias[dias.length - 1];
+  const D = L.filter(c => c.campo && c.campo.dia === ui.comDia).sort((a, b) => (a.campo.prioridade || 2) - (b.campo.prioridade || 2) || (a.campo.ordem || 99) - (b.campo.ordem || 99));
+  const ord = L.filter(c => c.campo && c.campo.dia === ui.comDia).sort((a, b) => (a.campo.ordem || 99) - (b.campo.ordem || 99));
+  const list = ui.comOrd === "rota" ? ord : D;
+  const p1 = ord.filter(c => c.campo.prioridade === 1 && !(c.visita && c.visita.resultado));
+  const q = c => [c.empresa, c.endereco || c.bairro, c.cidade || ""].filter(Boolean).join(", ");
+  const rota = p1.length >= 2 ? `https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=${encodeURIComponent(q(p1[p1.length - 1]))}&waypoints=${encodeURIComponent(p1.slice(0, -1).slice(0, 8).map(q).join("|"))}` : "";
+  const pend = D.filter(c => c.msg_previa && !c.msg_enviada_em).length, feitas = D.filter(c => c.visita && c.visita.resultado && c.visita.resultado !== "nao_visitei").length;
+  const all = L.filter(c => c.visita && c.visita.resultado), k = r => all.filter(c => c.visita.resultado === r).length;
+  return `<div class="cm-days">${dias.map(d => { const nD = L.filter(c => c.campo && c.campo.dia === d).length; return `<button type="button" class="chip" data-com="dia" data-d="${d}" aria-pressed="${d === ui.comDia}">${esc(fmtD(d, {weekday:"short", day:"2-digit", month:"2-digit"}))} · ${nD}</button>`; }).join("")}</div>
+    <div class="row"><span class="pill t-accent">${feitas}/${D.length} visitadas</span><span class="pill ${pend ? "t-warn" : "t-ok"}">${pend ? pend + " mensagens prévias a enviar" : "Mensagens prévias enviadas"}</span><span class="pill t-apv">Viagem: ${k("conversa") + k("reuniao") + k("diagnostico")} decisores · ${k("reuniao")} reuniões · ${k("diagnostico")} diagnósticos</span></div>
+    <div class="row">${rota ? `<a class="btn primary sm" target="_blank" rel="noopener" href="${rota}">Rota das prioridades no Maps (${p1.length})</a>` : ""}<button type="button" class="btn sm" data-com="ord">${ui.comOrd === "rota" ? "Ordenar por prioridade" : "Ordenar pela rota"}</button></div>
+    <details class="card cm-script"><summary><b>Como abordar na porta</b></summary>
+      <ol><li><b>Antes:</b> envie a mensagem prévia de cada card (de preferência no dia anterior, até 19h). Quem responder, ganha horário marcado.</li>
+      <li><b>Quando ir:</b> 9h30–11h30 ou 14h–16h30. Em academia e studio, evite 6h–9h e 17h–20h. Em restaurante e café, evite o pico do almoço (11h45–14h).</li>
+      <li><b>Recepção:</b> "Oi, sou o Pablo, da Alra Wellness. Mandei mensagem ontem para vocês. O responsável está por aí? São 5 minutos."</li>
+      <li><b>Com o dono:</b> abra com o gancho do card, não com o serviço. Três perguntas: como chega cliente novo hoje, qual o pior mês do ano, quem responde o WhatsApp.</li>
+      <li><b>Pedido:</b> "Posso te mandar amanhã um raio-x de 1 página do que vi? Se fizer sentido, sentamos 30 minutos antes de eu voltar." Pegue o WhatsApp do decisor.</li>
+      <li><b>Saiu, registrou:</b> registre a visita antes de entrar no carro. É isso que alimenta o fechamento das 21h.</li></ol></details>
+    <div class="cm-cards">${list.map(c => comCardHTML(c)).join("") || `<div class="empty"><p>Nenhuma empresa neste dia.</p></div>`}</div>`;
+}
+function comCardHTML(c){
+  const v = c.visita || {}, done = !!v.resultado, pr = (c.campo || {}).prioridade === 1, pos = done && !["nao_visitei","fechado"].includes(v.resultado);
+  const wnum = v.whatsapp_decisor || c.whatsapp;
+  return `<article class="card cm-card${pr ? " p1" : ""}${done ? " done" : ""}">
+    <div class="cm-hd"><span class="cm-num">${esc((c.campo || {}).ordem || "")}</span><div class="cm-g"><b>${esc(c.empresa)}</b><span class="muted">${esc([c.modalidade || c.nicho, c.bairro, (c.campo || {}).janela].filter(Boolean).join(" · "))}</span></div>
+      <div class="cm-tags">${pr ? `<span class="pill t-accent">Prioridade</span>` : ""}<span class="pill ${comPill(c.etapa)}">${esc(c.etapa)}</span></div></div>
+    ${c.gancho ? `<p class="cm-gancho"><b>Gancho:</b> ${esc(c.gancho)}</p>` : ""}
+    ${c.msg_previa && !done ? `<div class="cm-msg"><div class="spread"><span class="eyebrow">Mensagem prévia${wnum ? " · " + esc(wnum) : " · sem WhatsApp cadastrado"}</span>${c.msg_enviada_em ? `<span class="pill t-ok">Enviada ${esc(fmtStamp(c.msg_enviada_em))}</span>` : `<span class="pill t-warn">Não enviada</span>`}</div><p>${esc(c.msg_previa)}</p>
+      <div class="row">${wnum ? `<a class="btn sm" target="_blank" rel="noopener" href="${comWa(wnum, c.msg_previa)}">Abrir no WhatsApp</a>` : ""}<button type="button" class="btn sm" data-com="copy" data-id="${esc(c.id)}">Copiar</button>${c.msg_enviada_em ? `<button type="button" class="btn sm ghost" data-com="unsent" data-id="${esc(c.id)}">Desmarcar</button>` : `<button type="button" class="btn sm primary" data-com="sent" data-id="${esc(c.id)}">Marcar como enviada</button>`}</div></div>` : ""}
+    ${c.raiox ? `<details class="cm-det"><summary>Raio-X</summary><p>${esc(c.raiox)}</p></details>` : ""}
+    ${c.raiox_cliente ? `<details class="cm-det" open><summary>Raio-X pronto para enviar ao cliente</summary><p>${esc(c.raiox_cliente)}</p><button type="button" class="btn sm" data-com="copyrx" data-id="${esc(c.id)}">Copiar raio-x</button></details>` : ""}
+    ${done ? `<p class="cm-res"><b>${esc(comRes(v.resultado).l)}</b>${v.falou_com ? " · " + esc(v.falou_com) : ""}${v.proximo_passo ? " · Próximo: " + esc(v.proximo_passo) : ""}</p>` : ""}
+    <div class="cm-acts"><a class="btn sm" target="_blank" rel="noopener" href="${comMaps(c)}">Rota</a>${pos && wnum ? `<a class="btn sm" target="_blank" rel="noopener" href="${comWa(wnum, comMsgDepois(c))}">Follow-up</a>` : ""}<button type="button" class="btn sm" data-com="open" data-id="${esc(c.id)}">Ficha</button><button type="button" class="btn sm primary" data-com="visit" data-id="${esc(c.id)}">${done ? "Editar visita" : "Registrar visita"}</button></div></article>`;
+}
+function comPipelineHTML(L){
+  const f = ui.comF || (ui.comF = {q:"", etapa:"", nicho:"", tier:""});
+  const n = e => L.filter(c => c.etapa === e).length;
+  const R = L.filter(c => (!f.etapa || c.etapa === f.etapa) && (!f.nicho || c.nicho === f.nicho) && (!f.tier || c.tier === f.tier) && (!f.q || [c.empresa, c.bairro, c.cidade, c.modalidade, c.decisor].join(" ").toLowerCase().includes(f.q.toLowerCase())))
+    .sort((a, b) => (a.data_proxima || "9999").localeCompare(b.data_proxima || "9999") || String(a.tier || "Z").localeCompare(String(b.tier || "Z")) || String(a.empresa).localeCompare(String(b.empresa)));
+  const nichos = [...new Set(L.map(c => c.nicho).filter(Boolean))].sort();
+  const pot = R.filter(c => COM_ATIVAS.includes(c.etapa)).reduce((s, c) => s + comFee(c), 0);
+  return `<div class="cm-days"><button type="button" class="chip" data-com="et" data-e="" aria-pressed="${!f.etapa}">Todas · ${L.length}</button>${COM_ETAPAS.map(e => `<button type="button" class="chip" data-com="et" data-e="${esc(e)}" aria-pressed="${f.etapa === e}">${esc(e)} · ${n(e)}</button>`).join("")}</div>
+    <div class="row"><input class="inp" style="flex:1 1 220px;width:auto" id="cmQ" placeholder="Buscar empresa, bairro, contato" value="${esc(f.q)}">
+      <select class="inp" style="width:auto" id="cmNicho"><option value="">Todos os segmentos</option>${nichos.map(x => `<option ${f.nicho === x ? "selected" : ""}>${esc(x)}</option>`).join("")}</select>
+      <select class="inp" style="width:auto" id="cmTier"><option value="">Todos os portes</option>${["A","B","C"].map(x => `<option ${f.tier === x ? "selected" : ""}>${x}</option>`).join("")}</select></div>
+    <p class="muted" style="font-size:12.5px">${R.length} empresa${R.length === 1 ? "" : "s"} · potencial de R$ ${pot.toLocaleString("pt-BR")}/mês nas etapas ativas</p>
+    ${R.length ? `<div class="tbw"><table class="tb"><thead><tr><th>Empresa</th><th>Etapa</th><th>Porte · plano</th><th>Próxima ação</th><th>Contato</th></tr></thead><tbody>${R.slice(0, 400).map(c => { const late = c.data_proxima && c.data_proxima < ymd(TODAY) && COM_ATIVAS.includes(c.etapa); return `<tr class="cm-tr" data-com="open" data-id="${esc(c.id)}"><td><b>${esc(c.empresa)}</b><div class="muted" style="font-size:12px">${esc([c.modalidade || c.nicho, c.bairro, c.cidade].filter(Boolean).join(" · "))}</div></td><td><span class="pill ${comPill(c.etapa)}">${esc(c.etapa)}</span></td><td class="tnum">${esc(c.tier || "—")} · ${esc(c.plano || "—")}</td><td>${esc(c.proxima_acao || "—")}${c.data_proxima ? `<div class="${late ? "flag" : "muted"}" style="font-size:12px">${late ? "Atrasado · " : ""}${esc(fmtD(c.data_proxima, {day:"2-digit", month:"2-digit"}))}</div>` : ""}</td><td class="muted" style="font-size:12.5px">${esc(c.decisor || "")}${c.whatsapp ? `<div>${esc(c.whatsapp)}</div>` : ""}</td></tr>`; }).join("")}</tbody></table></div>` : `<div class="empty"><p>Nenhuma empresa com esses filtros.</p><button type="button" class="btn primary" data-com="new">+ Nova empresa</button></div>`}`;
+}
+function comFormHTML(){
+  const c = ui.tmp.comId ? S.comercial.find(x => x.id === ui.tmp.comId) : null, d = c || {etapa:"Mapeado", nicho:"", plano:"MOVE", tier:"B", origem:"Outbound", dono:(ME() || {}).nome || "", unidade:comUnitDefault(), cidade:""};
+  const opt = (list, v) => list.map(x => `<option value="${esc(x)}" ${String(v || "") === x ? "selected" : ""}>${esc(x || "—")}</option>`).join("");
+  const f = (id, l, v, extra) => `<div class="field${extra && extra.full ? " full" : ""}"><label for="cm-${id}">${l}</label><input class="inp" id="cm-${id}" value="${esc(v || "")}" ${extra && extra.type ? `type="${extra.type}"` : ""} ${extra && extra.ph ? `placeholder="${esc(extra.ph)}"` : ""}></div>`;
+  const cp = d.campo || {};
+  return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="cmT"><div class="m-head"><h2 id="cmT">${c ? esc(c.empresa) : "Nova empresa"}</h2><button type="button" class="x" data-act="close" aria-label="Fechar">×</button></div>
+  <form class="m-body" id="comForm" novalidate><div class="form">
+    ${f("empresa", "Empresa", d.empresa, {full:true})}
+    ${isDir() && S.unidades.length > 1 ? `<div class="field"><label for="cm-unidade">Unidade</label><select class="inp" id="cm-unidade">${S.unidades.map(u => `<option value="${u.id}" ${d.unidade === u.id ? "selected" : ""}>${esc(u.nome)}</option>`).join("")}</select></div>` : ""}
+    <div class="field"><label for="cm-nicho">Segmento</label><select class="inp" id="cm-nicho">${opt([""].concat(COM_NICHOS), d.nicho)}</select></div>
+    ${f("modalidade", "Especialidade", d.modalidade, {ph:"Pilates, brunch, empório…"})}
+    ${f("decisor", "Contato / decisor", d.decisor, {ph:"Nome (cargo)"})}
+    ${f("whatsapp", "WhatsApp", d.whatsapp, {ph:"48 9…"})}
+    ${f("instagram", "Instagram", d.instagram, {ph:"@perfil"})}
+    ${f("email", "E-mail", d.email, {type:"email"})}
+    ${f("bairro", "Bairro", d.bairro)}
+    ${f("cidade", "Cidade", d.cidade)}
+    ${f("endereco", "Endereço", d.endereco, {full:true})}
+    <div class="field"><label for="cm-etapa">Etapa</label><select class="inp" id="cm-etapa">${opt(COM_ETAPAS, d.etapa)}</select></div>
+    <div class="field"><label for="cm-plano">Plano provável</label><select class="inp" id="cm-plano">${opt(COM_PLANOS, d.plano)}</select></div>
+    <div class="field"><label for="cm-tier">Porte</label><select class="inp" id="cm-tier">${opt(["A","B","C"], d.tier)}</select></div>
+    ${f("fee", "Fee fechado (R$/mês)", d.fee, {type:"number", ph:"vazio = preço do plano"})}
+    ${f("dono", "Responsável", d.dono)}
+    <div class="field"><label for="cm-origem">Origem</label><select class="inp" id="cm-origem">${opt(COM_ORIGENS, d.origem)}</select></div>
+    ${f("proxima_acao", "Próxima ação", d.proxima_acao, {full:true})}
+    ${f("data_proxima", "Data da próxima ação", d.data_proxima, {type:"date"})}
+    <div class="field"><label for="cm-motivo">Motivo de perda</label><select class="inp" id="cm-motivo">${opt(COM_MOTIVOS, d.motivo_perda)}</select></div>
+    ${f("campo_dia", "Visita presencial (dia)", cp.dia, {type:"date"})}
+    <div class="field"><label for="cm-campo_pr">Prioridade da visita</label><select class="inp" id="cm-campo_pr"><option value="1" ${cp.prioridade === 1 ? "selected" : ""}>Prioridade</option><option value="2" ${cp.prioridade !== 1 ? "selected" : ""}>Se der tempo</option></select></div>
+    ${f("gancho", "Gancho de abordagem", d.gancho, {full:true})}
+    <div class="field full"><label for="cm-msg">Mensagem prévia (enviar antes da visita)</label><textarea id="cm-msg" rows="4">${esc(d.msg_previa || "")}</textarea></div>
+    <div class="field full"><label for="cm-notas">Notas</label><textarea id="cm-notas" rows="3">${esc(d.notas || "")}</textarea></div>
+  </div>
+  ${c && (c.log || []).length ? `<div class="muted" style="font-size:12px">${(c.log || []).slice(-6).reverse().map(l => `${esc(fmtStamp(l.em))}: ${esc(l.de || "—")} → ${esc(l.para)}`).join("<br>")}</div>` : ""}
+  <div class="actions">${c ? `<button type="button" class="btn danger" data-com="del" data-id="${esc(c.id)}">${ui.tmp.comDel ? "Confirmar exclusão" : "Excluir"}</button>` : ""}<button type="submit" class="btn primary">Salvar</button></div></form></div>`;
+}
+function comVisitaHTML(){
+  const c = S.comercial.find(x => x.id === ui.tmp.comId); if (!c) return "";
+  const v = c.visita || {};
+  return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="cvT"><div class="m-head"><h2 id="cvT">Visita · ${esc(c.empresa)}</h2><button type="button" class="x" data-act="close" aria-label="Fechar">×</button></div>
+  <form class="m-body" id="visForm" novalidate><div class="cm-opts">${COM_RES.map(r => `<label><input type="radio" name="cv-res" value="${r.k}" ${v.resultado === r.k ? "checked" : ""}> ${esc(r.l)}</label>`).join("")}</div>
+  <div class="form">
+    <div class="field"><label for="cv-falou">Falei com</label><input class="inp" id="cv-falou" value="${esc(v.falou_com || "")}" placeholder="Nome"></div>
+    <div class="field"><label for="cv-cargo">Cargo</label><input class="inp" id="cv-cargo" value="${esc(v.cargo || "")}" placeholder="Dono, sócio, gerente…"></div>
+    <div class="field"><label for="cv-wpp">WhatsApp do decisor</label><input class="inp" id="cv-wpp" inputmode="tel" value="${esc(v.whatsapp_decisor || "")}"></div>
+    <div class="field"><label for="cv-insta">Instagram</label><input class="inp" id="cv-insta" value="${esc(c.instagram || "")}" placeholder="@perfil"></div>
+    <div class="field full"><label for="cv-notas">O que vi e ouvi</label><textarea id="cv-notas" rows="4" placeholder="Clientes/alunos, ticket, pior mês, quem atende o WhatsApp, dor principal">${esc(v.notas || "")}</textarea></div>
+    <div class="field full"><label for="cv-prox">Próximo passo</label><input class="inp" id="cv-prox" value="${esc(v.proximo_passo || "")}" placeholder="Mandar raio-x, reunião qui 15h…"></div>
+    <div class="field"><label for="cv-data">Data do próximo passo</label><input class="inp" id="cv-data" type="date" value="${esc(v.data_proximo || ymd(addDays(TODAY, 1)))}"></div>
+  </div><div class="actions"><button type="submit" class="btn primary">Salvar visita</button></div></form></div>`;
+}
+function comSaveForm(){
+  const g = k => { const el = $("#cm-" + k); return el ? el.value.trim() : ""; };
+  const nome = g("empresa"); if (!nome) { toast("Dê um nome à empresa."); return; }
+  let c = ui.tmp.comId ? S.comercial.find(x => x.id === ui.tmp.comId) : null;
+  const un = $("#cm-unidade") ? $("#cm-unidade").value : (c ? c.unidade : comUnitDefault());
+  if (!un) { toast("Escolha a unidade."); return; }
+  const etapa = g("etapa");
+  if (etapa === "Perdido" && !g("motivo")) { toast("Escolha o motivo de perda."); return; }
+  if (!c) { c = {id:"cm-" + uid(), criado_em:nowIso(), criado_por:ui.me, etapa:"", log:[]}; S.comercial.push(c); comLog(c, etapa || "Mapeado"); }
+  else comLog(c, etapa);
+  Object.assign(c, {empresa:nome, unidade:un, nicho:g("nicho"), modalidade:g("modalidade"), decisor:g("decisor"), whatsapp:g("whatsapp"), instagram:g("instagram"), email:g("email"), bairro:g("bairro"), cidade:g("cidade"), endereco:g("endereco"), plano:g("plano"), tier:g("tier"), fee:g("fee") ? Number(g("fee")) : "", dono:g("dono"), origem:g("origem"), proxima_acao:g("proxima_acao"), data_proxima:g("data_proxima"), motivo_perda:g("motivo"), gancho:g("gancho"), msg_previa:($("#cm-msg") || {}).value || "", notas:($("#cm-notas") || {}).value || "", atualizado_em:nowIso()});
+  const dia = g("campo_dia");
+  if (dia) { const old = c.campo || {}; c.campo = {dia, prioridade:+g("campo_pr") || 2, janela:old.dia === dia ? old.janela || "" : "", ordem:old.dia === dia ? old.ordem : 90 + S.comercial.filter(x => x.campo && x.campo.dia === dia).length}; }
+  else delete c.campo;
+  save(); ui.modal = null; ui.tmp = {}; toast("Empresa salva"); render();
+}
+function comSaveVisita(){
+  const c = S.comercial.find(x => x.id === ui.tmp.comId); if (!c) return;
+  const r = (document.querySelector('input[name="cv-res"]:checked') || {}).value; if (!r) { toast("Escolha o resultado da visita."); return; }
+  const g = id => ($("#" + id) || {}).value ? $("#" + id).value.trim() : "";
+  const v = {resultado:r, em:nowIso(), dia:(c.campo || {}).dia || ymd(TODAY), por:ui.me, falou_com:g("cv-falou"), cargo:g("cv-cargo"), whatsapp_decisor:g("cv-wpp"), notas:g("cv-notas"), proximo_passo:g("cv-prox"), data_proximo:g("cv-data")};
+  c.visita = v; if (g("cv-insta")) c.instagram = g("cv-insta");
+  if (v.falou_com && ["conversa","reuniao","diagnostico"].includes(r)) c.decisor = v.falou_com + (v.cargo ? " (" + v.cargo + ")" : "");
+  if (v.proximo_passo) { c.proxima_acao = v.proximo_passo; c.data_proxima = v.data_proximo || ""; }
+  const alvo = comRes(r).etapa, ia = COM_ETAPAS.indexOf(c.etapa), ib = COM_ETAPAS.indexOf(alvo);
+  if (alvo && alvo !== c.etapa && (alvo === "Nutrição" ? ia < COM_ETAPAS.indexOf("Ganho") : (ib > ia || ["Nutrição","Mapeado"].includes(c.etapa)))) comLog(c, alvo);
+  c.atualizado_em = nowIso(); save(); ui.modal = null; ui.tmp = {}; toast("Visita registrada"); render();
+}
+document.addEventListener("click", ev => {
+  const t = ev.target.closest("[data-com]"); if (!t) return;
+  const a = t.dataset.com, id = t.dataset.id, c = id ? S.comercial.find(x => x.id === id) : null;
+  if (a === "tab") { ui.comTab = t.dataset.tab; render(); }
+  else if (a === "dia") { ui.comDia = t.dataset.d; render(); }
+  else if (a === "ord") { ui.comOrd = ui.comOrd === "rota" ? "" : "rota"; render(); }
+  else if (a === "et") { (ui.comF || (ui.comF = {})).etapa = t.dataset.e; render(); }
+  else if (a === "new") { ui.modal = "comConta"; ui.tmp = {}; fillOverlay(); }
+  else if (a === "open" && c) { ui.modal = "comConta"; ui.tmp = {comId:id}; fillOverlay(); }
+  else if (a === "visit" && c) { ui.modal = "comVisita"; ui.tmp = {comId:id}; fillOverlay(); }
+  else if (a === "copy" && c) copyText(c.msg_previa || "", "Mensagem copiada");
+  else if (a === "copyrx" && c) copyText(c.raiox_cliente || "", "Raio-x copiado");
+  else if (a === "sent" && c) { c.msg_enviada_em = nowIso(); if (c.etapa === "Mapeado") comLog(c, "Abordado"); save(); toast("Mensagem prévia marcada como enviada"); render(); }
+  else if (a === "unsent" && c) { delete c.msg_enviada_em; save(); render(); }
+  else if (a === "del" && c) { if (!ui.tmp.comDel) { ui.tmp.comDel = true; fillOverlay(); setTimeout(() => { if (ui.tmp.comDel) { ui.tmp.comDel = false; fillOverlay(); } }, 3000); return; } S.comercial = S.comercial.filter(x => x.id !== id); save(); ui.modal = null; ui.tmp = {}; toast("Empresa excluída"); render(); }
+});
+document.addEventListener("input", ev => {
+  const id = ev.target.id; if (!["cmQ","cmNicho","cmTier"].includes(id)) return;
+  const f = ui.comF || (ui.comF = {}); f[{cmQ:"q", cmNicho:"nicho", cmTier:"tier"}[id]] = ev.target.value;
+  clearTimeout(comercialHTML.t); comercialHTML.t = setTimeout(() => { render(); const el = document.getElementById(id); if (el && id === "cmQ") { el.focus(); el.setSelectionRange(el.value.length, el.value.length); } }, id === "cmQ" ? 250 : 0);
+});
+document.addEventListener("submit", ev => {
+  if (ev.target.id === "comForm") { ev.preventDefault(); comSaveForm(); }
+  else if (ev.target.id === "visForm") { ev.preventDefault(); comSaveVisita(); }
+}, true);
 
 /* ================= início ================= */
 const STEPS = [
@@ -2946,7 +3186,7 @@ function confirmHTML(){
 }
 function fillOverlay(){
   const ov = $("#overlay"), m = ui.modal;
-  const M = {newPeca:newPecaHTML, gen:genHTML, client:clientFormHTML, person:personFormHTML, profile:profileHTML, unit:unitFormHTML, cap:capFormHTML, mat:matFormHTML, acc:accFormHTML, vaultSetup:() => vaultFormHTML("setup"), vaultUnlock:() => vaultFormHTML("unlock"), accHist:accHistHTML, notifs:notifsHTML, approveAll:approveAllHTML, inviteLink:inviteLinkHTML, confirm:confirmHTML, day:() => dayAllHTML(ui.tmp.day, ui.tmp.kind), msg:msgHTML};
+  const M = {newPeca:newPecaHTML, gen:genHTML, client:clientFormHTML, person:personFormHTML, profile:profileHTML, unit:unitFormHTML, cap:capFormHTML, mat:matFormHTML, acc:accFormHTML, vaultSetup:() => vaultFormHTML("setup"), vaultUnlock:() => vaultFormHTML("unlock"), accHist:accHistHTML, notifs:notifsHTML, approveAll:approveAllHTML, inviteLink:inviteLinkHTML, confirm:confirmHTML, day:() => dayAllHTML(ui.tmp.day, ui.tmp.kind), msg:msgHTML, comConta:comFormHTML, comVisita:comVisitaHTML};
   let html = "";
   if (m && M[m]) html = M[m]();
   else if (ui.openId) {
