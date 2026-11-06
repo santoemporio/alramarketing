@@ -323,6 +323,15 @@ textarea,.inp{width:100%;border:1px solid var(--line2);border-radius:10px;paddin
 textarea{resize:vertical;field-sizing:content;min-height:3.4em;overflow-y:hidden}
 .clilink{border:0;background:none;padding:0;font:inherit;color:inherit;cursor:pointer;border-radius:6px}.clilink:hover span:nth-child(2),.clilink:focus-visible span:nth-child(2){text-decoration:underline;color:var(--accent-fg)}.clilink .arr{font-size:11px;color:var(--accent-fg);margin-left:2px}.clinks{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;font-size:12px;color:var(--muted)}.clinks .linkbtn{font-size:12px}
 .lock{font-size:10px}
+.mid-list{display:flex;flex-direction:column;gap:8px}.mid-li{display:grid;grid-template-columns:minmax(170px,1.1fr) minmax(0,2fr) 90px auto;gap:12px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.mid-li.late{border-color:color-mix(in srgb,var(--danger) 45%,var(--line));background:color-mix(in srgb,var(--danger) 5%,var(--surface))}.mid-li.done{opacity:.7}
+.mid-c{display:flex;flex-direction:column;gap:2px;min-width:0}.mid-n{font-weight:800;text-align:left;color:var(--fg)}.mid-d{font-size:11.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.mid-bs{display:flex;flex-direction:column;gap:4px}.mid-b{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:0;background:none;padding:3px 4px;border-radius:8px;font:inherit;font-size:13px;color:var(--fg);cursor:pointer;text-align:left}.mid-b:hover{background:var(--raised)}.mid-b>span:first-child{min-width:84px;color:var(--muted)}
+.mid-t{text-align:right;font-weight:800;font-size:13px}.mid-a{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.mid-cf{border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:10px}.mid-cf.on{border-color:var(--accent);background:var(--accent-soft)}.mid-cfh{display:flex;gap:8px;align-items:center;cursor:pointer}
+.mid-alert{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:1px solid color-mix(in srgb,var(--accent) 40%,var(--line));background:var(--accent-soft);border-radius:12px;padding:10px 14px;font:inherit;font-size:13.5px;color:var(--fg);cursor:pointer;margin-bottom:14px}.mid-alert span:nth-child(2){flex:1}.mid-alert .bad{color:var(--danger);font-weight:700}
+@media (max-width:900px){.mid-li{grid-template-columns:1fr}.mid-t{text-align:left}.mid-a{justify-content:flex-start}}
+.ccard[hidden]{display:none}
 .tipocli{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}.tipocli label{display:block;padding:10px 12px;border:1px solid var(--line);border-radius:12px;cursor:pointer}.tipocli label:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
 .combo{position:relative;min-width:200px}.combo .inp{width:100%}.combo-l{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:60;max-height:300px;overflow:auto;background:var(--raised);border:1px solid var(--line2);border-radius:12px;box-shadow:var(--shadow-lg);padding:4px;display:flex;flex-direction:column}
 .combo-l[hidden]{display:none}.combo-l button{display:flex;align-items:center;gap:8px;border:0;background:none;text-align:left;padding:8px 10px;border-radius:8px;font:inherit;font-size:13px;color:var(--fg);cursor:pointer}.combo-l button[hidden]{display:none}.combo-l button:hover,.combo-l button:focus-visible{background:var(--surface);outline:none}.combo-l button[aria-selected="true"]{font-weight:800;color:var(--accent-fg)}.combo-l .dot{width:9px;height:9px;border-radius:50%;flex:none}.combo-vazio{padding:8px 10px;font-size:12.5px}
@@ -788,6 +797,7 @@ const ICONS = {
   carr:'<rect x="7" y="3" width="14" height="14" rx="2"/><path d="M3 7v12a2 2 0 0 0 2 2h12"/>',
   equipePauta:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v16"/><circle cx="5.5" cy="13" r=".6"/><circle cx="5.5" cy="17" r=".6"/>',
   comercial:'<path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/>',
+  midia:'<rect x="2.5" y="6" width="19" height="13" rx="2"/><path d="M2.5 10h19M6.5 15h4"/>',
   dashboards:'<path d="M4 20V11M10 20V5M16 20v-6M22 20H2"/>',
   config:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'
 };
@@ -812,8 +822,8 @@ function monthLabel(d){ const s = d.toLocaleDateString("pt-BR",{month:"long", ye
 const nowIso = () => new Date().toISOString();
 
 /* ================= estado + sincronização ================= */
-const COLS = ["unidades","pessoas","clientes","pecas","captacoes","materiais","acessos","feedbacks","pacotes","notifs","relatorios","arquivo","comercial"];
-const EMPTY = () => ({cfg:{}, unidades:[], pessoas:[], clientes:[], pecas:[], captacoes:[], materiais:[], acessos:[], feedbacks:[], pacotes:[], notifs:[], relatorios:[], arquivo:[], comercial:[]});
+const COLS = ["unidades","pessoas","clientes","pecas","captacoes","materiais","acessos","feedbacks","pacotes","notifs","relatorios","arquivo","comercial","midiaContas","midiaCobs"];
+const EMPTY = () => ({cfg:{}, unidades:[], pessoas:[], clientes:[], pecas:[], captacoes:[], materiais:[], acessos:[], feedbacks:[], pacotes:[], notifs:[], relatorios:[], arquivo:[], comercial:[], midiaContas:[], midiaCobs:[]});
 let S = EMPTY();
 let db = null, assets = null, mode = "loading";
 const cache = {}; COLS.concat(["cfg"]).forEach(c => cache[c] = {});
@@ -929,6 +939,8 @@ function demoData(){
   D.clientes[0].regras = {validaHead:true};
   D.captacoes = [{id:"cap1", clienteId:"c-b", titulo:"Reels de treino", data:dd(3), inicio:"09:00", fim:"11:00", local:"Unidade centro", resp:"p-av", status:"Confirmada", equip:["Câmera","Gimbal","Microfone"], pecas:[]}, {id:"cap2", clienteId:"c-c", titulo:"Fotos do cardápio", data:dd(-3), inicio:"14:00", fim:"16:00", local:"Loja", resp:"p-av", status:"Realizada", equip:["Câmera","Iluminação"], pecas:[]}];
   D.materiais = [{id:"m1", clienteId:"c-a", nome:"Logo principal", categoria:"Logo", origem:"Arquivo do cliente", link:"https://drive.google.com/", em:at(-30)}];
+  D.midiaContas = [{id:"mc-a", nome:"Clínica Aurora · Meta e Google", clienteId:"c-a", resp:"p-tr", forma:"Pix", cobranca:{}, ativo:true, canais:{meta:{on:true, verba:3000, dias:[2,5]}, google:{on:true, verba:1000, dias:[2]}}}, {id:"mc-x", nome:"Conta avulsa Canoas", clienteId:"", forma:"Boleto", cobranca:{nome:"Marta", whats:"51999990000"}, ativo:true, canais:{meta:{on:true, verba:1200, dias:[3]}}}];
+  D.midiaCobs = [{id:"mb-1", contaId:"mc-a", canal:"meta", data:dd(-3), valor:375, status:"enviado"}, {id:"mb-2", contaId:"mc-a", canal:"google", data:dd(-3), valor:250, status:"pago"}, {id:"mb-3", contaId:"mc-x", canal:"meta", data:t, valor:300, status:"aenviar"}];
   return D;
 }
 function demoUser(){ const m = person(ui.me); authUser = {email: m ? m.email : "demo@demo.alra", app_metadata:{}, user_metadata:{}}; isAdmin = false; }
@@ -1328,6 +1340,7 @@ function comboHTML(id, value, items, ph, small){
   return `<div class="combo" data-combo="${esc(id)}"><input class="inp${small ? " sm" : ""}" type="search" data-combo-in="${esc(id)}" value="${esc(lab)}" placeholder="${esc(ph || "Digite para buscar…")}" autocomplete="off" role="combobox" aria-expanded="false" aria-label="${esc(ph || "Buscar")}"><input type="hidden" id="${esc(id)}" value="${esc(value)}">
     <div class="combo-l" role="listbox" hidden>${items.map(x => `<button type="button" role="option" data-combo-pick="${esc(id)}" data-v="${esc(x.v)}" data-n="${esc(normTxt(x.l))}" ${x.v === value ? 'aria-selected="true"' : ""}>${x.dot ? `<span class="dot" style="background:${esc(x.dot)}"></span>` : ""}${esc(x.l)}</button>`).join("")}<span class="combo-vazio muted" hidden>Nenhum cliente com esse nome.</span></div></div>`;
 }
+function cliFiltrar(v){ ui.cq = v; const q = normTxt(v); let n = 0; const all = document.querySelectorAll("#cliGrid [data-nome]"); all.forEach(el => { const ok = !q || el.dataset.nome.includes(q); el.hidden = !ok; if (ok) n++; }); const el = $("#cliQn"); if (el) el.textContent = `${n} de ${all.length}`; }
 function comboFiltrar(box, q){ const n = normTxt(q); let vis = 0; box.querySelectorAll("[data-combo-pick]").forEach(b => { const ok = !n || b.dataset.n.includes(n); b.hidden = !ok; if (ok) vis++; }); const v = box.querySelector(".combo-vazio"); if (v) v.hidden = vis > 0; }
 function comboAbrir(box, on){ const l = box.querySelector(".combo-l"), i = box.querySelector("[data-combo-in]"); if (!l) return; l.hidden = !on; i.setAttribute("aria-expanded", on ? "true" : "false"); }
 function visField(p){
@@ -1941,6 +1954,7 @@ function navItems(){
   if (timeAtLeast("B")) it.push(["publicacao","Publicações"]);
   it.push(["captacoes","Captações"],["clientes","Clientes"]);
   if (timeAtLeast("A")) it.push(["comercial","Comercial"]);
+  if (midiaOk()) it.push(["midia","Financeiro de mídia"]);
   if (timeAtLeast("B")) it.push(["dashboards","Dashboards"]);
   if (timeAtLeast("A")) it.push(["config","Configurações"]);
   return it;
@@ -1966,7 +1980,7 @@ function render(){
   autoReports();
   const unread = S.notifs.filter(n => n.para === ui.me && !n.lida).length;
   const unreadRel = S.notifs.filter(n => n.para === ui.me && !n.lida && n.relId).length;
-  const V = {inicio:inicioHTML, equipePauta:equipePautaHTML, calendario:calendarioHTML, pecas:pecasHTML, aprovacoes:aprovacoesHTML, publicacao:publicacaoHTML, captacoes:captacoesHTML, clientes:clientesHTML, hub:hubHTML, dashboards:dashboardsHTML, config:configHTML, comercial:comercialHTML};
+  const V = {inicio:inicioHTML, equipePauta:equipePautaHTML, calendario:calendarioHTML, pecas:pecasHTML, aprovacoes:aprovacoesHTML, publicacao:publicacaoHTML, captacoes:captacoesHTML, clientes:clientesHTML, midia:midiaHTML, hub:hubHTML, dashboards:dashboardsHTML, config:configHTML, comercial:comercialHTML};
   const opt = (v, l) => `<option value="${esc(v)}" ${ui.me === v ? "selected" : ""}>${esc(l)}</option>`;
   const sc = window.scrollY;
   app.innerHTML = `<div class="shell${ui.navMin ? " min" : ""}"><aside class="side">
@@ -2254,7 +2268,7 @@ function inicioHTML(){
   const k = (n, l, cls, a) => `<button type="button" class="kpi ${cls}" ${a}><b>${n}</b><span>${l}</span></button>`;
   const caps = S.captacoes.filter(x => (x.resp === ui.me || (T !== "C" && headOfUnit(cli(x.clienteId).unidade))) && !["Realizada","Cancelada"].includes(x.status) && diffDays(pd(x.data), TODAY) >= 0 && diffDays(pd(x.data), TODAY) <= 7).sort((a, b) => (a.data + a.inicio).localeCompare(b.data + b.inicio));
   const un = isDir() && ui.unidade === "todas" && S.unidades.length > 1 ? "todas as unidades" : S.unidades.length === 1 ? S.unidades[0].nome : unidade(isDir() && ui.unidade !== "todas" ? ui.unidade : m.unidade).nome;
-  return `<div><div class="eyebrow">${esc(fmtD(TODAY,{weekday:"long", day:"2-digit", month:"long"}))} · ${esc(TIMES[T])}</div><h1>${T === "C" ? (queue.length ? `${esc(first)}, <em>${queue.length}</em> ${queue.length === 1 ? "peça está" : "peças estão"} com você` : `Olá, ${esc(first)}`) : `Visão geral · ${esc(un)}`}</h1>${T === "C" ? `<p class="muted" style="font-size:12.5px;margin-top:4px">Os números abaixo contam só as pautas em que você atua.</p>` : ""}</div>
+  return midAlertaHTML() + `<div><div class="eyebrow">${esc(fmtD(TODAY,{weekday:"long", day:"2-digit", month:"long"}))} · ${esc(TIMES[T])}</div><h1>${T === "C" ? (queue.length ? `${esc(first)}, <em>${queue.length}</em> ${queue.length === 1 ? "peça está" : "peças estão"} com você` : `Olá, ${esc(first)}`) : `Visão geral · ${esc(un)}`}</h1>${T === "C" ? `<p class="muted" style="font-size:12.5px;margin-top:4px">Os números abaixo contam só as pautas em que você atua.</p>` : ""}</div>
     <div class="kpis k5">${k(andamento.length, "em andamento", "", 'data-go="pecas" data-sf="todas"')}${k(late.length, "atrasadas", late.length ? "bad" : "", 'data-go="pecas" data-sf="todas"')}${k(comCli.length, "com o cliente", comCli.length ? "hot" : "", 'data-go="pecas" data-sf="cliente"')}${k(ajuste.length, "em ajuste", "", 'data-go="pecas" data-sf="ajuste"')}${k(hoje.length, "para publicar hoje", hoje.length ? "hot" : "", T === "C" ? 'data-go="pecas" data-sf="aprovado"' : 'data-go="publicacao"')}</div>
     <div class="grid2"><section class="card"><div class="spread"><h2>Distribuição por etapa</h2><span class="muted tnum" style="font-size:12px">${base.length} pautas</span></div>${stackHTML(base, true)}</section>
       <section class="card"><div class="spread"><h2>Sua fila</h2>${queue.length ? `<button type="button" class="linkbtn" data-go="pecas" data-sf="minha">Ver no Kanban</button>` : ""}</div>${queue.length ? `<div class="list">${queue.slice(0, 6).map(liHTML).join("")}</div>${queue.length > 6 ? `<span class="muted" style="font-size:12px">+${queue.length - 6} na sua fila</span>` : ""}` : `<p class="muted" style="font-size:12.5px">Quando uma peça chegar na sua etapa, ela aparece aqui.</p>`}</section></div>
@@ -2603,11 +2617,218 @@ function captacoesHTML(){
   return head + filt + calView("capMonth", byDay, item, "data-newcap", "caps") + `<p class="muted" style="font-size:12px">Clique no + de um dia para agendar. Na captação ficam o horário, o local, os equipamentos, o roteiro, as pautas e o link do material bruto.</p>`;
 }
 
+/* ================= financeiro de mídia (contas de anúncio: verba, cobranças e recargas) ================= */
+const MID_CANAIS = [["meta","Meta Ads"],["google","Google Ads"],["tiktok","TikTok Ads"],["linkedin","LinkedIn Ads"]];
+const MID_ST = {aenviar:["A enviar","t-warn"], enviado:["Enviado · aguardando pagamento","t-info"], pago:["Pago","t-ok"]};
+const MID_FREQ = [["semanal","Toda semana"],["quinzenal","A cada 15 dias"],["mensal","1 vez por mês"]];
+const midRecMes = x => ((x.dias || []).length || 1) * (x.freq === "mensal" ? 1 / ((x.dias || []).length || 1) : x.freq === "quinzenal" ? 2 : 4.33);
+const MID_FORMAS = ["Pix","Boleto","Cartão de crédito","Outro"];
+const DSEM = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+const midiaOk = () => !isClient() && !!ME() && (isDir() || isDirReal() || has("trafego"));
+const brl = v => "R$ " + (Number(v) || 0).toLocaleString("pt-BR", {minimumFractionDigits:2, maximumFractionDigits:2});
+const midCanal = k => (MID_CANAIS.find(x => x[0] === k) || [k, k])[1];
+const midConta = id => (S.midiaContas || []).find(x => x.id === id);
+const midContas = () => (S.midiaContas || []).filter(c => !c.excluido).sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+const midCobs = () => (S.midiaCobs || []).filter(b => !b.excluido && midConta(b.contaId) && !midConta(b.contaId).excluido);
+const midLate = b => b.status !== "pago" && b.data < ymd(TODAY);
+const midPl = n => n + (n === 1 ? " cobrança" : " cobranças");
+const midSoma = l => Math.round(l.reduce((s, b) => s + (Number(b.valor) || 0), 0) * 100) / 100;
+const midMes = () => ui.midMes ? pd(ui.midMes) : firstOfMonth(TODAY);
+const midDoMes = m => { const k = ymd(m).slice(0, 7); return midCobs().filter(b => b.data.slice(0, 7) === k); };
+function midVerba(c){ return Object.values(c.canais || {}).filter(x => x.on).reduce((s, x) => s + (Number(x.verba) || 0), 0); }
+function midNum(v){ if (typeof v === "number") return v; const s = String(v || "").replace(/[R$\s]/g, ""); const n = s.includes(",") ? Number(s.replace(/\./g, "").replace(",", ".")) : Number(s); return isFinite(n) ? Math.round(n * 100) / 100 : 0; }
+function midWa(n){ let d = String(n || "").replace(/\D/g, ""); if (!d) return ""; if (d.length <= 11) d = "55" + d; return d; }
+
+/* gera as parcelas do mês a partir do plano de cada conta (não mexe em canal que já tem cobrança no mês) */
+function midGerar(m){
+  const ini = firstOfMonth(m), fim = endOfMonth(m), k = ymd(ini).slice(0, 7); let n = 0, pul = 0;
+  midContas().filter(c => c.ativo !== false).forEach(c => Object.entries(c.canais || {}).forEach(([ck, cf]) => {
+    if (!cf || !cf.on || !(Number(cf.verba) > 0) || !(cf.dias || []).length) return;
+    if (midCobs().some(b => b.contaId === c.id && b.canal === ck && b.data.slice(0, 7) === k)) { pul++; return; }
+    let dts = []; for (let d = new Date(ini); d <= fim; d = addDays(d, 1)) if (cf.dias.includes(d.getDay())) dts.push(ymd(d));
+    if (cf.freq === "mensal") dts = dts.slice(0, 1); else if (cf.freq === "quinzenal") { const ws = [...new Set(dts.map(x => Math.floor((pd(x).getDate() - 1) / 7)))].filter((w, i) => i === 0 || i === 2); dts = dts.filter(x => ws.includes(Math.floor((pd(x).getDate() - 1) / 7))); }
+    if (!dts.length) return;
+    const cent = Math.round(Number(cf.verba) * 100), parc = Math.floor(cent / dts.length), resto = cent - parc * dts.length;
+    dts.forEach((dt, i) => { S.midiaCobs.push({id:"mb-" + uid(), contaId:c.id, canal:ck, data:dt, valor:(parc + (i === dts.length - 1 ? resto : 0)) / 100, status:"aenviar", origem:"plano", criadoEm:nowIso(), criadoPor:ui.me}); n++; });
+  }));
+  return {n, pul};
+}
+function midMsg(c, dt, l){
+  const cl = c.clienteId ? cli(c.clienteId) : null, nome = String((c.cobranca || {}).nome || (cl && cl.contato && cl.contato.nome) || "").trim().split(/\s+/)[0];
+  const tot = midSoma(l), forma = c.forma || "Pix";
+  return `Olá${nome ? ", " + nome : ""}! Tudo bem?\nSegue a recarga de mídia de ${fmtD(pd(dt), {day:"2-digit", month:"2-digit"})} da conta ${c.nome}:\n${l.map(b => `• ${midCanal(b.canal)}: ${brl(b.valor)}`).join("\n")}${l.length > 1 ? `\nTotal: ${brl(tot)}` : ""}\nForma de pagamento: ${forma}.\nAssim que pagar, me envia o comprovante por aqui, por favor. Obrigado!`;
+}
+function midGrupos(l){
+  const g = {}; l.forEach(b => { const k = b.data + "|" + b.contaId; (g[k] = g[k] || []).push(b); });
+  return Object.entries(g).map(([k, bs]) => ({data:k.split("|")[0], conta:midConta(k.split("|")[1]), bs:bs.sort((a, b) => a.canal.localeCompare(b.canal))})).sort((a, b) => a.data.localeCompare(b.data) || a.conta.nome.localeCompare(b.conta.nome, "pt-BR"));
+}
+function midLinhaHTML(g, showDate){
+  const c = g.conta, cl = c.clienteId ? cli(c.clienteId) : null, tot = midSoma(g.bs), pend = g.bs.filter(b => b.status !== "pago"), ae = g.bs.filter(b => b.status === "aenviar");
+  const late = g.bs.some(midLate), wa = midWa((c.cobranca || {}).whats || (cl && cl.contato && cl.contato.whatsapp)), gk = esc(g.data + "|" + c.id);
+  return `<div class="mid-li${late ? " late" : ""}${pend.length ? "" : " done"}">
+    <div class="mid-c">${showDate ? `<span class="mid-d tnum">${esc(DSEM[pd(g.data).getDay()])} ${esc(fmtShort(g.data))}</span>` : ""}<button type="button" class="linkbtn mid-n" data-mid="conta" data-id="${esc(c.id)}">${esc(c.nome)}</button>${cl && cl.id ? `<span class="muted" style="font-size:11.5px">${esc(cl.nome)}</span>` : `<span class="muted" style="font-size:11.5px">sem cliente cadastrado</span>`}</div>
+    <div class="mid-bs">${g.bs.map(b => `<button type="button" class="mid-b" data-mid="cob" data-id="${esc(b.id)}" title="Editar esta cobrança"><span>${esc(midCanal(b.canal))}</span><b class="tnum">${brl(b.valor)}</b><span class="pill ${midLate(b) ? "t-bad" : MID_ST[b.status][1]}">${midLate(b) ? `Atrasado ${diffDays(TODAY, pd(b.data))}d · ${b.status === "enviado" ? "enviado" : "a enviar"}` : MID_ST[b.status][0]}</span>${b.comprovante ? `<span title="Comprovante anexado">📎</span>` : ""}</button>`).join("")}</div>
+    <div class="mid-t tnum">${g.bs.length > 1 ? brl(tot) : ""}</div>
+    <div class="mid-a">${pend.length ? `<button type="button" class="btn sm" data-mid="msg" data-g="${gk}" title="Copia a mensagem de cobrança para o WhatsApp">Copiar mensagem</button>${wa ? `<a class="btn sm" href="https://wa.me/${esc(wa)}?text=${encodeURIComponent(midMsg(c, g.data, pend))}" target="_blank" rel="noopener" data-mid="wa" data-g="${gk}">WhatsApp ↗</a>` : ""}${ae.length ? `<button type="button" class="btn sm" data-mid="enviado" data-g="${gk}">Marcar enviado</button>` : ""}<button type="button" class="btn sm primary" data-mid="pago" data-g="${gk}">Marcar pago</button>` : `<span class="muted" style="font-size:12px">Tudo pago</span>`}</div></div>`;
+}
+function midiaHTML(){
+  if (!midiaOk()) return msgPage("Sem acesso", "O Financeiro de mídia é da Diretoria e dos gestores de tráfego.");
+  const tab = ui.midTab || "hoje", m = midMes(), L = midDoMes(m), C = midContas(), td = ymd(TODAY);
+  const tabs = [["hoje","Hoje"],["mes","Cronograma do mês"],["contas","Contas de anúncio"]];
+  const late = midCobs().filter(midLate), hoje = midCobs().filter(b => b.data === td && b.status !== "pago");
+  const k = (lab, v, sub, cls) => `<div class="kpi ${cls || ""}"><span>${lab}</span><b class="tnum">${v}</b><small>${sub}</small></div>`;
+  const pago = L.filter(b => b.status === "pago"), env = L.filter(b => b.status === "enviado"), ae = L.filter(b => b.status === "aenviar");
+  const kp = `<div class="kpis">${k("Programado no mês", brl(midSoma(L)), `${midPl(L.length)} · verba planejada ${brl(C.filter(c => c.ativo !== false).reduce((s, c) => s + midVerba(c), 0))}`)}${k("Pago", brl(midSoma(pago)), `${midPl(pago.length)}${L.length ? " · " + Math.round(midSoma(pago) / Math.max(1, midSoma(L)) * 100) + "%" : ""}`, "good")}${k("Enviado, aguardando", brl(midSoma(env)), midPl(env.length))}${k("A enviar", brl(midSoma(ae)), midPl(ae.length))}${k("Atrasado (todos os meses)", brl(midSoma(late)), `${midPl(late.length)} em ${new Set(late.map(b => b.contaId)).size} conta${new Set(late.map(b => b.contaId)).size === 1 ? "" : "s"}`, late.length ? "hot" : "")}</div>`;
+  const mesNav = `<div class="row" style="gap:6px;align-items:center"><button type="button" class="btn sm ghost" data-mid="mes" data-d="-1" aria-label="Mês anterior">‹</button><b style="min-width:150px;text-align:center">${esc(monthLabel(m))}</b><button type="button" class="btn sm ghost" data-mid="mes" data-d="1" aria-label="Próximo mês">›</button></div>`;
+  let body = "";
+  if (!C.length) body = `<div class="empty"><b>Nenhuma conta de anúncio cadastrada</b><p>Cadastre cada conta com o cliente, a verba mensal por canal e os dias de recarga. O sistema monta o cronograma de cobranças do mês.</p><button type="button" class="btn primary" data-mid="novaConta">+ Nova conta</button></div>`;
+  else if (tab === "contas") body = midContasHTML(C, m);
+  else if (tab === "mes") body = midMesHTML(L, m);
+  else {
+    const prox = midCobs().filter(b => b.status !== "pago" && b.data > td && b.data <= ymd(addDays(TODAY, 3)));
+    const sec = (t, l, vazio, sd) => `<section class="card"><h2>${t}</h2>${l.length ? `<div class="mid-list">${midGrupos(l).map(g => midLinhaHTML(g, sd)).join("")}</div>` : `<p class="muted" style="font-size:13px">${vazio}</p>`}</section>`;
+    body = sec(`Atrasadas <span class="hint">· data passou e ainda não foi pago</span>`, late, "Nenhuma cobrança atrasada.", true) + sec(`Hoje · ${esc(fmtD(TODAY, {weekday:"long", day:"2-digit", month:"2-digit"}))}`, hoje, "Nenhuma cobrança pendente para hoje.", false) + sec("Próximos 3 dias", prox, "Nada programado para os próximos dias.", true);
+  }
+  return `<div class="spread"><div><div class="eyebrow">Tráfego pago · contas de anúncio</div><h1>Financeiro de mídia</h1></div><div class="row" style="gap:8px"><button type="button" class="btn" data-mid="novaCob">+ Cobrança avulsa</button><button type="button" class="btn primary" data-mid="novaConta">+ Nova conta</button></div></div>
+    <div class="spread">${mesNav}${tab !== "hoje" ? `<button type="button" class="btn sm" data-mid="gerar" title="Cria as parcelas do mês a partir da verba e dos dias de cada conta. Canais que já têm cobranças no mês não são alterados.">Gerar cobranças de ${esc(monthLabel(m).split(" ")[0].toLowerCase())}</button>` : ""}</div>
+    ${kp}<div class="tabs" role="group">${tabs.map(([kk, l]) => `<button type="button" data-mid="tab" data-tab="${kk}" aria-pressed="${tab === kk}">${l}</button>`).join("")}</div>${body}`;
+}
+function midMesHTML(L, m){
+  const f = ui.midF || "todas", cf = ui.midCanal || "todos", cc = ui.midConta || "todas";
+  let l = L; if (f === "pend") l = l.filter(b => b.status !== "pago"); else if (f !== "todas") l = l.filter(b => b.status === f);
+  if (cf !== "todos") l = l.filter(b => b.canal === cf); if (cc !== "todas") l = l.filter(b => b.contaId === cc);
+  const sel = (id, v, ops) => `<select class="inp sm" id="${id}">${ops.map(([k, t]) => `<option value="${esc(k)}" ${v === k ? "selected" : ""}>${esc(t)}</option>`).join("")}</select>`;
+  const filt = `<div class="row" style="gap:10px;flex-wrap:wrap"><label class="selw"><span>Conta</span>${comboHTML("midContaF", cc, [{v:"todas", l:"Todas as contas"}, ...midContas().map(c => ({v:c.id, l:c.nome}))], "Buscar conta…", true)}</label><label class="selw"><span>Situação</span>${sel("midF", f, [["todas","Todas"],["pend","Pendentes (a enviar + enviado)"],["aenviar","A enviar"],["enviado","Enviado"],["pago","Pago"]])}</label><label class="selw"><span>Canal</span>${sel("midCanalF", cf, [["todos","Todos"], ...MID_CANAIS])}</label></div>`;
+  if (!L.length) return filt + `<div class="empty"><b>Sem cobranças em ${esc(monthLabel(m).toLowerCase())}</b><p>Clique em “Gerar cobranças” para montar o cronograma a partir do plano de cada conta, ou lance uma cobrança avulsa.</p><button type="button" class="btn primary" data-mid="gerar">Gerar cobranças do mês</button></div>`;
+  const gs = midGrupos(l), sem = {}; gs.forEach(g => { const d = pd(g.data), w = ymd(addDays(d, -((d.getDay() + 6) % 7))); (sem[w] = sem[w] || []).push(g); });
+  return filt + (gs.length ? Object.entries(sem).map(([w, G]) => { const bs = G.flatMap(g => g.bs); return `<section class="card"><div class="spread"><h2>Semana de ${esc(fmtShort(w))}</h2><span class="muted tnum" style="font-size:12.5px">${brl(midSoma(bs))} · pago ${brl(midSoma(bs.filter(b => b.status === "pago")))}</span></div><div class="mid-list">${G.map(g => midLinhaHTML(g, true)).join("")}</div></section>`; }).join("") : `<p class="muted">Nenhuma cobrança com esses filtros.</p>`);
+}
+function midContasHTML(C, m){
+  const L = midDoMes(m);
+  return `<div class="tbw"><table class="tb"><thead><tr><th>Conta</th><th>Canais · verba mensal · dias</th><th class="num">Programado no mês</th><th class="num">Pago</th><th class="num">Pendente</th><th>Situação</th></tr></thead><tbody>${C.map(c => {
+    const l = L.filter(b => b.contaId === c.id), lt = midCobs().filter(b => b.contaId === c.id && midLate(b)), cl = c.clienteId ? cli(c.clienteId) : null, resp = c.resp ? person(c.resp) : null;
+    const can = Object.entries(c.canais || {}).filter(([, x]) => x.on).map(([k, x]) => `<div><b>${esc(midCanal(k))}</b> ${brl(x.verba)} <span class="muted">· ${(x.dias || []).map(d => DSEM[d]).join(", ") || "sem dias"}${x.freq && x.freq !== "semanal" ? " · " + (MID_FREQ.find(f => f[0] === x.freq) || ["", ""])[1].toLowerCase() : ""}</span></div>`).join("") || `<span class="muted">Sem canal ativo</span>`;
+    const st = c.ativo === false ? `<span class="pill t-done">Pausada</span>` : lt.length ? `<span class="pill t-bad">${lt.length} atrasada${lt.length > 1 ? "s" : ""} · ${brl(midSoma(lt))}</span>` : !l.length && midVerba(c) > 0 ? `<span class="pill t-warn">Sem cobranças no mês</span>` : `<span class="pill t-ok">Em dia</span>`;
+    return `<tr><td style="min-width:190px"><button type="button" class="linkbtn" style="font-weight:800" data-mid="conta" data-id="${esc(c.id)}">${esc(c.nome)}</button><div class="muted" style="font-size:11.5px">${cl && cl.id ? esc(cl.nome) : "sem cliente cadastrado"}${resp ? " · " + esc(resp.nome.split(" ")[0]) : ""} · ${esc(c.forma || "Pix")}</div></td><td style="font-size:12.5px">${can}</td><td class="num tnum">${brl(midSoma(l))}</td><td class="num tnum">${brl(midSoma(l.filter(b => b.status === "pago")))}</td><td class="num tnum">${brl(midSoma(l.filter(b => b.status !== "pago")))}</td><td>${st}</td></tr>`;
+  }).join("")}</tbody></table></div><p class="muted" style="font-size:12px">A verba mensal de cada canal é dividida igualmente entre os dias de recarga do mês. Depois de gerada, cada cobrança pode ter data e valor ajustados (feriado, verba extra, pausa).</p>`;
+}
+function midAlertaHTML(){
+  if (!midiaOk()) return "";
+  const td = ymd(TODAY), late = midCobs().filter(midLate), hoje = midCobs().filter(b => b.data === td && b.status === "aenviar");
+  if (!late.length && !hoje.length) return "";
+  return `<button type="button" class="mid-alert" data-mid="ir"><b>Financeiro de mídia</b><span>${hoje.length ? `${hoje.length} cobrança${hoje.length > 1 ? "s" : ""} para enviar hoje (${brl(midSoma(hoje))})` : ""}${hoje.length && late.length ? " · " : ""}${late.length ? `<span class="bad">${late.length} atrasada${late.length > 1 ? "s" : ""} (${brl(midSoma(late))})</span>` : ""}</span><span aria-hidden="true">→</span></button>`;
+}
+
+/* ---- modais ---- */
+function midContaFormHTML(){
+  const d = ui.tmp.mc, cl = S.clientes.slice().sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+  const gest = ativos().filter(p => (p.papeis || []).includes("trafego") || (p.papeis || []).includes("diretoria"));
+  return `<div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="mcT"><div class="m-head"><h2 id="mcT">${d._exists ? "Conta · " + esc(d.nome) : "Nova conta de anúncio"}</h2><button type="button" class="x" data-act="close" aria-label="Fechar">×</button></div>
+    <div class="m-body"><div class="form">
+      <div class="field"><label for="mc-n">Nome da conta</label><input class="inp" id="mc-n" data-mc="nome" value="${esc(d.nome || "")}" placeholder="Ex.: Sorri Esteio"></div>
+      <div class="field"><span class="lb">Cliente</span>${comboHTML("mc-cli", d.clienteId || "", [{v:"", l:"Sem cliente cadastrado"}, ...cl.map(c => ({v:c.id, l:c.nome, dot:c.cor}))], "Digite o nome do cliente…")}</div>
+      <div class="field"><label for="mc-r">Gestor de tráfego</label><select class="inp" id="mc-r" data-mc="resp"><option value="">Definir depois</option>${gest.map(p => `<option value="${esc(p.id)}" ${d.resp === p.id ? "selected" : ""}>${esc(p.nome)}</option>`).join("")}</select></div>
+      <div class="field"><label for="mc-f">Forma de pagamento</label><select class="inp" id="mc-f" data-mc="forma">${MID_FORMAS.map(x => `<option ${(d.forma || "Pix") === x ? "selected" : ""}>${x}</option>`).join("")}</select></div>
+      <div class="field"><label for="mc-cn">Quem recebe a cobrança</label><input class="inp" id="mc-cn" data-mcc="nome" value="${esc((d.cobranca || {}).nome || "")}" placeholder="Se vazio, usa o contato do cliente"></div>
+      <div class="field"><label for="mc-cw">WhatsApp da cobrança</label><input class="inp" id="mc-cw" data-mcc="whats" value="${esc((d.cobranca || {}).whats || "")}" placeholder="(51) 9…"></div>
+    </div>
+    <div class="eyebrow">Canais, verba mensal e dias de recarga</div>
+    ${MID_CANAIS.map(([k, l]) => { const x = (d.canais || {})[k] || {}; return `<div class="mid-cf${x.on ? " on" : ""}"><label class="mid-cfh"><input type="checkbox" data-mcon="${k}" ${x.on ? "checked" : ""}> <b>${l}</b></label>${x.on ? `<div class="row" style="gap:12px;flex-wrap:wrap;align-items:flex-end"><label class="selw"><span>Verba mensal (R$)</span><input class="inp sm" inputmode="decimal" data-mcv="${k}" value="${esc(x.verba ? Number(x.verba).toFixed(2).replace(".", ",") : "")}" placeholder="0,00" style="width:140px"></label><div><span class="lb" style="font-size:12px">Dias de recarga</span><div class="seg">${[1,2,3,4,5,6,0].map(dd => `<label><input type="checkbox" data-mcd="${k}" value="${dd}" ${(x.dias || []).includes(dd) ? "checked" : ""}> ${DSEM[dd]}</label>`).join("")}</div></div><label class="selw"><span>Frequência</span><select class="inp sm" data-mcq="${k}">${MID_FREQ.map(([f, l]) => `<option value="${f}" ${(x.freq || "semanal") === f ? "selected" : ""}>${l}</option>`).join("")}</select></label>${Number(x.verba) > 0 && (x.dias || []).length ? `<span class="muted" style="font-size:12px">≈ ${brl(Number(x.verba) / midRecMes(x))} por recarga</span>` : ""}</div>` : ""}</div>`; }).join("")}
+    <div class="field full"><label for="mc-o">Observações</label><textarea id="mc-o" data-mc="obs" rows="2" placeholder="Ex.: cliente paga direto no cartão da conta; avisar antes de pausar">${esc(d.obs || "")}</textarea></div>
+    <label class="row" style="gap:8px"><input type="checkbox" data-mcat ${d.ativo === false ? "" : "checked"}> Conta ativa <span class="hint">· contas pausadas não geram cobranças</span></label>
+    ${ui.tmp.err ? `<div class="err">${esc(ui.tmp.err)}</div>` : ""}
+    <div class="actions"><button type="button" class="btn primary" data-mid="salvarConta">Salvar conta</button><button type="button" class="btn ghost" data-act="close">Cancelar</button></div>
+    ${d._exists ? `<div>${ui.tmp.mcDel ? `<span class="row" style="gap:8px"><button type="button" class="linkbtn" style="color:var(--danger)" data-mid="excluirConta">Confirmar: excluir conta e cobranças pendentes</button><button type="button" class="linkbtn" data-mid="excluirNao">Cancelar</button></span>` : `<button type="button" class="linkbtn" style="color:var(--danger)" data-mid="excluirConta">Excluir conta</button>`}</div>` : ""}
+    </div></div>`;
+}
+function midCobFormHTML(){
+  const d = ui.tmp.mb, C = midContas();
+  return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="mbT"><div class="m-head"><h2 id="mbT">${d._exists ? "Cobrança · " + esc((midConta(d.contaId) || {}).nome || "") : "Cobrança avulsa"}</h2><button type="button" class="x" data-act="close" aria-label="Fechar">×</button></div>
+    <div class="m-body"><div class="form">
+      <div class="field full"><span class="lb">Conta</span>${comboHTML("mb-conta", d.contaId || "", C.map(c => ({v:c.id, l:c.nome})), "Digite o nome da conta…")}</div>
+      <div class="field"><label for="mb-c">Canal</label><select class="inp" id="mb-c">${MID_CANAIS.map(([k, l]) => `<option value="${k}" ${d.canal === k ? "selected" : ""}>${l}</option>`).join("")}</select></div>
+      <div class="field"><label for="mb-d">Data</label><input class="inp" type="date" id="mb-d" value="${esc(d.data || ymd(TODAY))}"></div>
+      <div class="field"><label for="mb-v">Valor (R$)</label><input class="inp" inputmode="decimal" id="mb-v" value="${esc(d.valor != null ? String(d.valor).replace(".", ",") : "")}" placeholder="0,00"></div>
+      <div class="field"><label for="mb-s">Situação</label><select class="inp" id="mb-s">${Object.entries(MID_ST).map(([k, [l]]) => `<option value="${k}" ${(d.status || "aenviar") === k ? "selected" : ""}>${l}</option>`).join("")}</select></div>
+      <div class="field full"><label for="mb-o">Observação</label><input class="inp" id="mb-o" value="${esc(d.obs || "")}" placeholder="Ex.: verba extra da Black Friday"></div>
+    </div>
+    <div class="row" style="gap:8px;align-items:center">${d.comprovante ? `<a class="btn sm" href="${esc(blobUrl(d.comprovante.id))}" target="_blank" rel="noopener">📎 ${esc(d.comprovante.nome)}</a><button type="button" class="linkbtn" data-mid="tirarComp">Remover</button>` : assets ? `<label class="btn sm" for="mbComp" style="cursor:pointer"><input type="file" id="mbComp" hidden accept="image/*,application/pdf">+ Anexar comprovante</label>` : ""}${ui.tmp.anxProg ? `<span class="muted">${esc(ui.tmp.anxProg)}</span>` : ""}</div>
+    ${d._exists && (d.log || []).length ? `<div class="muted" style="font-size:11.5px">${(d.log || []).slice(-4).map(x => `${esc(fmtStamp(x.em))} · ${esc(mName(x.por))}: ${esc(x.t)}`).join("<br>")}</div>` : ""}
+    ${ui.tmp.err ? `<div class="err">${esc(ui.tmp.err)}</div>` : ""}
+    <div class="actions"><button type="button" class="btn primary" data-mid="salvarCob">Salvar</button><button type="button" class="btn ghost" data-act="close">Cancelar</button></div>
+    ${d._exists ? `<div>${ui.tmp.mbDel ? `<span class="row" style="gap:8px"><button type="button" class="linkbtn" style="color:var(--danger)" data-mid="excluirCob">Confirmar exclusão</button><button type="button" class="linkbtn" data-mid="excluirNao">Cancelar</button></span>` : `<button type="button" class="linkbtn" style="color:var(--danger)" data-mid="excluirCob">Excluir cobrança</button>`}</div>` : ""}
+    </div></div>`;
+}
+function midLog(b, t){ b.log = (b.log || []).slice(-19).concat([{t, em:nowIso(), por:ui.me}]); }
+function midSetStatus(b, st){ if (b.status === st) return; b.status = st; if (st === "enviado") b.enviadoEm = nowIso(); if (st === "pago") b.pagoEm = nowIso(); midLog(b, MID_ST[st][0]); }
+function midGrupoDe(g){ const [dt, cid] = String(g).split("|"); return midCobs().filter(b => b.data === dt && b.contaId === cid); }
+document.addEventListener("click", ev => {
+  const t = ev.target.closest && ev.target.closest("[data-mid]"); if (!t || !midiaOk()) return;
+  const a = t.dataset.mid;
+  if (a === "ir") { ui.view = "midia"; ui.midTab = "hoje"; render(); return; }
+  if (a === "tab") { ui.midTab = t.dataset.tab; render(); return; }
+  if (a === "mes") { const m = midMes(); ui.midMes = ymd(new Date(m.getFullYear(), m.getMonth() + Number(t.dataset.d), 1)); render(); return; }
+  if (a === "gerar") { const r = midGerar(midMes()); save(); toast(r.n ? `${r.n} cobranças criadas em ${monthLabel(midMes()).toLowerCase()}${r.pul ? ` · ${r.pul} canais já tinham cronograma e foram mantidos` : ""}.` : r.pul ? "Todas as contas já têm cobranças neste mês. Nada foi alterado." : "Nenhuma conta ativa com verba e dias de recarga."); ui.midTab = "mes"; render(); return; }
+  if (a === "novaConta") { ui.tmp = {mc:{nome:"", clienteId:"", resp:has("trafego") ? ui.me : "", forma:"Pix", cobranca:{}, canais:{meta:{on:true, verba:0, dias:[2,5]}}, ativo:true}}; ui.modal = "midConta"; fillOverlay(); return; }
+  if (a === "conta") { const c = midConta(t.dataset.id); if (!c) return; ui.tmp = {mc:Object.assign(JSON.parse(JSON.stringify(c)), {_exists:true})}; ui.modal = "midConta"; fillOverlay(); return; }
+  if (a === "novaCob") { ui.tmp = {mb:{contaId:ui.midConta && ui.midConta !== "todas" ? ui.midConta : "", canal:"meta", data:ymd(TODAY), status:"aenviar"}}; ui.modal = "midCob"; fillOverlay(); return; }
+  if (a === "cob") { const b = (S.midiaCobs || []).find(x => x.id === t.dataset.id); if (!b) return; ui.tmp = {mb:Object.assign(JSON.parse(JSON.stringify(b)), {_exists:true})}; ui.modal = "midCob"; fillOverlay(); return; }
+  if (a === "msg" || a === "wa") { const l = midGrupoDe(t.dataset.g).filter(b => b.status !== "pago"); if (!l.length) return; const c = midConta(l[0].contaId); if (a === "msg") { ev.preventDefault(); copyText(midMsg(c, l[0].data, l), "Mensagem copiada. Cole no WhatsApp do cliente."); } l.filter(b => b.status === "aenviar").forEach(b => midLog(b, a === "wa" ? "Abriu o WhatsApp com a cobrança" : "Copiou a mensagem de cobrança")); save(); return; }
+  if (a === "enviado" || a === "pago") { const l = midGrupoDe(t.dataset.g).filter(b => a === "pago" ? b.status !== "pago" : b.status === "aenviar"); l.forEach(b => midSetStatus(b, a)); save(); toast(a === "pago" ? `Marcado como pago · ${brl(midSoma(l))}` : "Marcado como enviado. Fica aguardando o pagamento."); render(); return; }
+  if (a === "salvarConta") { midSalvarConta(); return; }
+  if (a === "excluirConta") { if (!ui.tmp.mcDel) { ui.tmp.mcDel = true; fillOverlay(); return; } const c = midConta(ui.tmp.mc.id); if (c) { c.excluido = true; c.excluidoEm = nowIso(); c.excluidoPor = ui.me; (S.midiaCobs || []).filter(b => b.contaId === c.id && b.status !== "pago" && !b.excluido).forEach(b => { b.excluido = true; midLog(b, "Excluída junto com a conta"); }); } save(); ui.modal = null; ui.tmp = {}; toast("Conta excluída. As cobranças já pagas ficam no histórico."); render(); return; }
+  if (a === "excluirNao") { ui.tmp.mcDel = false; ui.tmp.mbDel = false; fillOverlay(); return; }
+  if (a === "salvarCob") { midSalvarCob(); return; }
+  if (a === "excluirCob") { if (!ui.tmp.mbDel) { ui.tmp.mbDel = true; fillOverlay(); return; } const b = (S.midiaCobs || []).find(x => x.id === ui.tmp.mb.id); if (b) { b.excluido = true; midLog(b, "Excluída"); } save(); ui.modal = null; ui.tmp = {}; toast("Cobrança excluída."); render(); return; }
+  if (a === "tirarComp") { delete ui.tmp.mb.comprovante; fillOverlay(); return; }
+});
+document.addEventListener("change", ev => {
+  const t = ev.target;
+  if (t.id === "midF") { ui.midF = t.value; render(); return; }
+  if (t.id === "midCanalF") { ui.midCanal = t.value; render(); return; }
+  if (t.id === "midContaF") { ui.midConta = t.value; render(); return; }
+  if (t.id === "mbComp" && ui.tmp.mb) { const files = [...t.files]; if (files.length) subirAnexos(files.slice(0, 1), out => { if (out[0]) ui.tmp.mb.comprovante = {id:out[0].id, nome:out[0].nome}; fillOverlay(); }); return; }
+  const d = ui.tmp && ui.tmp.mc; if (!d) return;
+  if (t.id === "mc-cli") { d.clienteId = t.value; const c = S.clientes.find(x => x.id === t.value); if (c && !d.nome) { d.nome = c.nome; fillOverlay(); } if (c && !d.resp && ((c.squad || {}).trafego || [])[0]) { d.resp = c.squad.trafego[0]; fillOverlay(); } return; }
+  if (t.dataset.mc) { d[t.dataset.mc] = t.value; return; }
+  if (t.dataset.mcc) { d.cobranca = Object.assign({}, d.cobranca, {[t.dataset.mcc]: t.value}); return; }
+  if (t.dataset.mcat !== undefined) { d.ativo = t.checked; return; }
+  if (t.dataset.mcon) { const k = t.dataset.mcon; d.canais = d.canais || {}; d.canais[k] = Object.assign({verba:0, dias:[]}, d.canais[k], {on:t.checked}); fillOverlay(); return; }
+  if (t.dataset.mcq) { d.canais[t.dataset.mcq].freq = t.value; fillOverlay(); return; }
+  if (t.dataset.mcv) { d.canais[t.dataset.mcv].verba = midNum(t.value); fillOverlay(); return; }
+  if (t.dataset.mcd) { const x = d.canais[t.dataset.mcd], v = +t.value; x.dias = t.checked ? [...new Set([...(x.dias || []), v])].sort() : (x.dias || []).filter(y => y !== v); fillOverlay(); return; }
+});
+function midSalvarConta(){
+  const d = ui.tmp.mc, fail = m => { ui.tmp.err = m; fillOverlay(); };
+  ["nome","obs"].forEach(k => { const el = document.querySelector(`[data-mc="${k}"]`); if (el) d[k] = el.value; });
+  document.querySelectorAll("[data-mcv]").forEach(el => { d.canais[el.dataset.mcv].verba = midNum(el.value); });
+  d.nome = String(d.nome || "").trim(); if (!d.nome) return fail("Dê um nome à conta.");
+  if (midContas().some(c => c.id !== d.id && normTxt(c.nome) === normTxt(d.nome))) return fail("Já existe uma conta com esse nome.");
+  const on = Object.entries(d.canais || {}).filter(([, x]) => x.on);
+  if (!on.length) return fail("Ative ao menos um canal (Meta, Google…).");
+  const semDia = on.find(([, x]) => Number(x.verba) > 0 && !(x.dias || []).length); if (semDia) return fail(`Marque os dias de recarga de ${midCanal(semDia[0])}.`);
+  const body = JSON.parse(JSON.stringify(d)); delete body._exists; body.atualizadoEm = nowIso(); body.atualizadoPor = ui.me;
+  if (d._exists) { const i = S.midiaContas.findIndex(c => c.id === d.id); S.midiaContas[i] = Object.assign(S.midiaContas[i], body); toast("Conta salva. Para refletir a nova verba num mês que já tem cobranças, ajuste as parcelas ou exclua e gere de novo."); }
+  else { body.id = "mc-" + uid(); body.criadoEm = nowIso(); body.criadoPor = ui.me; S.midiaContas.push(body); toast("Conta cadastrada. Use “Gerar cobranças” para montar o cronograma do mês."); }
+  save(); ui.modal = null; ui.tmp = {}; render();
+}
+function midSalvarCob(){
+  const d = ui.tmp.mb, fail = m => { ui.tmp.err = m; fillOverlay(); };
+  d.contaId = ($("#mb-conta") || {}).value || ""; d.canal = $("#mb-c").value; d.data = $("#mb-d").value; d.valor = midNum($("#mb-v").value); d.obs = $("#mb-o").value.trim(); const st = $("#mb-s").value;
+  if (!midConta(d.contaId)) return fail("Escolha a conta."); if (!d.data) return fail("Defina a data."); if (!(d.valor > 0)) return fail("Informe o valor.");
+  let b = d._exists ? S.midiaCobs.find(x => x.id === d.id) : null;
+  if (!b) { b = {id:"mb-" + uid(), status:"aenviar", origem:"manual", criadoEm:nowIso(), criadoPor:ui.me}; S.midiaCobs.push(b); midLog(b, "Cobrança avulsa criada"); }
+  const mud = [b.data !== d.data && b.data ? `data ${fmtShort(b.data)} → ${fmtShort(d.data)}` : "", b.valor !== d.valor && b.valor != null ? `valor ${brl(b.valor)} → ${brl(d.valor)}` : ""].filter(Boolean).join(" · ");
+  Object.assign(b, {contaId:d.contaId, canal:d.canal, data:d.data, valor:d.valor, obs:d.obs}); if (d.comprovante) { if (!b.comprovante) midLog(b, "Comprovante anexado"); b.comprovante = d.comprovante; } else delete b.comprovante;
+  if (mud) midLog(b, "Ajuste: " + mud); midSetStatus(b, st);
+  save(); ui.modal = null; ui.tmp = {}; toast("Cobrança salva."); render();
+}
+
 /* ================= clientes ================= */
 function clientesHTML(){
   const vc = allClients().slice().sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")), q = normTxt(ui.cq), mine = new Set(visibleClients().map(c => c.id));
   return `<div class="spread"><div><div class="eyebrow">Carteira ${isDir() && ui.unidade === "todas" ? "da rede" : "da unidade"}</div><h1>Clientes</h1></div>${isHead() ? `<button type="button" class="btn primary" data-act="newClient">+ Novo cliente</button>` : ""}</div>
-    ${vc.length ? `<div class="row"><label class="selw" style="flex:1;max-width:420px"><span>Pesquisar cliente</span><input class="inp" type="search" id="cliQ" placeholder="Digite o nome do cliente…" value="${esc(ui.cq || "")}" autocomplete="off"></label><span class="muted" id="cliQn" style="font-size:12.5px;align-self:flex-end;padding-bottom:9px">${vc.filter(c => !q || normTxt(c.nome).includes(q)).length} de ${vc.length}</span></div>` : ""}
+    ${vc.length ? `<div class="row"><label class="selw" style="flex:1;max-width:420px"><span>Pesquisar cliente</span>${comboHTML("cliPick", "", vc.map(c => ({v:c.id, l:c.nome, dot:c.cor})), "Digite o nome do cliente…").replace('class="combo"', 'class="combo" data-keep').replace('value=""', `value="${esc(ui.cq || "")}"`)}</label><span class="muted" id="cliQn" style="font-size:12.5px;align-self:flex-end;padding-bottom:9px">${vc.filter(c => !q || normTxt(c.nome).includes(q)).length} de ${vc.length}</span></div>` : ""}
     ${vc.length ? `<div class="grid2" id="cliGrid">${vc.map(c => { const ps = S.pecas.filter(p => p.clienteId === c.id); const sq = [...new Set(Object.values(c.squad || {}).flat())]; return `<button type="button" class="ccard" data-hub="${esc(c.id)}" data-nome="${esc(normTxt(c.nome))}" ${q && !normTxt(c.nome).includes(q) ? "hidden" : ""}><div class="spread"><h3><span class="dot" style="background:${esc(c.cor)};width:11px;height:11px"></span>${esc(c.nome)}</h3><span class="pill ${c.status === "Ativo" ? "t-ok" : "t-warn"}">${esc(c.status || "Ativo")}</span></div><div class="row" style="font-size:12px;color:var(--muted);gap:4px 12px">${c.categoria ? `<span>${esc(c.categoria)}</span>` : ""}${c.segmento ? `<span>${esc(c.segmento)}</span>` : ""}<span>Aprovação ${c.aprovacao === "semanal" ? "semanal" : "mensal"}</span></div><div style="font-size:12.5px;display:flex;flex-direction:column;gap:2px">${scopeSummary(c).map(([n, t]) => `<div><b>${esc(n)}</b> <span class="muted">· ${esc(t)}</span></div>`).join("") || `<span class="muted">Escopo não definido</span>`}</div><div class="spread"><span class="avs">${sq.map(id => av(id, 26)).join("") || `<span class="muted" style="font-size:12px">Equipe não definida</span>`}</span><span class="muted" style="font-size:12px"><b style="color:var(--fg)">${ps.filter(p => p.status === "cliente").length}</b> com o cliente · <b style="color:var(--fg)">${ps.filter(p => ["pauta","producao","revisao","ajuste"].includes(p.status)).length}</b> em andamento</span></div></button>`; }).join("")}</div>` : noClients()}`;
 }
 function dashHTML(c){
@@ -2705,7 +2926,7 @@ function drawerHTML(p){
   const unitPpl = ativos().filter(m => m.unidade === c.unidade);
   const opt = (list, sel) => `<option value="">Definir…</option>` + list.map(m => `<option value="${esc(m.id)}" ${sel === m.id ? "selected" : ""}>${esc(m.nome)}</option>`).join("");
   const top = `<div class="d-top"><button type="button" class="x" data-act="close" aria-label="Fechar">×</button><div class="ttl"><b>${esc(titleOf(p))}</b><span>${codTag(p)} <button type="button" class="linkbtn" style="font-size:11px;font-weight:600" data-act="copyLink" title="Copiar o link direto desta pauta">copiar link</button> · ${p.simples ? "Cartão simples" : cliLink(c)}${p.solicitante ? ` · para ${esc(p.solicitante)}` : ""} · ${esc(fmtD(p.data))}${p.simples ? "" : " · " + esc(isTask(p) ? "Pauta" : t.label)}</span></div>${pillP(p)}${canEd ? `<button type="button" class="btn sm${ed ? " primary" : ""}" data-act="pgEdit">${ed ? "Concluir edição" : "Editar"}</button>` : ""}</div>`;
-  const comentsSec = `<div class="sec"><h3>Comentários</h3><div class="list">${(p.coments || []).map((m, i) => `<div class="cm">${av(m.por, 26)}<div style="flex:1;min-width:0"><div class="s spread"><span>${esc(mName(m.por))} · ${esc(fmtStamp(m.em))}</span>${canDelCom(m) ? (u.comDel === i ? `<span class="row" style="gap:6px"><button type="button" class="linkbtn" style="color:var(--danger);font-size:12px" data-act="comDelGo" data-i="${i}">Excluir comentário</button><button type="button" class="linkbtn" style="font-size:12px" data-act="comDelNo">Cancelar</button></span>` : `<button type="button" class="linkbtn comx" data-act="comDel" data-i="${i}" title="Excluir comentário" aria-label="Excluir comentário">Excluir</button>`) : ""}</div><div class="b">${esc(m.texto)}</div></div></div>`).join("") || `<span class="muted" style="font-size:12.5px">Nenhum comentário. O cliente não vê esta conversa.</span>`}</div>
+  const comentsSec = `<div class="sec"><h3>Comentários</h3><div class="list">${(p.coments || []).map((m, i) => `<div class="cm">${av(m.por, 26)}<div style="flex:1;min-width:0"><div class="s spread"><span>${esc(mName(m.por))} · ${esc(fmtStamp(m.em))}</span>${canDelCom(m) ? (u.cmtDel === i ? `<span class="row" style="gap:6px"><button type="button" class="linkbtn" style="color:var(--danger);font-size:12px" data-act="comDelGo" data-i="${i}">Excluir comentário</button><button type="button" class="linkbtn" style="font-size:12px" data-act="comDelNo">Cancelar</button></span>` : `<button type="button" class="linkbtn comx" data-act="comDel" data-i="${i}" title="Excluir comentário" aria-label="Excluir comentário">Excluir</button>`) : ""}</div><div class="b">${esc(m.texto)}</div></div></div>`).join("") || `<span class="muted" style="font-size:12.5px">Nenhum comentário. O cliente não vê esta conversa.</span>`}</div>
         <div class="row" style="margin-top:8px;flex-wrap:nowrap"><input class="inp" id="cmtxt" placeholder="Escreva para a equipe… (os responsáveis são avisados)" value="${esc(u.cm || "")}" aria-label="Comentário interno"><button type="button" class="btn sm" data-act="comment">Enviar</button></div></div>`;
   const histSec = `<div class="sec"><h3>Histórico</h3><ul class="hist">${[...(p.hist || [])].reverse().map((h, i) => `<li class="${i === 0 ? "hl" : ""}"><div><div class="a">${esc(ACOES[h.acao] || h.acao)}${h.versao ? ` (v${h.versao})` : ""}</div><div class="s">${esc(h.por === "cliente" && h.nome ? "Cliente · " + h.nome : mName(h.por))} · ${esc(fmtStamp(h.em))}</div>${h.texto ? `<div class="q">${esc(h.texto)}</div>` : ""}</div></li>`).join("")}</ul></div>`;
   const delRow = `${canPlan(p) ? (u.del ? `<div class="row"><span style="font-size:12.5px">Excluir esta pauta? Ela vai para o arquivo e pode ser restaurada.</span><button type="button" class="btn sm danger" data-act="archiveOne">Excluir</button><button type="button" class="btn sm ghost" data-act="toggleDel">Cancelar</button></div>` : `<div class="row"><button type="button" class="linkbtn" style="color:var(--danger)" data-act="toggleDel">Excluir pauta</button></div>`) : ""}`;
@@ -3218,7 +3439,7 @@ function confirmHTML(){
 }
 function fillOverlay(){
   const ov = $("#overlay"), m = ui.modal;
-  const M = {newPeca:newPecaHTML, gen:genHTML, client:clientFormHTML, person:personFormHTML, profile:profileHTML, unit:unitFormHTML, cap:capFormHTML, mat:matFormHTML, acc:accFormHTML, vaultSetup:() => vaultFormHTML("setup"), vaultUnlock:() => vaultFormHTML("unlock"), accHist:accHistHTML, notifs:notifsHTML, approveAll:approveAllHTML, inviteLink:inviteLinkHTML, confirm:confirmHTML, day:() => dayAllHTML(ui.tmp.day, ui.tmp.kind), msg:msgHTML, comConta:comFormHTML, comVisita:comVisitaHTML};
+  const M = {midConta:midContaFormHTML, midCob:midCobFormHTML, newPeca:newPecaHTML, gen:genHTML, client:clientFormHTML, person:personFormHTML, profile:profileHTML, unit:unitFormHTML, cap:capFormHTML, mat:matFormHTML, acc:accFormHTML, vaultSetup:() => vaultFormHTML("setup"), vaultUnlock:() => vaultFormHTML("unlock"), accHist:accHistHTML, notifs:notifsHTML, approveAll:approveAllHTML, inviteLink:inviteLinkHTML, confirm:confirmHTML, day:() => dayAllHTML(ui.tmp.day, ui.tmp.kind), msg:msgHTML, comConta:comFormHTML, comVisita:comVisitaHTML};
   let html = "";
   if (m && M[m]) html = M[m]();
   else if (ui.openId) {
@@ -3344,8 +3565,8 @@ document.addEventListener("click", ev => {
     u.etqNova = false; u.etqNome = ""; save(); toast(`Etiqueta ${nome} criada.`); return redraw(); }
 });
 document.addEventListener("mousedown", ev => { if (ev.target.closest && ev.target.closest("[data-rtc]")) ev.preventDefault(); if (ev.target.closest && ev.target.closest("[data-combo-pick]")) ev.preventDefault(); });
-document.addEventListener("focusin", ev => { const i = ev.target.closest && ev.target.closest("[data-combo-in]"); if (!i) return; const box = i.closest(".combo"); i.select(); comboFiltrar(box, ""); comboAbrir(box, true); });
-document.addEventListener("focusout", ev => { const i = ev.target.closest && ev.target.closest("[data-combo-in]"); if (!i) return; const box = i.closest(".combo"); setTimeout(() => { if (box.contains(document.activeElement)) return; comboAbrir(box, false); const h = box.querySelector('input[type="hidden"]'), cur = box.querySelector(`[data-combo-pick][data-v="${CSS.escape(h.value)}"]`); i.value = cur ? cur.textContent : ""; }, 120); });
+document.addEventListener("focusin", ev => { const i = ev.target.closest && ev.target.closest("[data-combo-in]"); if (!i) return; const box = i.closest(".combo"); i.select(); comboFiltrar(box, box.dataset.keep !== undefined ? i.value : ""); comboAbrir(box, true); });
+document.addEventListener("focusout", ev => { const i = ev.target.closest && ev.target.closest("[data-combo-in]"); if (!i) return; const box = i.closest(".combo"); setTimeout(() => { if (box.contains(document.activeElement)) return; comboAbrir(box, false); if (box.dataset.keep !== undefined) return; const h = box.querySelector('input[type="hidden"]'), cur = box.querySelector(`[data-combo-pick][data-v="${CSS.escape(h.value)}"]`); i.value = cur ? cur.textContent : ""; }, 120); });
 document.addEventListener("keydown", ev => { const i = ev.target.closest && ev.target.closest("[data-combo-in]"); if (!i) return; const box = i.closest(".combo"), vis = [...box.querySelectorAll("[data-combo-pick]:not([hidden])")];
   if (ev.key === "Enter") { ev.preventDefault(); if (vis[0]) vis[0].click(); } else if (ev.key === "Escape") { comboAbrir(box, false); i.blur(); } else if (ev.key === "ArrowDown") { ev.preventDefault(); comboAbrir(box, true); if (vis[0]) vis[0].focus(); } });
 document.addEventListener("keydown", ev => { if (ev.key === "Enter" && ev.target.closest && ev.target.closest(".rtlink")) { ev.preventDefault(); const ok = ev.target.closest(".rtlink").querySelector("[data-rtlok]"); if (ok) ok.click(); } if (ev.key === "Escape" && ev.target.closest && ev.target.closest(".rtlink")) ev.target.closest(".rtlink").remove(); });
@@ -3447,9 +3668,9 @@ document.addEventListener("click", async ev => {
     case "mcliAll": { const u = ui.tmp; const vis = [...document.querySelectorAll(".mclil label:not([hidden]) [data-npmc]")].map(x => x.value); u.mcli = [...new Set([...(u.mcli || []), ...vis])]; fillOverlay(); break; }
     case "mcliNone": ui.tmp.mcli = []; fillOverlay(); break;
     case "copyLink": copyText(location.origin + "/?p=" + encodeURIComponent(ui.openId), "Link da pauta copiado."); break;
-    case "comDel": ui.tmp.comDel = +d.i; fillOverlay(); break;
-    case "comDelNo": ui.tmp.comDel = null; fillOverlay(); break;
-    case "comDelGo": { const p = S.pecas.find(x => x.id === ui.openId), i = +d.i; if (!p || !(p.coments || [])[i] || !canDelCom(p.coments[i])) break; p.coments.splice(i, 1); p.hist = [...(p.hist || []), entry("moveu", {texto:"Comentário excluído"})]; ui.tmp.comDel = null; save(); toast("Comentário excluído."); fillOverlay(); break; }
+    case "comDel": ui.tmp.cmtDel = +d.i; fillOverlay(); break;
+    case "comDelNo": ui.tmp.cmtDel = null; fillOverlay(); break;
+    case "comDelGo": { const p = S.pecas.find(x => x.id === ui.openId), i = +d.i; if (!p || !(p.coments || [])[i] || !canDelCom(p.coments[i])) break; p.coments.splice(i, 1); p.hist = [...(p.hist || []), entry("moveu", {texto:"Comentário excluído"})]; ui.tmp.cmtDel = null; save(); toast("Comentário excluído."); fillOverlay(); break; }
     case "kMenu": ui.kmenu = ui.kmenu === d.pid ? null : d.pid; render(); break;
     case "dupPeca": { const x = S.pecas.find(y => y.id === (d.pid || ui.openId)); ui.kmenu = null; if (!x || !canDup(x)) break; const n = duplicarPeca(x); toast("Card duplicado: a cópia está em Pauta."); if (ui.openId) { ui.openId = n.id; ui.idx = 0; ui.tmp = {}; } render(); break; }
     case "archAsk": { const x = S.pecas.find(y => y.id === d.pid); ui.kmenu = null; if (!x) break; ui.tmp = {confirm: {titulo: "Excluir pauta?", texto: `"${titleOf(x)}" vai para o arquivo (Kanban → Arquivadas) e pode ser restaurada.`, ok: "Excluir", ids: [x.id]}}; ui.modal = "confirm"; fillOverlay(); break; }
@@ -3576,7 +3797,7 @@ document.addEventListener("input", ev => {
   if (t.id === "f-corpo" && t.value !== undefined) { const el = $("#wcount"); if (el) { const n = t.value.trim().split(/\s+/).filter(Boolean).length; el.textContent = `${n} ${n === 1 ? "palavra" : "palavras"}`; } }
   if (t.id === "f-pausa") { const p = S.pecas.find(x => x.id === ui.openId); if (p && canMove(p)) { p.pausaMotivo = t.value; save(); } return; }
   if (t.id === "fBusca") { ui.busca = t.value; const pos = t.selectionStart; render(); const el = $("#fBusca"); if (el) { el.focus(); try { el.setSelectionRange(pos, pos); } catch(e) {} } return; }
-  if (t.dataset && t.dataset.comboIn !== undefined) { const box = t.closest(".combo"); comboAbrir(box, true); comboFiltrar(box, t.value); return; }
+  if (t.dataset && t.dataset.comboIn !== undefined) { const box = t.closest(".combo"); comboAbrir(box, true); comboFiltrar(box, t.value); if (t.dataset.comboIn === "cliPick") cliFiltrar(t.value); return; }
   if (t.id === "mcliQ") { ui.tmp.mcq = t.value; const q = normTxt(t.value); document.querySelectorAll(".mclil [data-mn]").forEach(el => el.hidden = !!q && !el.dataset.mn.includes(q)); return; }
   if (t.id === "cliQ") { ui.cq = t.value; const q = normTxt(t.value); let n = 0; document.querySelectorAll("#cliGrid [data-nome]").forEach(el => { const ok = !q || el.dataset.nome.includes(q); el.hidden = !ok; if (ok) n++; }); const el = $("#cliQn"); if (el) el.textContent = `${n} de ${document.querySelectorAll("#cliGrid [data-nome]").length}`; return; }
   if (t.dataset && t.dataset.rt !== undefined) { const p = S.pecas.find(x => x.id === ui.openId); if (p) { p.briefing = p.briefing || {}; setRt(p.briefing, t.dataset.rt, t); if (t.dataset.rt === "corpo") { const el = $("#wcount"); if (el) { const n = String(p.briefing.corpo || "").trim().split(/\s+/).filter(Boolean).length; el.textContent = `${n} ${n === 1 ? "palavra" : "palavras"}`; } } save(); } return; }
@@ -3604,6 +3825,7 @@ document.addEventListener("change", async ev => {
   if (t.dataset.prazo && isDirReal()) { const v = Math.max(1, Math.min(60, +t.value || 1)); S.cfg.prazos = Object.assign({}, S.cfg.prazos, {[t.dataset.prazo]: v}); save(); toast("Prazo salvo"); return; }
   if (t.id === "calMode") { ui.calMode = t.value; try { localStorage.setItem("alra-calmode", t.value); } catch(e) {} ["month","capMonth","pubMonth"].forEach(k => ui[k + "W"] = null); render(); return; }
   if (t.id === "fCli") { ui.cf = t.value; render(); return; }
+  if (t.id === "cliPick") { if (t.value) { ui.cq = ""; ui.openId = null; ui.modal = null; ui.hubId = t.value; ui.hubTab = "geral"; ui.tmp = {}; ui.view = "hub"; render(); } return; }
   if (t.id === "fFmt") { ui.tf = t.value; render(); return; }
   if (t.id === "fEtq") { ui.ef = t.value; render(); return; }
   if (t.id === "fPes") { ui.pf = t.value; render(); return; }
