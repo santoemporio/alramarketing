@@ -323,6 +323,10 @@ textarea,.inp{width:100%;border:1px solid var(--line2);border-radius:10px;paddin
 textarea{resize:vertical;field-sizing:content;min-height:3.4em;overflow-y:hidden}
 .clilink{border:0;background:none;padding:0;font:inherit;color:inherit;cursor:pointer;border-radius:6px}.clilink:hover span:nth-child(2),.clilink:focus-visible span:nth-child(2){text-decoration:underline;color:var(--accent-fg)}.clilink .arr{font-size:11px;color:var(--accent-fg);margin-left:2px}.clinks{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;font-size:12px;color:var(--muted)}.clinks .linkbtn{font-size:12px}
 .lock{font-size:10px}
+.tipocli{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}.tipocli label{display:block;padding:10px 12px;border:1px solid var(--line);border-radius:12px;cursor:pointer}.tipocli label:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.combo{position:relative;min-width:200px}.combo .inp{width:100%}.combo-l{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:60;max-height:300px;overflow:auto;background:var(--raised);border:1px solid var(--line2);border-radius:12px;box-shadow:var(--shadow-lg);padding:4px;display:flex;flex-direction:column}
+.combo-l[hidden]{display:none}.combo-l button{display:flex;align-items:center;gap:8px;border:0;background:none;text-align:left;padding:8px 10px;border-radius:8px;font:inherit;font-size:13px;color:var(--fg);cursor:pointer}.combo-l button[hidden]{display:none}.combo-l button:hover,.combo-l button:focus-visible{background:var(--surface);outline:none}.combo-l button[aria-selected="true"]{font-weight:800;color:var(--accent-fg)}.combo-l .dot{width:9px;height:9px;border-radius:50%;flex:none}.combo-vazio{padding:8px 10px;font-size:12.5px}
+.cm .comx{font-size:11.5px;color:var(--muted);opacity:0;transition:opacity .15s}.cm:hover .comx,.cm .comx:focus-visible{opacity:1}@media (hover:none){.cm .comx{opacity:1}}
 .rtlink{display:inline-flex;gap:6px;align-items:center;margin-left:6px;flex:1;min-width:200px}.rtlink .inp{flex:1;min-width:140px}.rtebar{flex-wrap:wrap;align-items:center}
 .rted a,.doctxt a,.docsub a,.rte.off a{color:var(--accent-fg);text-decoration:underline;text-underline-offset:2px}
 .aprtop{gap:10px;align-items:flex-end;flex-wrap:wrap}.pname{display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}.pname .inp{min-width:220px;text-transform:none;letter-spacing:0;font-size:14px;font-weight:600;color:var(--fg)}
@@ -1163,7 +1167,9 @@ const canEditInfo = c => !!c && !!ME() && inScope(c);
 
 /* ================= escopo → pautas ================= */
 function metaRedes(c){ const m = (c.escopo || {}).meta || {}; return [m.instagram && "Instagram", m.facebook && "Facebook"].filter(Boolean); }
+const ehProjeto = c => !!c && c.tipo === "projeto";
 function scopeItems(c){
+  if (ehProjeto(c)) return [];
   const e = fillEscopo(c.escopo), out = [];
   const add = (tipo, f, redes) => { if (f && f.on !== false && (f.dias || []).length) out.push({tipo, dias:f.dias.map(Number), freq:f.freq || "semanal", redes}); };
   const mr = metaRedes(c);
@@ -1188,6 +1194,7 @@ function slotsFor(c, from, to){
   return out;
 }
 function scopeSummary(c){
+  if (ehProjeto(c)) { const pj = c.projeto || {}; return [["Projeto", (pj.nome || "Projeto pontual") + (pj.inicio || pj.fim ? ` · ${pj.inicio ? fmtShort(pj.inicio) : "?"} a ${pj.fim ? fmtShort(pj.fim) : "?"}` : "")], ...(pj.entregaveis ? [["Entregáveis", String(pj.entregaveis).split(/\n+/).filter(Boolean).join(" · ")]] : [])]; }
   const e = fillEscopo(c.escopo), lines = [];
   const dtxt = f => { const d = (f.dias || []).map(Number).sort((a,b) => ((a+6)%7) - ((b+6)%7)); const dd = d.length === 7 ? "todos os dias" : d.join() === "1,2,3,4,5" ? "seg a sex" : d.map(x => WD[x].toLowerCase()).join(", "); return (dd || "dias não definidos") + (f.freq && f.freq !== "semanal" ? " · " + FREQ[f.freq].toLowerCase() : ""); };
   const mr = metaRedes(c);
@@ -1314,6 +1321,15 @@ async function subirAnexos(files, onDone){
   }
   ui.tmp.anxProg = ""; onDone(out);
 }
+const canDelCom = m => !isClient() && (m.por === ui.me || isDir() || isDirReal() || isHead());
+/* seletor de cliente com busca: digita e a lista filtra; o valor fica num input escondido com o mesmo id do antigo select */
+function comboHTML(id, value, items, ph, small){
+  const cur = items.find(x => x.v === value), lab = cur ? cur.l : "";
+  return `<div class="combo" data-combo="${esc(id)}"><input class="inp${small ? " sm" : ""}" type="search" data-combo-in="${esc(id)}" value="${esc(lab)}" placeholder="${esc(ph || "Digite para buscar…")}" autocomplete="off" role="combobox" aria-expanded="false" aria-label="${esc(ph || "Buscar")}"><input type="hidden" id="${esc(id)}" value="${esc(value)}">
+    <div class="combo-l" role="listbox" hidden>${items.map(x => `<button type="button" role="option" data-combo-pick="${esc(id)}" data-v="${esc(x.v)}" data-n="${esc(normTxt(x.l))}" ${x.v === value ? 'aria-selected="true"' : ""}>${x.dot ? `<span class="dot" style="background:${esc(x.dot)}"></span>` : ""}${esc(x.l)}</button>`).join("")}<span class="combo-vazio muted" hidden>Nenhum cliente com esse nome.</span></div></div>`;
+}
+function comboFiltrar(box, q){ const n = normTxt(q); let vis = 0; box.querySelectorAll("[data-combo-pick]").forEach(b => { const ok = !n || b.dataset.n.includes(n); b.hidden = !ok; if (ok) vis++; }); const v = box.querySelector(".combo-vazio"); if (v) v.hidden = vis > 0; }
+function comboAbrir(box, on){ const l = box.querySelector(".combo-l"), i = box.querySelector("[data-combo-in]"); if (!l) return; l.hidden = !on; i.setAttribute("aria-expanded", on ? "true" : "false"); }
 function visField(p){
   return `<div class="field full"><label class="privck" title="Privada: só a Diretoria, quem criou e os responsáveis veem e editam"><input type="checkbox" id="f-priv" ${p.privado ? "checked" : ""} ${canPriv(p) ? "" : "disabled"}> 🔒 Privado</label></div>`;
 }
@@ -2397,7 +2413,7 @@ function filtersHTML(vc, opts){
   const sem = S.pecas.some(p => semCli(p) && canSee(p));
   const ppl = T === "C" ? [] : ativos().filter(m => unitScope().includes(m.unidade)).sort((a, b) => a.nome.localeCompare(b.nome));
   if (ui.pf && !ppl.some(m => m.id === ui.pf)) ui.pf = "";
-  return `<div class="filters">${o.busca ? `<label class="selw"><span>Buscar</span><input class="inp sm" type="search" id="fBusca" placeholder="ID (#A1B2C3) ou título" value="${esc(ui.busca || "")}" autocomplete="off" style="min-width:190px"></label>` : ""}<label class="selw"><span>Cliente</span><select class="inp sm" id="fCli"><option value="todos">${isHead() ? "Todos os clientes" : "Meus clientes"}</option>${vc.map(c => `<option value="${esc(c.id)}" ${ui.cf === c.id ? "selected" : ""}>${esc(c.nome)}</option>`).join("")}${sem || ui.cf === "_sem" ? `<option value="_sem" ${ui.cf === "_sem" ? "selected" : ""}>Sem cliente</option>` : ""}</select></label>
+  return `<div class="filters">${o.busca ? `<label class="selw"><span>Buscar</span><input class="inp sm" type="search" id="fBusca" placeholder="ID (#A1B2C3) ou título" value="${esc(ui.busca || "")}" autocomplete="off" style="min-width:190px"></label>` : ""}<label class="selw"><span>Cliente</span>${comboHTML("fCli", ui.cf || "todos", [{v:"todos", l:isHead() ? "Todos os clientes" : "Meus clientes"}, ...vc.slice().sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")).map(c => ({v:c.id, l:c.nome, dot:c.cor})), ...(sem || ui.cf === "_sem" ? [{v:"_sem", l:"Sem cliente"}] : [])], "Buscar cliente…", true)}</label>
     ${o.fmt === false ? "" : `<label class="selw"><span>Formato</span><select class="inp sm" id="fFmt"><option value="todos">Todos os formatos</option>${Object.keys(GRUPOS).filter(g => grupos.includes(g) || g === "avulsa").map(g => `<option value="${g}" ${ui.tf === g ? "selected" : ""}>${esc(GRUPOS[g])}</option>`).join("")}</select></label>`}
     ${ppl.length && o.pes !== false ? `<label class="selw"><span>Pessoa</span><select class="inp sm" id="fPes"><option value="">Todas as pessoas</option>${ppl.map(m => `<option value="${esc(m.id)}" ${ui.pf === m.id ? "selected" : ""}>${esc(m.nome)}</option>`).join("")}</select></label>` : ""}${(() => { const es = etiquetas(); if (ui.ef && !es.some(e => e.id === ui.ef)) ui.ef = ""; return es.length && o.fmt !== false ? `<label class="selw"><span>Etiqueta</span><select class="inp sm" id="fEtq"><option value="">Todas as etiquetas</option>${es.map(e => `<option value="${esc(e.id)}" ${ui.ef === e.id ? "selected" : ""}>${esc(e.nome)}</option>`).join("")}</select></label>` : ""; })()}${o.extra || ""}</div>`;
 }
@@ -2527,7 +2543,7 @@ function aprovacoesHTML(){
     const days = pend && meta.enviadoEm ? Math.max(0, diffDays(TODAY, new Date(new Date(meta.enviadoEm).setHours(0,0,0,0)))) : null;
     const fb = S.feedbacks.filter(f => f.clienteId === c.id && f.k === k).slice(-1)[0];
     return `<tr><td style="min-width:180px">${cliTag(c)}<div class="muted" style="font-size:11.5px">${esc(periodLabel(c, k))}</div></td><td class="tnum">${esc(fmtD(dl))}</td><td>${st}</td><td class="num">${sent}/${ps.length}</td><td class="num">${apr}</td><td class="num">${adj || "—"}</td><td class="num">${days === null ? "—" : days + "d"}</td><td>${fb ? `<span class="pill ${fb.decisao === "total" ? "t-ok" : "t-warn"}" title="${esc(fb.texto)}">${fb.decisao === "total" ? "Aprovou tudo" : fb.decisao === "parcial" ? "Aprovou parte" : "Não aprovou"}</span>` : "—"}</td>
-      <td><div class="row" style="flex-wrap:nowrap">${ready && canEditClient(c) ? `<button type="button" class="btn sm primary" data-act="sendReady" data-cid="${esc(c.id)}" data-k="${k}">Enviar ${ready} ${ready === 1 ? "pronta" : "prontas"}</button>` : ""}<button type="button" class="btn sm" data-act="previewCli" data-cid="${esc(c.id)}" data-k="${k}">Prévia</button><button type="button" class="btn sm" data-act="msg" data-cid="${esc(c.id)}" data-k="${k}">Mensagem</button><button type="button" class="btn sm" data-act="aprLink" data-cid="${esc(c.id)}" title="Link único do cliente: mostra todos os meses, inclusive os anteriores">Link para aprovar</button></div></td></tr>`;
+      <td><div class="row" style="flex-wrap:nowrap">${ready && canEditClient(c) ? `<button type="button" class="btn sm primary" data-act="sendReady" data-cid="${esc(c.id)}" data-k="${k}">Enviar ${ready} ${ready === 1 ? "pronta" : "prontas"}</button>` : ""}<button type="button" class="btn sm" data-act="previewCli" data-cid="${esc(c.id)}" data-k="${k}">Prévia</button><button type="button" class="btn sm" data-act="msg" data-cid="${esc(c.id)}" data-k="${k}">Mensagem</button>${c.portalToken ? `<a class="btn sm" href="/c/${esc(c.portalToken)}" target="_blank" rel="noopener" title="Link único do cliente: mostra todos os meses">Abrir aprovação ↗</a><button type="button" class="btn sm" data-act="aprCopy" data-cid="${esc(c.id)}">Copiar link</button>` : canEditClient(c) ? `<button type="button" class="btn sm" data-act="aprLink" data-cid="${esc(c.id)}">Gerar link de aprovação</button>` : ""}</div></td></tr>`;
   }).join("");
   return head + `<div class="tbw"><table class="tb"><thead><tr><th>Cliente e período</th><th>Prazo de envio</th><th>Envio</th><th class="num">Enviadas</th><th class="num">Aprovadas</th><th class="num">Ajustes</th><th class="num">Com o cliente há</th><th>Feedback</th><th></th></tr></thead><tbody>${tr}</tbody></table></div>`;
 }
@@ -2689,7 +2705,7 @@ function drawerHTML(p){
   const unitPpl = ativos().filter(m => m.unidade === c.unidade);
   const opt = (list, sel) => `<option value="">Definir…</option>` + list.map(m => `<option value="${esc(m.id)}" ${sel === m.id ? "selected" : ""}>${esc(m.nome)}</option>`).join("");
   const top = `<div class="d-top"><button type="button" class="x" data-act="close" aria-label="Fechar">×</button><div class="ttl"><b>${esc(titleOf(p))}</b><span>${codTag(p)} <button type="button" class="linkbtn" style="font-size:11px;font-weight:600" data-act="copyLink" title="Copiar o link direto desta pauta">copiar link</button> · ${p.simples ? "Cartão simples" : cliLink(c)}${p.solicitante ? ` · para ${esc(p.solicitante)}` : ""} · ${esc(fmtD(p.data))}${p.simples ? "" : " · " + esc(isTask(p) ? "Pauta" : t.label)}</span></div>${pillP(p)}${canEd ? `<button type="button" class="btn sm${ed ? " primary" : ""}" data-act="pgEdit">${ed ? "Concluir edição" : "Editar"}</button>` : ""}</div>`;
-  const comentsSec = `<div class="sec"><h3>Comentários</h3><div class="list">${(p.coments || []).map(m => `<div class="cm">${av(m.por, 26)}<div><div class="s">${esc(mName(m.por))} · ${esc(fmtStamp(m.em))}</div><div class="b">${esc(m.texto)}</div></div></div>`).join("") || `<span class="muted" style="font-size:12.5px">Nenhum comentário. O cliente não vê esta conversa.</span>`}</div>
+  const comentsSec = `<div class="sec"><h3>Comentários</h3><div class="list">${(p.coments || []).map((m, i) => `<div class="cm">${av(m.por, 26)}<div style="flex:1;min-width:0"><div class="s spread"><span>${esc(mName(m.por))} · ${esc(fmtStamp(m.em))}</span>${canDelCom(m) ? (u.comDel === i ? `<span class="row" style="gap:6px"><button type="button" class="linkbtn" style="color:var(--danger);font-size:12px" data-act="comDelGo" data-i="${i}">Excluir comentário</button><button type="button" class="linkbtn" style="font-size:12px" data-act="comDelNo">Cancelar</button></span>` : `<button type="button" class="linkbtn comx" data-act="comDel" data-i="${i}" title="Excluir comentário" aria-label="Excluir comentário">Excluir</button>`) : ""}</div><div class="b">${esc(m.texto)}</div></div></div>`).join("") || `<span class="muted" style="font-size:12.5px">Nenhum comentário. O cliente não vê esta conversa.</span>`}</div>
         <div class="row" style="margin-top:8px;flex-wrap:nowrap"><input class="inp" id="cmtxt" placeholder="Escreva para a equipe… (os responsáveis são avisados)" value="${esc(u.cm || "")}" aria-label="Comentário interno"><button type="button" class="btn sm" data-act="comment">Enviar</button></div></div>`;
   const histSec = `<div class="sec"><h3>Histórico</h3><ul class="hist">${[...(p.hist || [])].reverse().map((h, i) => `<li class="${i === 0 ? "hl" : ""}"><div><div class="a">${esc(ACOES[h.acao] || h.acao)}${h.versao ? ` (v${h.versao})` : ""}</div><div class="s">${esc(h.por === "cliente" && h.nome ? "Cliente · " + h.nome : mName(h.por))} · ${esc(fmtStamp(h.em))}</div>${h.texto ? `<div class="q">${esc(h.texto)}</div>` : ""}</div></li>`).join("")}</ul></div>`;
   const delRow = `${canPlan(p) ? (u.del ? `<div class="row"><span style="font-size:12.5px">Excluir esta pauta? Ela vai para o arquivo e pode ser restaurada.</span><button type="button" class="btn sm danger" data-act="archiveOne">Excluir</button><button type="button" class="btn sm ghost" data-act="toggleDel">Cancelar</button></div>` : `<div class="row"><button type="button" class="linkbtn" style="color:var(--danger)" data-act="toggleDel">Excluir pauta</button></div>`) : ""}`;
@@ -2985,7 +3001,7 @@ function newPecaHTML(){
       <section class="psec"><h3>Propriedades</h3><div class="form props">
         ${soTask() ? "" : `<div class="field full"><span class="lb">Tipo de pauta</span><div class="seg">${Object.entries(CATS).map(([k, l]) => `<label><input type="radio" name="npcat" value="${k}" ${cat === k ? "checked" : ""}> ${l}</label>`).join("")}</div></div>`}
         <div class="field full"><div class="spread"><label for="np-cli">${u.multi ? "Clientes" : "Cliente"}</label>${cat !== "interna" || !soTask() ? `<button type="button" class="linkbtn" style="font-size:11.5px;font-weight:600;opacity:.8" data-act="npMulti">${u.multi ? "Só um cliente" : "Selecionar vários"}</button>` : ""}</div>
-          <select class="inp" id="np-cli" ${u.multi ? "hidden" : ""}><option value="" ${sem ? "selected" : ""}>Sem cliente · demanda avulsa</option>${vc.map(x => `<option value="${esc(x.id)}" ${cid === x.id ? "selected" : ""}>${esc(x.nome)}</option>`).join("")}</select>
+          ${u.multi ? `<input type="hidden" id="np-cli" value="${esc(cid)}">` : comboHTML("np-cli", cid, [{v:"", l:"Sem cliente · demanda avulsa"}, ...vc.slice().sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")).map(x => ({v:x.id, l:x.nome, dot:x.cor}))], "Digite o nome do cliente…")}
           ${u.multi ? `<div class="mcli"><div class="row" style="gap:6px"><input class="inp sm" style="flex:1;min-width:120px" type="search" id="mcliQ" placeholder="Filtrar (ex.: sorri)" autocomplete="off" value="${esc(u.mcq || "")}"><button type="button" class="btn sm" data-act="mcliAll">Marcar visíveis</button><button type="button" class="btn sm ghost" data-act="mcliNone">Limpar</button></div>
             <div class="mclil">${vc.slice().sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")).map(x => `<label data-mn="${esc(normTxt(x.nome))}" ${u.mcq && !normTxt(x.nome).includes(normTxt(u.mcq)) ? "hidden" : ""}><input type="checkbox" data-npmc value="${esc(x.id)}" ${(u.mcli || []).includes(x.id) ? "checked" : ""}> ${esc(x.nome)}</label>`).join("")}</div>
             <span class="hint" id="mcliN">${(u.mcli || []).length} selecionados · cria uma pauta igual para cada cliente, cada uma com a própria aprovação.</span></div>` : ""}</div>
@@ -3025,6 +3041,29 @@ function freqRow(path, label, f, canToggle){
 }
 const temRede = e => !!(e.meta.instagram || e.meta.facebook || e.tiktok.on || e.youtube.on || e.linkedin.on || e.blog.on);
 const soTrafego = e => !!(e.trafego && e.trafego.on) && !temRede(e);
+function escopoFormHTML(d){
+  const e = d.escopo, net = (path, label, on) => `<label><input type="checkbox" data-sc="${path}" ${on ? "checked" : ""}> ${label}</label>`, meta = e.meta.instagram || e.meta.facebook;
+  return `      <div class="eyebrow">3 · Redes e escopo</div>
+      <p class="muted" style="font-size:12.5px;margin-top:-6px">Marque as redes. As opções de cada uma abrem logo abaixo.</p>
+      <div class="netpick">${net("meta.instagram", "Instagram", e.meta.instagram)}${net("meta.facebook", "Facebook", e.meta.facebook)}${net("tiktok.on", "TikTok", e.tiktok.on)}${net("youtube.on", "YouTube", e.youtube.on)}${net("linkedin.on", "LinkedIn", e.linkedin.on)}${net("blog.on", "Blog", e.blog.on)}<label class="nettraf"><input type="checkbox" data-sc="trafego.on" ${e.trafego.on ? "checked" : ""}> Tráfego pago</label></div>
+      ${meta ? `<div class="npanel"><b>Instagram e Facebook <span class="hint">· mesma peça, mesma aprovação</span></b>${freqRow("meta.feed", "Feed", e.meta.feed, false)}${freqRow("meta.stories", "Stories", e.meta.stories, true)}</div>` : ""}
+      ${e.tiktok.on ? `<div class="npanel"><b>TikTok</b>${freqRow("tiktok.video", "Vídeos", e.tiktok.video, false)}</div>` : ""}
+      ${e.youtube.on ? `<div class="npanel"><b>YouTube</b>${freqRow("youtube.video", "Vídeo na íntegra (público)", e.youtube.video, true)}${freqRow("youtube.shorts", "YouTube Shorts", e.youtube.shorts, true)}</div>` : ""}
+      ${e.linkedin.on ? `<div class="npanel"><b>LinkedIn</b>${freqRow("linkedin.post", "Post", e.linkedin.post, true)}${freqRow("linkedin.artigo", "Artigo", e.linkedin.artigo, true)}${freqRow("linkedin.newsletter", "Newsletter", e.linkedin.newsletter, true)}</div>` : ""}
+      ${e.blog.on ? `<div class="npanel"><b>Blog</b>${freqRow("blog.post", "Posts", e.blog.post, false)}</div>` : ""}
+      <div class="npanel"><label style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;cursor:pointer"><input type="checkbox" data-sc="captacao.on" ${e.captacao.on ? "checked" : ""} style="accent-color:var(--accent)"> Captação incluída no escopo</label>${e.captacao.on ? `<div class="form"><div class="field"><label for="cf-capf">Frequência</label><select class="inp" id="cf-capf" data-sc="captacao.freq">${Object.entries(CAPFREQ).map(([k, l]) => `<option value="${k}" ${e.captacao.freq === k ? "selected" : ""}>${l}</option>`).join("")}</select></div><div class="field"><label for="cf-capo">Observação</label><input class="inp" type="text" id="cf-capo" data-sc="captacao.obs" value="${esc(e.captacao.obs || "")}" placeholder="Ex.: 1 diária por mês, 4 horas"></div></div>` : ""}</div>
+      ${e.trafego.on ? `<div class="npanel"><b>Tráfego pago</b><div class="form"><div class="field full"><label for="cf-trafo">Plataformas e observações</label><input class="inp" type="text" id="cf-trafo" data-sc="trafego.obs" value="${esc(e.trafego.obs || "")}" placeholder="Ex.: Meta Ads e Google Ads, verba mensal definida com o cliente"></div></div></div>` : ""}
+`;
+}
+function projetoFormHTML(d){
+  const pj = d.projeto || {};
+  return `<div class="eyebrow">3 · Projeto</div>
+      <div class="form"><div class="field full"><label for="cf-pjn">Nome do projeto</label><input class="inp" id="cf-pjn" data-cfpj="nome" value="${esc(pj.nome || "")}" placeholder="Ex.: Identidade visual completa"></div>
+        <div class="field"><label for="cf-pji">Início</label><input class="inp" type="date" id="cf-pji" data-cfpj="inicio" value="${esc(pj.inicio || "")}"></div>
+        <div class="field"><label for="cf-pjf">Entrega final</label><input class="inp" type="date" id="cf-pjf" data-cfpj="fim" value="${esc(pj.fim || "")}"></div>
+        <div class="field full"><label for="cf-pje">Escopo e entregáveis <span class="hint">· um por linha</span></label><textarea id="cf-pje" data-cfpj="entregaveis" rows="5" placeholder="Logo principal e variações&#10;Paleta de cores e tipografia&#10;Manual da marca (PDF)&#10;Papelaria">${esc(pj.entregaveis || "")}</textarea></div></div>
+      <p class="muted" style="font-size:12.5px">Cliente de projeto não gera pautas mensais. As pautas das etapas (ex.: conceito, logo, manual) são criadas em Nova pauta, escolhendo este cliente.</p>`;
+}
 function clientFormHTML(){
   const d = ui.tmp.cd, isNew = !d._exists, un = d.unidade, e = d.escopo;
   const ppl = fn => ativos().filter(m => m.unidade === un && fn(m.papeis || []));
@@ -3033,6 +3072,8 @@ function clientFormHTML(){
   const meta = e.meta.instagram || e.meta.facebook;
   return `<div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="cfT"><div class="m-head"><h2 id="cfT">${isNew ? "Novo cliente" : "Editar " + esc(d.nome)}</h2><button type="button" class="x" data-act="close" aria-label="Fechar">×</button></div>
     <form class="m-body" id="cfForm" novalidate>
+      <div class="eyebrow">Tipo de cliente</div>
+      <div class="seg tipocli"><label><input type="radio" name="cftipo" value="recorrente" ${d.tipo !== "projeto" ? "checked" : ""}> <b>Recorrente</b> <span class="hint">· escopo mensal, pautas todo mês</span></label><label><input type="radio" name="cftipo" value="projeto" ${d.tipo === "projeto" ? "checked" : ""}> <b>Projeto</b> <span class="hint">· início e fim, escopo específico (ex.: identidade visual)</span></label></div>
       <div class="eyebrow">1 · Cadastro</div>
       <div class="form"><div class="field"><label for="cf-nome">Nome do cliente</label><input class="inp" id="cf-nome" data-cf="nome" value="${esc(d.nome)}"></div>
         <div class="field"><span class="lb">Cor no calendário</span><div class="row" style="gap:6px">${CORES.map(cr => `<label style="width:26px;height:26px;border-radius:50%;background:${cr};cursor:pointer;position:relative;box-shadow:${d.cor === cr ? "0 0 0 2px #fff,0 0 0 4px " + cr : "none"}"><input type="radio" name="cfcor" value="${cr}" ${d.cor === cr ? "checked" : ""} style="opacity:0;position:absolute;inset:0;margin:0" aria-label="Cor ${cr}"></label>`).join("")}</div></div>
@@ -3047,16 +3088,7 @@ function clientFormHTML(){
         <div class="field"><label for="cf-em">E-mail</label><input class="inp" id="cf-em" type="email" data-cfc="email" value="${esc(d.contato.email || "")}" placeholder="contato@cliente.com.br" autocomplete="off"></div>
         <div class="field"><label for="cf-apr">Periodicidade</label><select class="inp" id="cf-apr" data-cf="aprovacao"><option value="mensal" ${d.aprovacao !== "semanal" ? "selected" : ""}>Mensal</option><option value="semanal" ${d.aprovacao === "semanal" ? "selected" : ""}>Semanal</option></select></div>
         <div class="field"><label for="cf-ant">Enviar com quantos dias de antecedência</label><input class="inp" type="number" min="1" max="30" id="cf-ant" data-cf="antecedencia" value="${esc(d.antecedencia)}"></div></div>
-      <div class="eyebrow">3 · Redes e escopo</div>
-      <p class="muted" style="font-size:12.5px;margin-top:-6px">Marque as redes. As opções de cada uma abrem logo abaixo.</p>
-      <div class="netpick">${net("meta.instagram", "Instagram", e.meta.instagram)}${net("meta.facebook", "Facebook", e.meta.facebook)}${net("tiktok.on", "TikTok", e.tiktok.on)}${net("youtube.on", "YouTube", e.youtube.on)}${net("linkedin.on", "LinkedIn", e.linkedin.on)}${net("blog.on", "Blog", e.blog.on)}<label class="nettraf"><input type="checkbox" data-sc="trafego.on" ${e.trafego.on ? "checked" : ""}> Tráfego pago</label></div>
-      ${meta ? `<div class="npanel"><b>Instagram e Facebook <span class="hint">· mesma peça, mesma aprovação</span></b>${freqRow("meta.feed", "Feed", e.meta.feed, false)}${freqRow("meta.stories", "Stories", e.meta.stories, true)}</div>` : ""}
-      ${e.tiktok.on ? `<div class="npanel"><b>TikTok</b>${freqRow("tiktok.video", "Vídeos", e.tiktok.video, false)}</div>` : ""}
-      ${e.youtube.on ? `<div class="npanel"><b>YouTube</b>${freqRow("youtube.video", "Vídeo na íntegra (público)", e.youtube.video, true)}${freqRow("youtube.shorts", "YouTube Shorts", e.youtube.shorts, true)}</div>` : ""}
-      ${e.linkedin.on ? `<div class="npanel"><b>LinkedIn</b>${freqRow("linkedin.post", "Post", e.linkedin.post, true)}${freqRow("linkedin.artigo", "Artigo", e.linkedin.artigo, true)}${freqRow("linkedin.newsletter", "Newsletter", e.linkedin.newsletter, true)}</div>` : ""}
-      ${e.blog.on ? `<div class="npanel"><b>Blog</b>${freqRow("blog.post", "Posts", e.blog.post, false)}</div>` : ""}
-      <div class="npanel"><label style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;cursor:pointer"><input type="checkbox" data-sc="captacao.on" ${e.captacao.on ? "checked" : ""} style="accent-color:var(--accent)"> Captação incluída no escopo</label>${e.captacao.on ? `<div class="form"><div class="field"><label for="cf-capf">Frequência</label><select class="inp" id="cf-capf" data-sc="captacao.freq">${Object.entries(CAPFREQ).map(([k, l]) => `<option value="${k}" ${e.captacao.freq === k ? "selected" : ""}>${l}</option>`).join("")}</select></div><div class="field"><label for="cf-capo">Observação</label><input class="inp" type="text" id="cf-capo" data-sc="captacao.obs" value="${esc(e.captacao.obs || "")}" placeholder="Ex.: 1 diária por mês, 4 horas"></div></div>` : ""}</div>
-      ${e.trafego.on ? `<div class="npanel"><b>Tráfego pago</b><div class="form"><div class="field full"><label for="cf-trafo">Plataformas e observações</label><input class="inp" type="text" id="cf-trafo" data-sc="trafego.obs" value="${esc(e.trafego.obs || "")}" placeholder="Ex.: Meta Ads e Google Ads, verba mensal definida com o cliente"></div></div></div>` : ""}
+      ${d.tipo === "projeto" ? projetoFormHTML(d) : escopoFormHTML(d)}
       <div class="eyebrow">4 · Equipe do cliente</div>
       ${soTrafego(e) ? `<p class="muted" style="font-size:12.5px;margin-top:-6px">Cliente só de tráfego: a equipe é o gestor de tráfego e a criação.</p>` : ""}
       <div class="form">${soTrafego(e) ? "" : `<div class="field full"><span class="lb">Planejamento</span>${box("planejamento", ppl(p => p.includes("planejamento") || (p.includes("head") && !p.includes("diretoria"))))}</div>`}
@@ -3293,6 +3325,8 @@ document.addEventListener("click", ev => {
     save(); fillOverlay(); const el = a === "CardAdd" && $("#ch" + (cs.length - 1)); if (el) el.focus(); return; }
   const mv = ev.target.closest && ev.target.closest("[data-mvst]");
   if (mv) { ev.preventDefault(); ev.stopImmediatePropagation(); const p = S.pecas.find(x => x.id === ui.openId); if (p) { const keep = ui.openId; moveTo(p, mv.dataset.mvst); if (!ui.openId && keep && S.pecas.some(x => x.id === keep)) { ui.openId = keep; fillOverlay(); } } return; }
+  const cp = ev.target.closest && ev.target.closest("[data-combo-pick]");
+  if (cp) { ev.preventDefault(); ev.stopImmediatePropagation(); const box = cp.closest(".combo"), h = box.querySelector('input[type="hidden"]'), i = box.querySelector("[data-combo-in]"); h.value = cp.dataset.v; i.value = cp.textContent; comboAbrir(box, false); h.dispatchEvent(new Event("change", {bubbles:true})); return; }
   const t = ev.target.closest && ev.target.closest("[data-etqdel],[data-etq],[data-npetq],[data-etqcor],[data-act=etqNovaTg],[data-act=etqMng],[data-act=etqCriar]");
   if (!t) return;
   ev.preventDefault(); ev.stopImmediatePropagation();
@@ -3309,7 +3343,11 @@ document.addEventListener("click", ev => {
     if (ui.modal === "newPeca") u.etqs = [...new Set([...(u.etqs || []), id])]; else if (p && canEtq(p)) p.etiquetas = [...new Set([...(p.etiquetas || []), id])];
     u.etqNova = false; u.etqNome = ""; save(); toast(`Etiqueta ${nome} criada.`); return redraw(); }
 });
-document.addEventListener("mousedown", ev => { if (ev.target.closest && ev.target.closest("[data-rtc]")) ev.preventDefault(); });
+document.addEventListener("mousedown", ev => { if (ev.target.closest && ev.target.closest("[data-rtc]")) ev.preventDefault(); if (ev.target.closest && ev.target.closest("[data-combo-pick]")) ev.preventDefault(); });
+document.addEventListener("focusin", ev => { const i = ev.target.closest && ev.target.closest("[data-combo-in]"); if (!i) return; const box = i.closest(".combo"); i.select(); comboFiltrar(box, ""); comboAbrir(box, true); });
+document.addEventListener("focusout", ev => { const i = ev.target.closest && ev.target.closest("[data-combo-in]"); if (!i) return; const box = i.closest(".combo"); setTimeout(() => { if (box.contains(document.activeElement)) return; comboAbrir(box, false); const h = box.querySelector('input[type="hidden"]'), cur = box.querySelector(`[data-combo-pick][data-v="${CSS.escape(h.value)}"]`); i.value = cur ? cur.textContent : ""; }, 120); });
+document.addEventListener("keydown", ev => { const i = ev.target.closest && ev.target.closest("[data-combo-in]"); if (!i) return; const box = i.closest(".combo"), vis = [...box.querySelectorAll("[data-combo-pick]:not([hidden])")];
+  if (ev.key === "Enter") { ev.preventDefault(); if (vis[0]) vis[0].click(); } else if (ev.key === "Escape") { comboAbrir(box, false); i.blur(); } else if (ev.key === "ArrowDown") { ev.preventDefault(); comboAbrir(box, true); if (vis[0]) vis[0].focus(); } });
 document.addEventListener("keydown", ev => { if (ev.key === "Enter" && ev.target.closest && ev.target.closest(".rtlink")) { ev.preventDefault(); const ok = ev.target.closest(".rtlink").querySelector("[data-rtlok]"); if (ok) ok.click(); } if (ev.key === "Escape" && ev.target.closest && ev.target.closest(".rtlink")) ev.target.closest(".rtlink").remove(); });
 document.addEventListener("paste", ev => { const ed = ev.target.closest && ev.target.closest(".rted[contenteditable]"); if (!ed) return; ev.preventDefault(); const txt = (ev.clipboardData || window.clipboardData).getData("text/plain"); document.execCommand("insertText", false, txt); });
 /* caixas de texto crescem com o conteúdo */
@@ -3409,6 +3447,9 @@ document.addEventListener("click", async ev => {
     case "mcliAll": { const u = ui.tmp; const vis = [...document.querySelectorAll(".mclil label:not([hidden]) [data-npmc]")].map(x => x.value); u.mcli = [...new Set([...(u.mcli || []), ...vis])]; fillOverlay(); break; }
     case "mcliNone": ui.tmp.mcli = []; fillOverlay(); break;
     case "copyLink": copyText(location.origin + "/?p=" + encodeURIComponent(ui.openId), "Link da pauta copiado."); break;
+    case "comDel": ui.tmp.comDel = +d.i; fillOverlay(); break;
+    case "comDelNo": ui.tmp.comDel = null; fillOverlay(); break;
+    case "comDelGo": { const p = S.pecas.find(x => x.id === ui.openId), i = +d.i; if (!p || !(p.coments || [])[i] || !canDelCom(p.coments[i])) break; p.coments.splice(i, 1); p.hist = [...(p.hist || []), entry("moveu", {texto:"Comentário excluído"})]; ui.tmp.comDel = null; save(); toast("Comentário excluído."); fillOverlay(); break; }
     case "kMenu": ui.kmenu = ui.kmenu === d.pid ? null : d.pid; render(); break;
     case "dupPeca": { const x = S.pecas.find(y => y.id === (d.pid || ui.openId)); ui.kmenu = null; if (!x || !canDup(x)) break; const n = duplicarPeca(x); toast("Card duplicado: a cópia está em Pauta."); if (ui.openId) { ui.openId = n.id; ui.idx = 0; ui.tmp = {}; } render(); break; }
     case "archAsk": { const x = S.pecas.find(y => y.id === d.pid); ui.kmenu = null; if (!x) break; ui.tmp = {confirm: {titulo: "Excluir pauta?", texto: `"${titleOf(x)}" vai para o arquivo (Kanban → Arquivadas) e pode ser restaurada.`, ok: "Excluir", ids: [x.id]}}; ui.modal = "confirm"; fillOverlay(); break; }
@@ -3469,7 +3510,8 @@ document.addEventListener("click", async ev => {
     case "logout": sb.auth.signOut().then(() => location.replace("/")); break;
     case "backFromClient": ui.me = ui.meAuto; ui.view = "inicio"; ui.openId = null; render(); break;
     case "portalGen": { const c = S.clientes.find(x => x.id === d.cid); if (!c) break; if (c.portalToken && !u.regen) { ui.tmp = {regen: true}; render(); break; } const b = crypto.getRandomValues(new Uint8Array(24)); c.portalToken = btoa(String.fromCharCode(...b)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); c.portalCriadoEm = nowIso(); save(); ui.tmp = {}; toast("Link de aprovação gerado. O link anterior parou de funcionar."); render(); break; }
-    case "aprLink": { const c = S.clientes.find(x => x.id === d.cid); if (!c) break; if (!c.portalToken) { if (!canEditClient(c)) { toast("O cliente ainda não tem link. Peça ao planejamento do cliente para gerar."); break; } const b = crypto.getRandomValues(new Uint8Array(24)); c.portalToken = btoa(String.fromCharCode(...b)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); c.portalCriadoEm = nowIso(); save(); } copyText(location.origin + "/c/" + c.portalToken, "Link de aprovação copiado. É o mesmo para todos os meses."); break; }
+    case "aprLink": { const c = S.clientes.find(x => x.id === d.cid); if (!c || !canEditClient(c)) break; if (!c.portalToken) { const b = crypto.getRandomValues(new Uint8Array(24)); c.portalToken = btoa(String.fromCharCode(...b)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); c.portalCriadoEm = nowIso(); save(); } toast("Link de aprovação criado. É o mesmo para todos os meses."); render(); break; }
+    case "aprCopy": { const c = S.clientes.find(x => x.id === d.cid); if (c && c.portalToken) copyText(location.origin + "/c/" + c.portalToken, "Link de aprovação copiado. É o mesmo para todos os meses."); break; }
     case "portalCopy": { const c = cli(d.cid); copyText(location.origin + "/c/" + c.portalToken, "Link copiado"); break; }
     case "textReady": if (!String((p.briefing || {}).corpo || "").trim()) { toast("Escreva o texto completo antes."); break; } setStatus(p, "revisao", entry("entrega"), {retorno:false}); toast("Enviada para revisão"); render(); break;
     case "ajusteOk": setStatus(p, "revisao", entry("ajuste_ok"), {retorno:false}); toast("Ajuste concluído: de volta à revisão"); render(); break;
@@ -3534,6 +3576,7 @@ document.addEventListener("input", ev => {
   if (t.id === "f-corpo" && t.value !== undefined) { const el = $("#wcount"); if (el) { const n = t.value.trim().split(/\s+/).filter(Boolean).length; el.textContent = `${n} ${n === 1 ? "palavra" : "palavras"}`; } }
   if (t.id === "f-pausa") { const p = S.pecas.find(x => x.id === ui.openId); if (p && canMove(p)) { p.pausaMotivo = t.value; save(); } return; }
   if (t.id === "fBusca") { ui.busca = t.value; const pos = t.selectionStart; render(); const el = $("#fBusca"); if (el) { el.focus(); try { el.setSelectionRange(pos, pos); } catch(e) {} } return; }
+  if (t.dataset && t.dataset.comboIn !== undefined) { const box = t.closest(".combo"); comboAbrir(box, true); comboFiltrar(box, t.value); return; }
   if (t.id === "mcliQ") { ui.tmp.mcq = t.value; const q = normTxt(t.value); document.querySelectorAll(".mclil [data-mn]").forEach(el => el.hidden = !!q && !el.dataset.mn.includes(q)); return; }
   if (t.id === "cliQ") { ui.cq = t.value; const q = normTxt(t.value); let n = 0; document.querySelectorAll("#cliGrid [data-nome]").forEach(el => { const ok = !q || el.dataset.nome.includes(q); el.hidden = !ok; if (ok) n++; }); const el = $("#cliQn"); if (el) el.textContent = `${n} de ${document.querySelectorAll("#cliGrid [data-nome]").length}`; return; }
   if (t.dataset && t.dataset.rt !== undefined) { const p = S.pecas.find(x => x.id === ui.openId); if (p) { p.briefing = p.briefing || {}; setRt(p.briefing, t.dataset.rt, t); if (t.dataset.rt === "corpo") { const el = $("#wcount"); if (el) { const n = String(p.briefing.corpo || "").trim().split(/\s+/).filter(Boolean).length; el.textContent = `${n} ${n === 1 ? "palavra" : "palavras"}`; } } save(); } return; }
@@ -3626,7 +3669,9 @@ document.addEventListener("change", async ev => {
     if (t.dataset.sc) { const path = t.dataset.sc; if (path.endsWith(".dias")) { const f = getPath(cd.escopo, path.slice(0, -5)), v = +t.value; f.dias = t.checked ? [...new Set([...(f.dias || []).map(Number), v])] : (f.dias || []).map(Number).filter(x => x !== v); } else if (t.type === "checkbox") { setPath(cd.escopo, path, t.checked); fillOverlay(); } else setPath(cd.escopo, path, t.value); return; }
     if (t.dataset.sq) { const k = t.dataset.sq; cd.squad[k] = t.checked ? [...new Set([...(cd.squad[k] || []), t.value])] : (cd.squad[k] || []).filter(x => x !== t.value); return; }
     if (t.dataset.cfr) { cd.regras[t.dataset.cfr] = t.checked; return; }
-    if (t.dataset.cf) { cd[t.dataset.cf] = t.value; if (t.dataset.cf === "unidade") { cd.squad = {planejamento:[], producao:[], social:[]}; fillOverlay(); } return; }
+    if (t.dataset.cf) { cd[t.dataset.cf] = t.value; if (t.dataset.cf === "unidade") { cd.squad = {planejamento:[], producao:[], social:[], atendimento:[], trafego:[]}; fillOverlay(); } return; }
+    if (t.dataset.cfpj) { cd.projeto = Object.assign({}, cd.projeto, {[t.dataset.cfpj]: t.value}); return; }
+    if (t.name === "cftipo") { cd.tipo = t.value; fillOverlay(); return; }
   }
   if (ui.tmp.pd) { if (t.dataset.pfp !== undefined) { const x = ui.tmp.pd; x.papeis = t.checked ? [...new Set([...(x.papeis || []), t.value])] : (x.papeis || []).filter(r => r !== t.value); return; } if (t.dataset.pf) { ui.tmp.pd[t.dataset.pf] = t.value; return; } }
   if (ui.tmp.cap) {
@@ -3698,20 +3743,25 @@ document.addEventListener("submit", async ev => {
     const cd = ui.tmp.cd; cd.nome = ($("#cf-nome").value || "").trim(); cd.notas = $("#cf-not").value; cd.antecedencia = Number($("#cf-ant").value) || 7; cd.drive = ($("#cf-drive").value || "").trim(); if (cd.drive) cd.driveId = folderIdOf(cd.drive) || cd.driveId; else { delete cd.driveId; delete cd.driveSub; } cd.contato.nome = ($("#cf-cn").value || "").trim(); cd.contato.whatsapp = (($("#cf-wa") || {}).value || "").trim(); cd.contato.email = (($("#cf-em") || {}).value || "").trim(); if (cd.contato.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(cd.contato.email)) { ui.tmp.err = "Confira o e-mail do cliente."; fillOverlay(); return; }
     const fail = msg => { ui.tmp.err = msg; fillOverlay(); };
     if (!cd.nome) return fail("Dê um nome ao cliente.");
-    const e = cd.escopo;
-    if (!temRede(e) && !e.trafego.on) return fail("Marque ao menos uma rede ou o tráfego pago no escopo.");
+    const e = cd.escopo, proj = cd.tipo === "projeto";
+    ["nome","inicio","fim","entregaveis"].forEach(k => { const el = document.querySelector(`[data-cfpj="${k}"]`); if (el) cd.projeto = Object.assign({}, cd.projeto, {[k]: el.value}); });
+    if (proj) { const pj = cd.projeto || {}; if (!(pj.nome || "").trim()) return fail("Dê um nome ao projeto."); if (!pj.fim) return fail("Defina a data de entrega final do projeto."); if (pj.inicio && pj.fim < pj.inicio) return fail("A entrega final não pode ser antes do início."); if (!cd.squad.producao.length) return fail("Defina ao menos uma pessoa de produção na equipe do cliente."); }
+    else if (!temRede(e) && !e.trafego.on) return fail("Marque ao menos uma rede ou o tráfego pago no escopo.");
     const items = [];
+    if (!proj) {
     if (e.meta.instagram || e.meta.facebook) { items.push(["Feed", e.meta.feed]); if (e.meta.stories.on) items.push(["Stories", e.meta.stories]); }
     if (e.tiktok.on) items.push(["TikTok", e.tiktok.video]);
     if (e.youtube.on) { if (!e.youtube.video.on && !e.youtube.shorts.on) return fail("No YouTube, marque vídeo na íntegra, Shorts ou os dois."); if (e.youtube.video.on) items.push(["Vídeo YouTube", e.youtube.video]); if (e.youtube.shorts.on) items.push(["YouTube Shorts", e.youtube.shorts]); }
     if (e.linkedin.on) { if (!["post","artigo","newsletter"].some(k => e.linkedin[k].on)) return fail("No LinkedIn, marque post, artigo ou newsletter."); [["post","Post LinkedIn"],["artigo","Artigo LinkedIn"],["newsletter","Newsletter LinkedIn"]].forEach(([k, l]) => { if (e.linkedin[k].on) items.push([l, e.linkedin[k]]); }); }
     if (e.blog.on) items.push(["Blog", e.blog.post]);
-    const semDia = items.find(([, f]) => !(f.dias || []).length); if (semDia) return fail(`Marque os dias de ${semDia[0]}.`);
-    if (soTrafego(e)) { if (!(cd.squad.trafego || []).length || !cd.squad.producao.length) return fail("Defina o gestor de tráfego e ao menos uma pessoa da criação."); }
+    }
+    const semDia = proj ? null : items.find(([, f]) => !(f.dias || []).length); if (semDia) return fail(`Marque os dias de ${semDia[0]}.`);
+    if (proj) {}
+    else if (soTrafego(e)) { if (!(cd.squad.trafego || []).length || !cd.squad.producao.length) return fail("Defina o gestor de tráfego e ao menos uma pessoa da criação."); }
     else { if (!cd.squad.planejamento.length || !cd.squad.producao.length) return fail("Defina ao menos uma pessoa de planejamento e uma de produção na equipe do cliente."); if (e.trafego.on && !(cd.squad.trafego || []).length) return fail("Defina o gestor de tráfego do cliente."); }
     const body = JSON.parse(JSON.stringify(cd)); delete body._exists; delete body.err;
     if (cd._exists) { const i = S.clientes.findIndex(c => c.id === cd.id); S.clientes[i] = Object.assign(S.clientes[i], body); toast("Cliente salvo"); }
-    else { body.id = uid(); body.inicio = ymd(TODAY); S.clientes.push(body); ui.hubId = body.id; ui.view = "hub"; ui.hubTab = "cadastro"; toast("Cliente cadastrado. Próximo passo: gerar as pautas no calendário."); }
+    else { body.id = uid(); body.inicio = ymd(TODAY); S.clientes.push(body); ui.hubId = body.id; ui.view = "hub"; ui.hubTab = "cadastro"; toast(proj ? "Projeto cadastrado. Crie as pautas das etapas em Nova pauta." : "Cliente cadastrado. Próximo passo: gerar as pautas no calendário."); }
     save(); ui.modal = null; ui.tmp = {}; render(); return; }
   if (id === "pfForm") { if (!isDirReal()) { ui.tmp.err = "Só a Diretoria cadastra e altera pessoas."; fillOverlay(); return; } const x = ui.tmp.pd; x.nome = String(x.nome).trim(); x.email = String(x.email || "").trim().toLowerCase(); if (!x.nome) { ui.tmp.err = "Dê um nome."; fillOverlay(); return; } if (x.email && !/^[^@\s]+@alramarketing\.com\.br$/.test(x.email) && x.email !== (person(x.id) || {}).email) { ui.tmp.err = "Use um e-mail @alramarketing.com.br."; fillOverlay(); return; } if (!isDirReal() && x.email !== String((person(x.id) || {}).email || "").toLowerCase()) { ui.tmp.err = "Só a Diretoria altera e-mails de acesso."; fillOverlay(); return; } if (x.email && S.pessoas.some(y => y.id !== x.id && emailOf(y) === x.email)) { ui.tmp.err = "Este e-mail já está em outra pessoa."; fillOverlay(); return; } if (!(x.papeis || []).length) { ui.tmp.err = "Marque ao menos um papel."; fillOverlay(); return; } if (!x.email) { ui.tmp.err = "Preencha o e-mail @alramarketing.com.br: é ele que dá o acesso."; fillOverlay(); return; }
     const body = JSON.parse(JSON.stringify(x)); delete body._exists; delete body.err;
