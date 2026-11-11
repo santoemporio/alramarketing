@@ -323,6 +323,12 @@ textarea,.inp{width:100%;border:1px solid var(--line2);border-radius:10px;paddin
 textarea{resize:vertical;field-sizing:content;min-height:3.4em;overflow-y:hidden}
 .clilink{border:0;background:none;padding:0;font:inherit;color:inherit;cursor:pointer;border-radius:6px}.clilink:hover span:nth-child(2),.clilink:focus-visible span:nth-child(2){text-decoration:underline;color:var(--accent-fg)}.clilink .arr{font-size:11px;color:var(--accent-fg);margin-left:2px}.clinks{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;font-size:12px;color:var(--muted)}.clinks .linkbtn{font-size:12px}
 .lock{font-size:10px}
+.d-top .pnav{flex:none;white-space:nowrap}.d-top .pnav[disabled]{opacity:.35;cursor:default}.d-top .pnpos{font-size:11.5px;color:var(--muted);flex:none}@media (max-width:700px){.d-top .pnl{display:none}}
+.ment-l{position:absolute;left:0;bottom:calc(100% + 4px);z-index:60;min-width:260px;max-width:100%;background:var(--raised);border:1px solid var(--line2);border-radius:12px;box-shadow:var(--shadow-lg);padding:4px;display:flex;flex-direction:column}.ment-l[hidden]{display:none}
+.ment-l button{display:flex;align-items:center;gap:8px;border:0;background:none;text-align:left;padding:6px 8px;border-radius:8px;font:inherit;font-size:13px;color:var(--fg);cursor:pointer}.ment-l button span{display:flex;flex-direction:column;line-height:1.2}.ment-l small{color:var(--muted);font-size:11px}.ment-l button.on,.ment-l button:hover{background:var(--surface)}
+.cm .b .ment{color:var(--accent-fg);font-weight:800}
+.ap-scroll{display:flex;flex-direction:column;gap:7px;position:relative}.ap-scroll.min{overflow-y:auto;overscroll-behavior:contain;padding-right:2px}.ap-more{padding:0 2px}
+.vtbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 14px;margin-bottom:14px;border:1px solid var(--accent);background:var(--accent-soft);border-radius:12px;font-size:13px}
 .mid-list{display:flex;flex-direction:column;gap:8px}.mid-li{display:grid;grid-template-columns:minmax(170px,1.1fr) minmax(0,2fr) 90px auto;gap:12px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
 .mid-li.late{border-color:color-mix(in srgb,var(--danger) 45%,var(--line));background:color-mix(in srgb,var(--danger) 5%,var(--surface))}.mid-li.done{opacity:.7}
 .mid-c{display:flex;flex-direction:column;gap:2px;min-width:0}.mid-n{font-weight:800;text-align:left;color:var(--fg)}.mid-d{font-size:11.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
@@ -832,23 +838,23 @@ const lsGet = k => { try { return localStorage.getItem(k) || ""; } catch(e) { re
 const loaded = {};
 let saveT = null, queue = Promise.resolve(), writeErr = false;
 function strip(o){ const x = Object.assign({}, o); delete x.id; return x; }
-function save(){ clearTimeout(saveT); saveT = setTimeout(flush, 600); }
+function save(){ if (ui.verTime) return; clearTimeout(saveT); saveT = setTimeout(flush, 600); }
 function flushNow(){ clearTimeout(saveT); flush(); return queue; }
 function flush(){
-  saveT = null;
+  saveT = null; if (ui.verTime) return;
   if (mode === "local") { try { localStorage.setItem(LSKEY, JSON.stringify(S)); } catch(e) {} return; }
   if (mode !== "db") return;
   const cfgS = JSON.stringify(S.cfg || {});
-  if (cache.cfg.main !== cfgS) { cache.cfg.main = cfgS; enqueue(() => dbSet("cfg", "main", JSON.parse(cfgS))); }
+  if (cache.cfg.main !== cfgS) { cache.cfg.main = cfgS; pendMark("cfg|main"); enqueue(() => dbSet("cfg", "main", JSON.parse(cfgS)).finally(() => pendDone("cfg|main"))); }
   COLS.forEach(col => {
     const seen = new Set();
     (S[col] || []).forEach(o => {
       if (!o.id) o.id = uid();
       seen.add(o.id);
       const js = JSON.stringify(strip(o));
-      if (cache[col][o.id] !== js) { cache[col][o.id] = js; const id = o.id; enqueue(() => dbSet(col, id, JSON.parse(js))); }
+      if (cache[col][o.id] !== js) { cache[col][o.id] = js; const id = o.id; pendMark(col + "|" + id); enqueue(() => dbSet(col, id, JSON.parse(js)).finally(() => pendDone(col + "|" + id))); }
     });
-    Object.keys(cache[col]).forEach(id => { if (!seen.has(id)) { delete cache[col][id]; enqueue(() => dbDel(col, id)); } });
+    Object.keys(cache[col]).forEach(id => { if (!seen.has(id)) { delete cache[col][id]; pendMark(col + "|" + id); enqueue(() => dbDel(col, id).finally(() => pendDone(col + "|" + id))); } });
   });
 }
 function enqueue(fn){
@@ -859,12 +865,18 @@ function enqueue(fn){
   });
 }
 let rT = null;
-function renderSoon(){ clearTimeout(rT); rT = setTimeout(() => { const a = document.activeElement; const typing = a && (/TEXTAREA|INPUT|SELECT/.test(a.tagName) || a.isContentEditable) && $("#overlay").contains(a); if (typing) { rT = setTimeout(renderSoon, 1500); return; } if (a && a.dataset && a.dataset.ob) { rT = setTimeout(renderSoon, 2000); return; } render(); }, 150); }
+function renderSoon(){ clearTimeout(rT); rT = setTimeout(() => { const a = document.activeElement; const txt = a && (a.isContentEditable || a.tagName === "TEXTAREA" || (a.tagName === "INPUT" && !/^(checkbox|radio|button|submit|file|range|color|date|month|week|time)$/.test(a.type))); const typing = a && (txt || (/SELECT/.test(a.tagName) && $("#overlay").contains(a))); if (typing && a.value !== "" ) { rT = setTimeout(renderSoon, 1500); return; } if (typing && $("#overlay").contains(a)) { rT = setTimeout(renderSoon, 1500); return; } if (a && a.dataset && a.dataset.ob) { rT = setTimeout(renderSoon, 2000); return; } if (document.querySelector("details.pick[open], .combo-l:not([hidden]), .kmenu, .ment-l:not([hidden])")) { rT = setTimeout(renderSoon, 1500); return; } render(); }, 150); }
 /* ---------- Supabase ---------- */
 let deepP = (location.pathname === "/" && new URLSearchParams(location.search).get("p")) || null;
 let mustSetPwd = false, sb = null, authUser = null, SB_URL = "", isMember = false, isAdmin = false, portalToken = "";
-async function dbSet(col, id, data){ const {error} = await sb.from("docs").upsert({col, id, data, updated_at: new Date().toISOString()}); if (error) throw error; }
-async function dbDel(col, id){ const {error} = await sb.from("docs").delete().eq("col", col).eq("id", id); if (error) throw error; }
+/* versões vistas (updated_at por documento) e escritas pendentes: base da ressincronização */
+const ver = {}, pendW = {}, wroteAt = {};
+const setVer = (col, id, u) => { (ver[col] = ver[col] || {})[id] = u; };
+function pendMark(k){ pendW[k] = (pendW[k] || 0) + 1; wroteAt[k] = Date.now(); }
+function pendDone(k){ pendW[k] = Math.max(0, (pendW[k] || 1) - 1); wroteAt[k] = Date.now(); }
+const pendOn = k => (pendW[k] || 0) > 0 || Date.now() - (wroteAt[k] || 0) < 12000;
+async function dbSet(col, id, data){ const u = new Date().toISOString(); const {error} = await sb.from("docs").upsert({col, id, data, updated_at: u}); if (error) throw error; setVer(col, id, u); }
+async function dbDel(col, id){ const {error} = await sb.from("docs").delete().eq("col", col).eq("id", id); if (error) throw error; if (ver[col]) delete ver[col][id]; }
 function applyRow(col, id, data){
   const js = JSON.stringify(data || {});
   if (col === "cfg") { if (id !== "main" || cache.cfg.main === js) return false; cache.cfg.main = js; S.cfg = JSON.parse(js); return true; }
@@ -880,26 +892,69 @@ function removeRow(col, id){
 }
 async function loadAll(){
   let all = [], from = 0;
-  for (;;) { const {data, error} = await sb.from("docs").select("col,id,data").order("col").order("id").range(from, from + 999); if (error) throw error; all = all.concat(data); if (data.length < 1000) break; from += 1000; }
+  for (;;) { const {data, error} = await sb.from("docs").select("col,id,data,updated_at").order("col").order("id").range(from, from + 999); if (error) throw error; all = all.concat(data); if (data.length < 1000) break; from += 1000; }
   return all;
 }
-async function subscribe(){
-  const pend = []; let loadedAll = false;
-  sb.channel("docs-all").on("postgres_changes", {event:"*", schema:"public", table:"docs"}, pl => {
-    if (!loadedAll) { pend.push(pl); return; }
+let chan = null, chanRetry = 0, chanT = null, loadedAll = false;
+const chanPend = [];
+function openChannel(){
+  clearTimeout(chanT);
+  if (chan) { const old = chan; chan = null; try { sb.removeChannel(old); } catch(e) {} }
+  const me = sb.channel("docs-" + Date.now().toString(36)).on("postgres_changes", {event:"*", schema:"public", table:"docs"}, pl => {
+    if (chan !== me) return;
+    if (!loadedAll) { chanPend.push(pl); return; }
     applyChange(pl);
-  }).subscribe(st => { if (st === "CHANNEL_ERROR" || st === "TIMED_OUT") toast("A conexão em tempo real caiu. Recarregue a página se os dados pararem de atualizar."); });
-  try { (await loadAll()).forEach(r => applyRow(r.col, r.id, r.data)); }
+  });
+  chan = me;
+  me.subscribe(st => {
+    if (chan !== me) return;
+    if (st === "SUBSCRIBED") { if (chanRetry && loadedAll) resync(true); chanRetry = 0; }
+    else if (st === "CHANNEL_ERROR" || st === "TIMED_OUT" || st === "CLOSED") { chanT = setTimeout(openChannel, Math.min(30000, 1500 * Math.pow(2, chanRetry++))); }
+  });
+}
+async function subscribe(){
+  openChannel();
+  try { (await loadAll()).forEach(r => { applyRow(r.col, r.id, r.data); setVer(r.col, r.id, r.updated_at); }); }
   catch(e) { $("#app").innerHTML = msgPage("Não foi possível carregar os dados", "Verifique a conexão e recarregue a página."); return; }
-  loadedAll = true; pend.forEach(applyChange);
+  loadedAll = true; chanPend.splice(0).forEach(applyChange);
   mode = "db"; migrate(); render();
 }
 function applyChange(pl){
   let changed = false, col;
-  if (pl.eventType === "DELETE") { col = (pl.old || {}).col; changed = removeRow(col, (pl.old || {}).id); }
-  else { col = pl.new.col; changed = applyRow(col, pl.new.id, pl.new.data); }
+  if (pl.eventType === "DELETE") { col = (pl.old || {}).col; const id = (pl.old || {}).id; if (!col || pendOn(col + "|" + id)) return; changed = removeRow(col, id); if (ver[col]) delete ver[col][id]; }
+  else { col = pl.new.col; if (pendW[col + "|" + pl.new.id] > 0) return; changed = applyRow(col, pl.new.id, pl.new.data); setVer(col, pl.new.id, pl.new.updated_at); }
   if (changed && mode === "db") { if (col === "notifs") notifyIncoming(); renderSoon(); }
 }
+/* ressincronização: compara a versão de cada documento com o banco e busca só o que mudou.
+   Roda ao voltar para a aba, ao trocar de menu ou abrir uma pauta, ao reconectar e a cada 40s com a aba visível. */
+let syncing = false, lastSync = 0;
+async function resync(force){
+  if (mode !== "db" || !sb || !loadedAll || syncing || ui.verTime) return;
+  if (!force && Date.now() - lastSync < 4000) return;
+  syncing = true; lastSync = Date.now();
+  try {
+    if (saveT) flushNow();
+    let rows = [], from = 0;
+    for (;;) { const {data, error} = await sb.from("docs").select("col,id,updated_at").order("col").order("id").range(from, from + 999); if (error) throw error; rows = rows.concat(data); if (data.length < 1000) break; from += 1000; }
+    const seen = {}, need = {};
+    rows.forEach(r => { (seen[r.col] = seen[r.col] || new Set()).add(r.id); if (pendOn(r.col + "|" + r.id)) return; if ((ver[r.col] || {})[r.id] !== r.updated_at) (need[r.col] = need[r.col] || []).push(r.id); });
+    let changed = false, notif = false;
+    for (const col of Object.keys(need)) {
+      const ids = need[col];
+      for (let i = 0; i < ids.length; i += 150) {
+        const {data, error} = await sb.from("docs").select("col,id,data,updated_at").eq("col", col).in("id", ids.slice(i, i + 150)); if (error) throw error;
+        data.forEach(r => { if (pendOn(r.col + "|" + r.id)) return; if (applyRow(r.col, r.id, r.data)) { changed = true; if (r.col === "notifs") notif = true; } setVer(r.col, r.id, r.updated_at); });
+      }
+    }
+    COLS.forEach(col => Object.keys(cache[col]).forEach(id => { if ((seen[col] && seen[col].has(id)) || pendOn(col + "|" + id) || !(ver[col] || {})[id]) return; if (removeRow(col, id)) { changed = true; delete ver[col][id]; } }));
+    if (changed) { if (notif) notifyIncoming(); renderSoon(); }
+  } catch(e) {}
+  finally { syncing = false; }
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden) { resync(true); if (chan && chan.state && chan.state !== "joined" && chan.state !== "joining") openChannel(); } });
+window.addEventListener("focus", () => resync());
+window.addEventListener("online", () => { if (mode === "db") { openChannel(); resync(true); } });
+setInterval(() => { if (!document.hidden) resync(); }, 40000);
 const msgPage = (t, p, extra) => `<div class="center"><div class="wiz"><div class="row" style="gap:12px">${LOGO_FULL(30)}<span class="muted" style="font-weight:700">Sistema de conteúdo</span></div><div class="card"><h1>${t}</h1><p class="muted">${p}</p>${extra || ""}</div></div></div>`;
 function loginHTML(msg, forgot){
   const g = `<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>`;
@@ -1120,7 +1175,8 @@ function av(id, size){
   return `<span class="av" style="background:${avColor(id)};${st}" title="${esc(n)}">${esc(initials(n))}</span>`;
 }
 const ME = () => person(ui.me);
-const isDirReal = () => { const m = person(ui.meAuto); return isAdmin || (!!m && (m.papeis || []).includes("diretoria")); };
+const isDirAuth = () => { const m = person(ui.meAuto); return isAdmin || (!!m && (m.papeis || []).includes("diretoria")); };
+const isDirReal = () => !ui.verTime && isDirAuth();
 const isClient = () => String(ui.me || "").startsWith("cli:");
 const has = r => { const m = ME(); return !!m && (m.papeis || []).includes(r); };
 const isDir = () => has("diretoria");
@@ -1134,6 +1190,8 @@ const allClients = () => isClient() ? [] : S.clientes.filter(inScope);
 const meuCliente = c => !!c && visibleClients().some(x => x.id === c.id);
 const canSeeHub = p => !isClient() && privOk(p) && unitScope().includes(unitOf(p));
 const normTxt = t => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+/* Head de Planejamento da unidade (head + planejamento): revisa e aprova tudo o que a criação finaliza */
+function headPlanDe(p){ const u = unitOf(p), hs = ativos().filter(m => (m.papeis || []).includes("head") && (m.papeis || []).includes("planejamento") && !(m.papeis || []).includes("diretoria")); const h = hs.find(m => m.unidade === u) || hs[0]; return h ? h.id : null; }
 function owner(p){
   const r = p.resp || {}, f = fluxoOf(p);
   if (isTask(p)) return ["pauta","planejamento","pautado","producao"].includes(p.status) ? (r.prod || r.plan) : null;
@@ -1142,7 +1200,8 @@ function owner(p){
   if (f === "trafego" && p.status === "publicado") return p.encerrada ? null : trafOf(p);
   if (f === "pontual" && p.status === "aprovado") return atendimentoDe(cli(p.clienteId))[0] || r.plan;
   switch (p.status) {
-    case "pauta": case "revisao": return r.plan;
+    case "pauta": return r.plan;
+    case "revisao": return headPlanDe(p) || r.plan;
     case "planejamento": return r.plan || p.criadoPor;
     case "pautado": case "producao": return r.prod;
     case "cliente": return "cliente";
@@ -1333,6 +1392,51 @@ async function subirAnexos(files, onDone){
   }
   ui.tmp.anxProg = ""; onDone(out);
 }
+/* menções: @Nome no comentário avisa a pessoa */
+function mentLabel(m){ const f = String(m.nome || "").trim().split(/\s+/)[0]; return ativos().filter(x => String(x.nome || "").trim().split(/\s+/)[0].toLowerCase() === f.toLowerCase()).length > 1 ? String(m.nome).trim() : f; }
+function mentFind(txt){ const t = String(txt); return ativos().filter(m => m.id !== ui.me && new RegExp("(^|\\s)@" + mentLabel(m).replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "(?![\\wÀ-ÿ])", "i").test(t)).map(m => m.id); }
+function comTxtHTML(m){ let h = esc(m.texto); (m.men || []).forEach(id => { const pm = person(id); if (!pm) return; const l = esc("@" + mentLabel(pm)); h = h.split(l).join(`<b class="ment">${l}</b>`); }); return h; }
+function mentState(inp){ const c = inp.selectionStart || 0, before = inp.value.slice(0, c), m = before.match(/(^|\s)@([^\s@]{0,30})$/); return m ? {q:m[2], start:c - m[2].length - 1, end:c} : null; }
+function mentShow(inp){
+  const L = $("#mentL"); if (!L) return; const st = mentState(inp); if (!st) { L.hidden = true; return; }
+  const q = normTxt(st.q), ps = ativos().filter(m => m.id !== ui.me && (!q || normTxt(m.nome).split(/\s+/).some(w => w.startsWith(q)) || normTxt(m.nome).startsWith(q))).sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")).slice(0, 7);
+  if (!ps.length) { L.hidden = true; return; }
+  L.innerHTML = ps.map((m, i) => `<button type="button" role="option" data-ment="${esc(m.id)}" class="${i === 0 ? "on" : ""}">${av(m.id, 22)}<span><b>${esc(m.nome)}</b><small>${esc(m.cargo || "")}</small></span></button>`).join(""); L.hidden = false;
+}
+function mentPick(id){ const inp = $("#cmtxt"), m = person(id); if (!inp || !m) return; const st = mentState(inp); if (!st) return; const ins = "@" + mentLabel(m) + " "; inp.value = inp.value.slice(0, st.start) + ins + inp.value.slice(st.end); const c = st.start + ins.length; inp.setSelectionRange(c, c); inp.focus(); ui.tmp.cm = inp.value; $("#mentL").hidden = true; }
+document.addEventListener("input", ev => { if (ev.target.id === "cmtxt") mentShow(ev.target); });
+document.addEventListener("mousedown", ev => { const b = ev.target.closest && ev.target.closest("[data-ment]"); if (b) { ev.preventDefault(); mentPick(b.dataset.ment); } });
+document.addEventListener("keydown", ev => {
+  if (ev.target.id !== "cmtxt") return; const L = $("#mentL"); if (!L || L.hidden) return;
+  const bs = [...L.querySelectorAll("[data-ment]")], i = bs.findIndex(b => b.classList.contains("on"));
+  if (ev.key === "ArrowDown" || ev.key === "ArrowUp") { ev.preventDefault(); const n = (i + (ev.key === "ArrowDown" ? 1 : -1) + bs.length) % bs.length; bs.forEach((b, k) => b.classList.toggle("on", k === n)); }
+  else if (ev.key === "Enter" || ev.key === "Tab") { ev.preventDefault(); ev.stopImmediatePropagation(); mentPick((bs[i] || bs[0]).dataset.ment); }
+  else if (ev.key === "Escape") { ev.stopImmediatePropagation(); L.hidden = true; }
+}, true);
+document.addEventListener("focusout", ev => { if (ev.target.id === "cmtxt") setTimeout(() => { const L = $("#mentL"); if (L) L.hidden = true; }, 150); });
+function apFit(){ document.querySelectorAll(".ap-scroll.min").forEach(el => { el.style.maxHeight = ""; const k = [...el.children].filter(x => x.matches(".kc, .kcw")); if (k.length > 5) el.style.maxHeight = (k[4].offsetTop + k[4].offsetHeight + 4) + "px"; }); }
+window.addEventListener("resize", () => apFit());
+/* Diretoria: visão de teste do Time C. Mostra o sistema como uma pessoa do Time C vê. Nada é salvo nesse modo. */
+const timeCPessoas = () => ativos().filter(m => timeOf(m) === "C").sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+function verTimeEntrar(){
+  if (!isDirAuth()) return; const ps = timeCPessoas(); if (!ps.length) { toast("Nenhuma pessoa no Time C para simular."); render(); return; }
+  flushNow(); const me = person(ui.meAuto), p = ps.find(m => me && m.unidade === me.unidade) || ps[0];
+  ui.verTime = true; ui.me = p.id; ui.view = "inicio"; ui.openId = null; ui.modal = null; ui.tmp = {}; render(); toast("Visão de teste do Time C. Nada do que fizer aqui é salvo.");
+}
+function verTimeSair(quiet){
+  ui.verTime = false; ui.me = ui.meAuto; ui.openId = null; ui.modal = null; ui.tmp = {};
+  if (mode === "db") { COLS.forEach(col => { S[col] = Object.entries(cache[col]).map(([id, js]) => Object.assign(JSON.parse(js), {id})); }); if (cache.cfg.main) S.cfg = JSON.parse(cache.cfg.main); resync(true); }
+  if (!quiet) { ui.view = "inicio"; render(); toast("Você voltou para a visão da Diretoria."); }
+}
+function verTimeBar(){ if (!ui.verTime) return ""; return `<div class="vtbar"><b>Visão de teste · Time C</b><label class="row" style="gap:6px">vendo como <select class="inp sm" id="verTimeP">${timeCPessoas().map(m => `<option value="${esc(m.id)}" ${ui.me === m.id ? "selected" : ""}>${esc(m.nome)}</option>`).join("")}</select></label><span class="muted">Nada do que fizer aqui é salvo.</span><button type="button" class="btn sm primary" data-vtsair>Sair da visão de teste</button></div>`; }
+function navCtxFrom(el){ const box = el.closest(".col, .list, .epr, .card, section, .tbw, main"); return box ? [...new Set([...box.querySelectorAll("[data-open]")].map(x => x.dataset.open))] : null; }
+function navList(p){
+  const ok = x => x && x.status === p.status && canSee(x);
+  let ids = (ui.navCtx || []).filter(id => ok(S.pecas.find(y => y.id === id)));
+  if (!ids.includes(p.id) || ids.length < 2) { ids = sortPrio(S.pecas.filter(x => ok(x) && cfMatch(x))).map(x => x.id); if (!ids.includes(p.id)) ids = [p.id]; }
+  return ids;
+}
+function pnavGo(id){ const op = S.pecas.find(x => x.id === id); if (!op) return; ui.openId = id; ui.idx = 0; ui.tmp = {edit: timeAtLeast("B") && headOfUnit(unitOf(op)) && ["pauta","producao","revisao","ajuste"].includes(op.status)}; ui.modal = null; fillOverlay(); const b = document.querySelector("#overlay .d-body"); if (b) b.scrollTop = 0; }
 const canDelCom = m => !isClient() && (m.por === ui.me || isDir() || isDirReal() || isHead());
 /* seletor de cliente com busca: digita e a lista filtra; o valor fica num input escondido com o mesmo id do antigo select */
 function comboHTML(id, value, items, ph, small){
@@ -1629,7 +1733,7 @@ function stageNotify(p, st){
       ids = [o];
       msg = isTask(p) ? `Task com você: ${t}`
         : st === "producao" ? `Em produção com você: ${t}`
-        : st === "revisao" ? `Para revisar: ${t}`
+        : st === "revisao" ? `Para revisar e aprovar: ${t}`
         : st === "ajuste" ? `Ajuste com você: ${t}`
         : st === "aprovado" ? (f === "trafego" ? `Criativo aprovado: configure a campanha ${t}` : f === "pontual" ? `Aprovada, pronta para entregar: ${t}` : `Aprovada, pronta para publicar: ${t}`)
         : st === "pauta" ? `Pauta com você: ${t}`
@@ -1982,16 +2086,19 @@ function render(){
   const unreadRel = S.notifs.filter(n => n.para === ui.me && !n.lida && n.relId).length;
   const V = {inicio:inicioHTML, equipePauta:equipePautaHTML, calendario:calendarioHTML, pecas:pecasHTML, aprovacoes:aprovacoesHTML, publicacao:publicacaoHTML, captacoes:captacoesHTML, clientes:clientesHTML, midia:midiaHTML, hub:hubHTML, dashboards:dashboardsHTML, config:configHTML, comercial:comercialHTML};
   const opt = (v, l) => `<option value="${esc(v)}" ${ui.me === v ? "selected" : ""}>${esc(l)}</option>`;
-  const sc = window.scrollY;
+  const sc = window.scrollY, keep = [...app.querySelectorAll(".board, .ap-scroll, .tbw, .epw")].map(el => [el.scrollLeft, el.scrollTop]);
+  const sig = ui.view + "|" + (ui.openId || "") + "|" + (ui.modal || "") + "|" + (ui.hubId || ""); if (sig !== render.sig) { render.sig = sig; setTimeout(() => resync(), 0); }
   app.innerHTML = `<div class="shell${ui.navMin ? " min" : ""}"><aside class="side">
     <div class="brandrow"><div class="brand"><div style="min-width:0"><div style="display:flex;align-items:center">${LOGO_FULL(26)}${halloweenOn() ? `<span class="hw-pk" aria-hidden="true">🎃</span>` : ""}</div><span style="margin-top:4px">${esc(isDir() && ui.unidade === "todas" && S.unidades.length > 1 ? "Todas as unidades" : unidade(isDir() && ui.unidade !== "todas" ? ui.unidade : m.unidade).nome)}</span></div></div>
       <button type="button" class="bell" data-act="notifs" aria-label="Notificações${unread ? ", " + unread + " não lidas" : ""}">${svgi("bell")}${unread ? `<i>${unread > 99 ? "99+" : unread}</i>` : ""}</button></div>
-    ${isDir() && S.unidades.length > 1 ? `<select class="unit" id="unitSel" aria-label="Unidade"><option value="todas" ${ui.unidade === "todas" ? "selected" : ""}>Todas as unidades</option>${S.unidades.map(u => `<option value="${u.id}" ${ui.unidade === u.id ? "selected" : ""}>${esc(u.nome)}</option>`).join("")}</select>` : ""}
+    ${(isDir() || ui.verTime) && isDirAuth() ? `<select class="unit" id="unitSel" aria-label="Unidade ou visão de teste">${S.unidades.length > 1 ? `<option value="todas" ${!ui.verTime && ui.unidade === "todas" ? "selected" : ""}>Todas as unidades</option>${S.unidades.map(u => `<option value="${u.id}" ${!ui.verTime && ui.unidade === u.id ? "selected" : ""}>${esc(u.nome)}</option>`).join("")}` : `<option value="${esc(ui.unidade || "todas")}" ${ui.verTime ? "" : "selected"}>Visão da Diretoria</option>`}<option value="__timeC" ${ui.verTime ? "selected" : ""}>Time C · visão de teste</option></select>` : ""}
     <nav class="navl" aria-label="Módulos"><span class="navsec">Trabalho</span>${nav.map(([k,l]) => (k === "clientes" ? `<span class="navsec">Gestão</span>` : "") + `<button type="button" data-view="${k}" title="${esc(l)}" ${ui.view === k || (k === "clientes" && ui.view === "hub") ? 'aria-current="page"' : ""}>${ico(k)}<span class="nl">${l}</span>${k === "dashboards" && unreadRel ? `<span class="ncnt">${unreadRel}</span>` : ""}</button>`).join("")}</nav>
     <div class="mebox"><button type="button" class="navtog" data-act="navMin" aria-label="${ui.navMin ? "Expandir menu" : "Recolher menu"}" title="${ui.navMin ? "Expandir menu" : "Recolher menu"}"><b aria-hidden="true">${ui.navMin ? "»" : "«"}</b><span class="nl">Recolher menu</span></button><button type="button" class="themetog" data-act="tema" title="${temaGet() === "dark" ? "Voltar para o modo claro" : "Usar o modo escuro"}"><span class="ti" aria-hidden="true">${temaGet() === "dark" ? "☀️" : "🌙"}</span><span class="nl">${temaGet() === "dark" ? "Modo claro" : "Modo escuro"}</span></button><button type="button" class="mebtn" data-act="profile" title="Meu perfil">${av(m.id, 32)}<span style="min-width:0" class="nl"><b>${esc(m.nome)}</b><span>${esc(TIMES[timeOf(m)])}</span></span></button>
       <button type="button" class="linkbtn" style="align-self:flex-start;color:var(--muted)" data-act="logout"><span class="nl">Sair (${esc(authUser ? authUser.email : "")})</span></button></div>
-  </aside><main class="main">${mode === "demo" ? demoBar() : ""}${ui.view === "inicio" ? hwBanner() : ""}${(V[ui.view] || inicioHTML)()}</main></div>${hwDeco()}`;
+  </aside><main class="main">${verTimeBar()}${mode === "demo" ? demoBar() : ""}${ui.view === "inicio" ? hwBanner() : ""}${(V[ui.view] || inicioHTML)()}</main></div>${hwDeco()}`;
   window.scrollTo(0, sc);
+  [...app.querySelectorAll(".board, .ap-scroll, .tbw, .epw")].forEach((el, i) => { if (keep[i]) { el.scrollLeft = keep[i][0]; el.scrollTop = keep[i][1]; } });
+  apFit();
   fillOverlay();
 }
 
@@ -2287,7 +2394,7 @@ function equipePautaHTML(){
   const rows = pool.filter(p => sel.includes(p.id));
   const chip = p => { const c = cli(p.clienteId), d = doneFor(p), l = lateFor(p); return `<button type="button" class="epc${d ? " done" : ""}${l ? " late" : ""}" data-open="${esc(p.id)}" title="${esc(c.nome + " · " + canal(p).label + " · " + stLabel(p) + (p.dataProducao ? "" : " · data de produção pelo prazo do cliente"))}"><span class="dot" style="background:${esc(c.cor)}"></span><span class="k">${canal(p).k}</span><span class="h">${esc(titleOf(p))}</span></button>`; };
   const weekLbl = `${fmtD(days[0],{day:"2-digit", month:"short"})} a ${fmtD(days[6],{day:"2-digit", month:"short"})}`;
-  const filt = T === "C" ? "" : `<details class="pick"><summary class="btn sm">Pessoas · ${rows.length === pool.length ? "todas" : rows.length}</summary><div class="pickl">${pool.map(p => `<label><input type="checkbox" data-epp value="${esc(p.id)}" ${sel.includes(p.id) ? "checked" : ""}> ${esc(p.nome)}</label>`).join("")}<div class="row" style="gap:6px;padding-top:6px;border-top:1px solid var(--line)"><button type="button" class="linkbtn" data-act="epAll">Todas</button><button type="button" class="linkbtn" data-act="epMe">Só eu</button></div></div></details>`;
+  const filt = T === "C" ? "" : `<details class="pick"><summary class="btn sm">Pessoas · ${rows.length === pool.length ? "todas" : rows.length}</summary><div class="pickl"><div class="row" style="gap:10px;padding-bottom:6px;margin-bottom:2px;border-bottom:1px solid var(--line)"><button type="button" class="linkbtn" data-act="epMe">Só eu</button><button type="button" class="linkbtn" data-act="epAll">Todos</button></div>${pool.map(p => `<label><input type="checkbox" data-epp value="${esc(p.id)}" ${sel.includes(p.id) ? "checked" : ""}> ${esc(p.nome)}</label>`).join("")}</div></details>`;
   const body = rows.map(m => {
     const mine = vis.filter(p => workerOf(p) === m.id), wk = mine.filter(p => ks.includes(prodDate(p)));
     const dn = wk.filter(doneFor).length, lt = mine.filter(lateFor).length;
@@ -2536,9 +2643,9 @@ function sendToReview(p){ const v = (p.versao || 0) + 1; p.versao = v; const not
 /* ================= aprovações ================= */
 function aprovacoesHTML(){
   const vc = visibleClients(), vis = S.pecas.filter(p => canSee(p) && cfMatch(p) && !isTask(p));
-  const col = (k, t, d) => { const l = sortP(vis.filter(p => p.status === k)); return `<div class="col apc"><div class="col-h"><b><i class="dot" style="background:var(--s-${k})"></i>${t}</b><span class="tnum">${l.length}</span></div><span class="muted" style="font-size:11.5px;padding:0 2px">${d}</span>${l.slice(0, 40).map(kcBtn).join("") || `<span class="muted" style="font-size:12px;padding:6px 2px">Nada aqui.</span>`}${l.length > 40 ? `<span class="muted" style="font-size:11.5px">+${l.length - 40}</span>` : ""}</div>`; };
+  const col = (k, t, d) => { const l = sortP(vis.filter(p => p.status === k)); return `<div class="col apc"><div class="col-h"><b><i class="dot" style="background:var(--s-${k})"></i>${t}</b><span class="tnum">${l.length}</span></div><span class="muted" style="font-size:11.5px;padding:0 2px">${d}</span><div class="ap-scroll${ui.apMax ? "" : " min"}">${l.slice(0, ui.apMax ? 40 : 200).map(kcBtn).join("") || `<span class="muted" style="font-size:12px;padding:6px 2px">Nada aqui.</span>`}</div>${!ui.apMax && l.length > 5 ? `<span class="muted ap-more" style="font-size:11.5px">Role para ver as outras ${l.length - 5}</span>` : ""}${ui.apMax && l.length > 40 ? `<span class="muted" style="font-size:11.5px">+${l.length - 40}</span>` : ""}</div>`; };
   const head = `<div><div class="eyebrow">Revisão, cliente e ajustes</div><h1>Aprovações</h1></div>${filtersHTML(vc, {fmt:false, pes:false})}
-    <div class="board ap3">${col("revisao", "Para revisar", "O planejamento confere e envia ao cliente.")}${col("cliente", "Com o cliente", "Aguardando resposta no portal ou por mensagem.")}${col("ajuste", "Pedidos de ajuste", "O cliente pediu mudança: volta para a criação ou o planejamento.")}</div>
+    <div class="spread" style="margin-top:4px"><span class="muted" style="font-size:12.5px">${ui.apMax ? "Visão completa das três etapas." : "Mostrando 5 pautas por etapa. Role dentro da coluna para ver as demais."}</span><button type="button" class="btn sm" data-apmax>${ui.apMax ? "Minimizar ⤡" : "Maximizar ⤢"}</button></div><div class="board ap3">${col("revisao", "Para revisar", "A Head de Planejamento revisa, aprova e envia ao cliente.")}${col("cliente", "Com o cliente", "Aguardando resposta no portal ou por mensagem.")}${col("ajuste", "Pedidos de ajuste", "O cliente pediu mudança: volta para a criação ou o planejamento.")}</div>
     <div style="margin-top:8px"><h2 style="margin:0">Pacotes por cliente e período</h2><p class="muted" style="margin-top:4px;font-size:12.5px;max-width:80ch">Cada linha é o que o cliente aprova de uma vez: o mês ou a semana. A prévia mostra as peças como vão aparecer no perfil.</p></div>`;
   if (!vc.length) return head + noClients();
   const rows = [];
@@ -2925,9 +3032,10 @@ function drawerHTML(p){
   const edFiles = (headOfUnit(unitOf(p)) && ["pauta","planejamento","pautado","producao","revisao","ajuste"].includes(p.status)) || (canProduce(p) && ["producao","ajuste","pauta","planejamento","pautado","revisao"].includes(p.status) && !(p.status === "ajuste" && p.ajusteCom === "planejamento"));
   const unitPpl = ativos().filter(m => m.unidade === c.unidade);
   const opt = (list, sel) => `<option value="">Definir…</option>` + list.map(m => `<option value="${esc(m.id)}" ${sel === m.id ? "selected" : ""}>${esc(m.nome)}</option>`).join("");
-  const top = `<div class="d-top"><button type="button" class="x" data-act="close" aria-label="Fechar">×</button><div class="ttl"><b>${esc(titleOf(p))}</b><span>${codTag(p)} <button type="button" class="linkbtn" style="font-size:11px;font-weight:600" data-act="copyLink" title="Copiar o link direto desta pauta">copiar link</button> · ${p.simples ? "Cartão simples" : cliLink(c)}${p.solicitante ? ` · para ${esc(p.solicitante)}` : ""} · ${esc(fmtD(p.data))}${p.simples ? "" : " · " + esc(isTask(p) ? "Pauta" : t.label)}</span></div>${pillP(p)}${canEd ? `<button type="button" class="btn sm${ed ? " primary" : ""}" data-act="pgEdit">${ed ? "Concluir edição" : "Editar"}</button>` : ""}</div>`;
-  const comentsSec = `<div class="sec"><h3>Comentários</h3><div class="list">${(p.coments || []).map((m, i) => `<div class="cm">${av(m.por, 26)}<div style="flex:1;min-width:0"><div class="s spread"><span>${esc(mName(m.por))} · ${esc(fmtStamp(m.em))}</span>${canDelCom(m) ? (u.cmtDel === i ? `<span class="row" style="gap:6px"><button type="button" class="linkbtn" style="color:var(--danger);font-size:12px" data-act="comDelGo" data-i="${i}">Excluir comentário</button><button type="button" class="linkbtn" style="font-size:12px" data-act="comDelNo">Cancelar</button></span>` : `<button type="button" class="linkbtn comx" data-act="comDel" data-i="${i}" title="Excluir comentário" aria-label="Excluir comentário">Excluir</button>`) : ""}</div><div class="b">${esc(m.texto)}</div></div></div>`).join("") || `<span class="muted" style="font-size:12.5px">Nenhum comentário. O cliente não vê esta conversa.</span>`}</div>
-        <div class="row" style="margin-top:8px;flex-wrap:nowrap"><input class="inp" id="cmtxt" placeholder="Escreva para a equipe… (os responsáveis são avisados)" value="${esc(u.cm || "")}" aria-label="Comentário interno"><button type="button" class="btn sm" data-act="comment">Enviar</button></div></div>`;
+  const nl = navList(p), ni = nl.indexOf(p.id), prevId = nl[ni - 1], nextId = nl[ni + 1];
+  const top = `<div class="d-top"><button type="button" class="x" data-act="close" aria-label="Fechar">×</button><button type="button" class="btn sm pnav" ${prevId ? `data-pnav="${esc(prevId)}"` : "disabled"} title="Pauta anterior em ${esc(stLabel(p))} (←)" aria-label="Pauta anterior">‹ <span class="pnl">Anterior</span></button><div class="ttl"><b>${esc(titleOf(p))}</b><span>${codTag(p)} <button type="button" class="linkbtn" style="font-size:11px;font-weight:600" data-act="copyLink" title="Copiar o link direto desta pauta">copiar link</button> · ${p.simples ? "Cartão simples" : cliLink(c)}${p.solicitante ? ` · para ${esc(p.solicitante)}` : ""} · ${esc(fmtD(p.data))}${p.simples ? "" : " · " + esc(isTask(p) ? "Pauta" : t.label)}</span></div>${pillP(p)}${canEd ? `<button type="button" class="btn sm${ed ? " primary" : ""}" data-act="pgEdit">${ed ? "Concluir edição" : "Editar"}</button>` : ""}<span class="pnpos tnum" title="Posição nesta etapa">${nl.length > 1 ? `${ni + 1} de ${nl.length}` : ""}</span><button type="button" class="btn sm pnav" ${nextId ? `data-pnav="${esc(nextId)}"` : "disabled"} title="Próxima pauta em ${esc(stLabel(p))} (→)" aria-label="Próxima pauta"><span class="pnl">Próxima</span> ›</button></div>`;
+  const comentsSec = `<div class="sec"><h3>Comentários</h3><div class="list">${(p.coments || []).map((m, i) => `<div class="cm">${av(m.por, 26)}<div style="flex:1;min-width:0"><div class="s spread"><span>${esc(mName(m.por))} · ${esc(fmtStamp(m.em))}</span>${canDelCom(m) ? (u.cmtDel === i ? `<span class="row" style="gap:6px"><button type="button" class="linkbtn" style="color:var(--danger);font-size:12px" data-act="comDelGo" data-i="${i}">Excluir comentário</button><button type="button" class="linkbtn" style="font-size:12px" data-act="comDelNo">Cancelar</button></span>` : `<button type="button" class="linkbtn comx" data-act="comDel" data-i="${i}" title="Excluir comentário" aria-label="Excluir comentário">Excluir</button>`) : ""}</div><div class="b">${comTxtHTML(m)}</div></div></div>`).join("") || `<span class="muted" style="font-size:12.5px">Nenhum comentário. O cliente não vê esta conversa.</span>`}</div>
+        <div class="row" style="margin-top:8px;flex-wrap:nowrap;position:relative"><input class="inp" id="cmtxt" placeholder="Escreva para a equipe… use @ para marcar alguém" value="${esc(u.cm || "")}" aria-label="Comentário interno" autocomplete="off"><button type="button" class="btn sm" data-act="comment">Enviar</button><div class="ment-l" id="mentL" role="listbox" hidden></div></div></div>`;
   const histSec = `<div class="sec"><h3>Histórico</h3><ul class="hist">${[...(p.hist || [])].reverse().map((h, i) => `<li class="${i === 0 ? "hl" : ""}"><div><div class="a">${esc(ACOES[h.acao] || h.acao)}${h.versao ? ` (v${h.versao})` : ""}</div><div class="s">${esc(h.por === "cliente" && h.nome ? "Cliente · " + h.nome : mName(h.por))} · ${esc(fmtStamp(h.em))}</div>${h.texto ? `<div class="q">${esc(h.texto)}</div>` : ""}</div></li>`).join("")}</ul></div>`;
   const delRow = `${canPlan(p) ? (u.del ? `<div class="row"><span style="font-size:12.5px">Excluir esta pauta? Ela vai para o arquivo e pode ser restaurada.</span><button type="button" class="btn sm danger" data-act="archiveOne">Excluir</button><button type="button" class="btn sm ghost" data-act="toggleDel">Cancelar</button></div>` : `<div class="row"><button type="button" class="linkbtn" style="color:var(--danger)" data-act="toggleDel">Excluir pauta</button></div>`) : ""}`;
   const chat = comentsSec + histSec + delRow;
@@ -3565,6 +3673,17 @@ document.addEventListener("click", ev => {
     u.etqNova = false; u.etqNome = ""; save(); toast(`Etiqueta ${nome} criada.`); return redraw(); }
 });
 document.addEventListener("mousedown", ev => { if (ev.target.closest && ev.target.closest("[data-rtc]")) ev.preventDefault(); if (ev.target.closest && ev.target.closest("[data-combo-pick]")) ev.preventDefault(); });
+document.addEventListener("click", ev => {
+  const n = ev.target.closest && ev.target.closest("[data-pnav]"); if (n) { ev.preventDefault(); pnavGo(n.dataset.pnav); return; }
+  const m = ev.target.closest && ev.target.closest("[data-apmax]"); if (m) { ui.apMax = !ui.apMax; render(); return; }
+  const v = ev.target.closest && ev.target.closest("[data-vtsair]"); if (v) { verTimeSair(); return; }
+});
+document.addEventListener("keydown", ev => {
+  if (!ui.openId || ui.modal || (ev.key !== "ArrowLeft" && ev.key !== "ArrowRight") || ev.altKey || ev.metaKey || ev.ctrlKey) return;
+  const a = document.activeElement; if (a && (a.isContentEditable || /INPUT|TEXTAREA|SELECT/.test(a.tagName))) return;
+  const b = document.querySelector(`#overlay .pnav[data-pnav]${ev.key === "ArrowLeft" ? ":first-of-type" : ":last-of-type"}`), all = [...document.querySelectorAll("#overlay .d-top .pnav")];
+  const btn = ev.key === "ArrowLeft" ? all[0] : all[all.length - 1]; if (btn && btn.dataset.pnav) { ev.preventDefault(); pnavGo(btn.dataset.pnav); }
+});
 document.addEventListener("focusin", ev => { const i = ev.target.closest && ev.target.closest("[data-combo-in]"); if (!i) return; const box = i.closest(".combo"); i.select(); comboFiltrar(box, box.dataset.keep !== undefined ? i.value : ""); comboAbrir(box, true); });
 document.addEventListener("focusout", ev => { const i = ev.target.closest && ev.target.closest("[data-combo-in]"); if (!i) return; const box = i.closest(".combo"); setTimeout(() => { if (box.contains(document.activeElement)) return; comboAbrir(box, false); if (box.dataset.keep !== undefined) return; const h = box.querySelector('input[type="hidden"]'), cur = box.querySelector(`[data-combo-pick][data-v="${CSS.escape(h.value)}"]`); i.value = cur ? cur.textContent : ""; }, 120); });
 document.addEventListener("keydown", ev => { const i = ev.target.closest && ev.target.closest("[data-combo-in]"); if (!i) return; const box = i.closest(".combo"), vis = [...box.querySelectorAll("[data-combo-pick]:not([hidden])")];
@@ -3599,7 +3718,7 @@ document.addEventListener("click", async ev => {
   if (d.dashst !== undefined) { ui.dashSt = d.dashst && ui.dashSt !== d.dashst ? d.dashst : null; render(); return; }
   if (d.selp) { ui.sel.has(d.selp) ? ui.sel.delete(d.selp) : ui.sel.add(d.selp); ui.tmp.bulkDel = false; render(); return; }
   if (d.selcol) { const ids = d.selcol.split(","); const all = ids.every(id => ui.sel.has(id)); ids.forEach(id => all ? ui.sel.delete(id) : ui.sel.add(id)); ui.tmp.bulkDel = false; render(); return; }
-  if (d.open) { if (Date.now() - (window.__dragEnd || 0) < 250) return; ui.openId = d.open; ui.idx = 0; const op = S.pecas.find(x => x.id === d.open); ui.tmp = {edit: !!op && timeAtLeast("B") && headOfUnit(unitOf(op)) && ["pauta","producao","revisao","ajuste"].includes(op.status)}; ui.modal = null; fillOverlay(); return; }
+  if (d.open) { if (Date.now() - (window.__dragEnd || 0) < 250) return; ui.navCtx = navCtxFrom(t); ui.openId = d.open; ui.idx = 0; const op = S.pecas.find(x => x.id === d.open); ui.tmp = {edit: !!op && timeAtLeast("B") && headOfUnit(unitOf(op)) && ["pauta","producao","revisao","ajuste"].includes(op.status)}; ui.modal = null; fillOverlay(); return; }
   if (d.mv !== undefined) { const p = S.pecas.find(x => x.id === ui.openId), i = +d.mv, j = i + Number(d.d); if (p && j >= 0 && j < p.midias.length) { [p.midias[i], p.midias[j]] = [p.midias[j], p.midias[i]]; ui.idx = j; save(); fillOverlay(); } return; }
   if (d.rmf !== undefined) { const p = S.pecas.find(x => x.id === ui.openId); if (p) { p.midias.splice(+d.rmf, 1); ui.idx = 0; save(); fillOverlay(); } return; }
   if (d.idx !== undefined) { ui.idx = Number(d.idx); fillOverlay(); return; }
@@ -3711,7 +3830,7 @@ document.addEventListener("click", async ev => {
     case "regApprove": u.reg = "ap"; fillOverlay(); break;
     case "regAdjust": u.reg = "aj"; fillOverlay(); break;
     case "regConfirm": { const txt = (u.regText || "").trim(); if (u.reg === "aj") { if (!txt) { toast("Registre o que o cliente pediu."); break; } const tp = u.regTipo || (isText(p) ? "texto" : "arte"); setStatus(p, "ajuste", entry("ajuste", {texto:txt, tipo:tp}), {ajusteCom: ajusteComOf(p, tp)}); } else setStatus(p, "aprovado", entry("registrou", {texto: txt || "Cliente aprovou fora do portal."})); ui.tmp = {}; toast("Resposta do cliente registrada"); render(); break; }
-    case "comment": { const txt = (u.cm || "").trim(); if (!txt) break; p.coments = p.coments || []; p.coments.push({por:ui.me, em:nowIso(), texto:txt}); notify([(p.resp || {}).plan, (p.resp || {}).prod], `Comentou em "${titleOf(p)}": ${txt.slice(0, 80)}`, p); u.cm = ""; save(); fillOverlay(); break; }
+    case "comment": { const txt = (u.cm || "").trim(); if (!txt) break; p.coments = p.coments || []; const men = mentFind(txt); p.coments.push(Object.assign({por:ui.me, em:nowIso(), texto:txt}, men.length ? {men} : {})); if (men.length) notify(men, `${mName(ui.me).split(" ")[0]} marcou você em "${titleOf(p)}": ${txt.slice(0, 90)}`, p); notify([(p.resp || {}).plan, (p.resp || {}).prod].filter(id => !men.includes(id)), `Comentou em "${titleOf(p)}": ${txt.slice(0, 80)}`, p); u.cm = ""; u.cmMent = null; save(); fillOverlay(); toast(men.length ? `Comentário enviado. ${men.map(id => mName(id).split(" ")[0]).join(", ")} ${men.length > 1 ? "foram avisados" : "foi avisado(a)"}.` : "Comentário enviado."); break; }
     case "sendNotif": { const ids = u.ntf || []; if (!ids.length) { toast("Marque quem deve ser notificado."); break; } const msg = (u.ntfText || "").trim(); notify(ids, msg ? `${titleOf(p)}: ${msg}` : `Pediu sua atenção em "${titleOf(p)}"`, p); p.hist.push(entry("notificou", {texto: ids.map(mName).join(", ") + (msg ? ` · ${msg}` : "")})); u.ntf = []; u.ntfText = ""; save(); fillOverlay(); toast("Notificação enviada"); break; }
     case "toggleDel": u.del = !u.del; fillOverlay(); break;
     case "loginGoogle": sb.auth.signInWithOAuth({provider:"google", options:{redirectTo: location.origin, queryParams:{hd:"alramarketing.com.br", prompt:"select_account"}}}).then(r => { if (r.error) toast(/provider|not enabled/i.test(r.error.message) ? "O login com Google ainda não foi ativado no Supabase." : "Não foi possível abrir o login do Google."); }); break;
@@ -3837,7 +3956,8 @@ document.addEventListener("change", async ev => {
     if (isClient()) { const x = S.pecas.find(y => y.clienteId === ui.me.slice(4) && y.status === "cliente"); if (x) ui.month = firstOfMonth(pd(x.data)); }
     render(); return; }
   if (t.dataset.wp !== undefined && ui.wiz && t.type === "checkbox") { const x = ui.wiz.pessoas[+t.dataset.wp]; x.papeis = t.checked ? [...new Set([...(x.papeis || []), t.value])] : (x.papeis || []).filter(r => r !== t.value); return; }
-  if (t.id === "unitSel") { ui.unidade = t.value; ui.cf = "todos"; render(); return; }
+  if (t.id === "unitSel") { if (t.value === "__timeC") { verTimeEntrar(); return; } if (ui.verTime) verTimeSair(true); ui.unidade = t.value; ui.cf = "todos"; render(); return; }
+  if (t.id === "verTimeP") { ui.me = t.value; ui.view = "inicio"; ui.openId = null; ui.modal = null; ui.tmp = {}; render(); return; }
   if (t.name === "adjtipo") { ui.tmp.adjTipo = t.value; return; }
   if (t.name === "regtipo") { ui.tmp.regTipo = t.value; return; }
   if (t.name === "aadec") { ui.tmp.dec = t.value; fillOverlay(); return; }
