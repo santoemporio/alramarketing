@@ -17,7 +17,7 @@
   --ok:#0F7A55; --ok-soft:#DDF3E7; --apv:#0E6E78; --apv-soft:#E2F3F5; --warn:#9A5300; --warn-soft:#FFF2E0;
   --info:#3150B8; --info-soft:#EDF1FD; --plan:#6747B5; --plan-soft:#F1EDFB; --done:#5E5764; --done-soft:#F0EDF1;
   --danger:#C2283A; --danger-soft:#FDEBED;
-  --s-pauta:#7E62C9; --s-planejamento:#9A6BE0; --s-pautado:#B05FD6; --s-producao:#A39BA9; --s-revisao:#4A68CF; --s-cliente:#FF0092; --s-ajuste:#D98200; --s-pausado:#8C8296; --s-aprovado:#1A93A0; --s-publicado:#13996A;
+  --s-pauta:#7E62C9; --s-planejamento:#9A6BE0; --s-revplan:#6E4FD8; --s-pautado:#B05FD6; --s-producao:#A39BA9; --s-revisao:#4A68CF; --s-cliente:#FF0092; --s-ajuste:#D98200; --s-pausado:#8C8296; --s-aprovado:#1A93A0; --s-publicado:#13996A;
   --shadow:0 1px 2px rgba(36,28,41,.04),0 6px 20px rgba(36,28,41,.05); --shadow-lg:0 24px 60px rgba(36,28,41,.16); --scrim:rgba(36,28,41,.32);
   --f:"Montserrat",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 }
@@ -323,6 +323,15 @@ textarea,.inp{width:100%;border:1px solid var(--line2);border-radius:10px;paddin
 textarea{resize:vertical;field-sizing:content;min-height:3.4em;overflow-y:hidden}
 .clilink{border:0;background:none;padding:0;font:inherit;color:inherit;cursor:pointer;border-radius:6px}.clilink:hover span:nth-child(2),.clilink:focus-visible span:nth-child(2){text-decoration:underline;color:var(--accent-fg)}.clilink .arr{font-size:11px;color:var(--accent-fg);margin-left:2px}.clinks{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;font-size:12px;color:var(--muted)}.clinks .linkbtn{font-size:12px}
 .lock{font-size:10px}
+.ajonde{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:10px;background:color-mix(in srgb,var(--s-ajuste) 14%,transparent);border:1px solid color-mix(in srgb,var(--s-ajuste) 45%,transparent);font-size:12.5px;margin-bottom:8px}.ajonde span{color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:10.5px}.ajonde b{font-size:13.5px}
+.ajq{color:var(--s-ajuste)}.ajtag{display:inline-block;font-size:10.5px;font-weight:800;color:#8a5200;background:color-mix(in srgb,var(--s-ajuste) 18%,transparent);border-radius:6px;padding:1px 6px;margin:0 4px 3px 0}
+.objtag{font-size:12px;color:var(--muted);margin:2px 0 6px}.objtag b{color:var(--fg);font-weight:700}
+.al-steps{display:flex;gap:6px;flex-wrap:wrap}.al-steps button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font:inherit;font-size:12.5px;font-weight:700;color:var(--muted);cursor:pointer}.al-steps button[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-fg)}
+.al-items,.al-encs{display:flex;flex-direction:column;gap:6px}.al-items>.linkbtn,.al-encs>.linkbtn{align-self:flex-start}.al-it{display:flex;gap:6px;align-items:center}.al-it .inp{flex:1}
+.al-enc{display:grid;grid-template-columns:22px minmax(160px,2fr) minmax(130px,1fr) 140px auto 28px;gap:6px;align-items:center}.al-enc.done .inp{opacity:.55;text-decoration:line-through}
+.al-chk{display:flex;flex-direction:column;gap:6px;font-size:13px}.al-chk label{display:flex;gap:8px;align-items:flex-start}
+.x.sm{width:28px;height:28px;font-size:16px}
+@media (max-width:800px){.al-enc{grid-template-columns:22px 1fr}.al-enc>*:nth-child(n+3){grid-column:2}}
 .d-top .pnav{flex:none;white-space:nowrap}.d-top .pnav[disabled]{opacity:.35;cursor:default}.d-top .pnpos{font-size:11.5px;color:var(--muted);flex:none}@media (max-width:700px){.d-top .pnl{display:none}}
 .ment-l{position:absolute;left:0;bottom:calc(100% + 4px);z-index:60;min-width:260px;max-width:100%;background:var(--raised);border:1px solid var(--line2);border-radius:12px;box-shadow:var(--shadow-lg);padding:4px;display:flex;flex-direction:column}.ment-l[hidden]{display:none}
 .ment-l button{display:flex;align-items:center;gap:8px;border:0;background:none;text-align:left;padding:6px 8px;border-radius:8px;font:inherit;font-size:13px;color:var(--fg);cursor:pointer}.ment-l button span{display:flex;flex-direction:column;line-height:1.2}.ment-l small{color:var(--muted);font-size:11px}.ment-l button.on,.ment-l button:hover{background:var(--surface)}
@@ -762,11 +771,11 @@ const GRUPOS = {meta:"Instagram e Facebook", stories:"Stories", ads:"Anúncios",
 const FORMATOS_GEN = ["Arte digital","Impresso","Vídeo","Fotos","Apresentação","Documento","Outro"];
 const FORMATOS = ["Post estático","Carrossel","Reels","Stories","Vídeo","Capa","Banner site","Banner newsletter"];
 const STATUS = {
-  pauta:{label:"Pauta", tone:"plan"}, planejamento:{label:"Planejamento", tone:"plan"}, pautado:{label:"Criação", tone:"plan"}, producao:{label:"Em produção", tone:"prod"}, revisao:{label:"Em revisão", tone:"info"},
+  pauta:{label:"Pauta", tone:"plan"}, planejamento:{label:"Planejamento", tone:"plan"}, revplan:{label:"Revisão planejamento", tone:"plan"}, pautado:{label:"Criação", tone:"plan"}, producao:{label:"Em produção", tone:"prod"}, revisao:{label:"Em revisão", tone:"info"},
   cliente:{label:"Com o cliente", tone:"accent"}, ajuste:{label:"Ajuste", tone:"warn"},
   pausado:{label:"Pausado", tone:"done"}, aprovado:{label:"Aprovado", tone:"apv"}, publicado:{label:"Publicado", tone:"ok"}
 };
-const ORDER = ["pauta","planejamento","pautado","producao","revisao","cliente","ajuste","pausado","aprovado","publicado"];
+const ORDER = ["pauta","planejamento","revplan","pautado","producao","revisao","cliente","ajuste","pausado","aprovado","publicado"];
 const CLIENT_ST = ["cliente","ajuste","aprovado","publicado"];
 const OBJETIVOS = ["Venda","Remarketing","Branding","Reconhecimento","Autoridade","Engajamento","Institucional"];
 const PAPEIS = {diretoria:"Diretoria da rede", head:"Head", planejamento:"Planejamento", design:"Design", audiovisual:"Audiovisual", social:"Social media", trafego:"Tráfego", atendimento:"Atendimento"};
@@ -776,7 +785,7 @@ const FREQ = {semanal:"Toda semana", quinzenal:"A cada 15 dias", mensal:"1× por
 const EQUIP = ["Câmera","Lentes","Tripé","Gimbal","Microfone","Iluminação","Rebatedor","Celular","Drone","Baterias extras","Cartões de memória"];
 const CAPFREQ = {semanal:"Semanal", quinzenal:"Quinzenal", mensal:"Mensal", demanda:"Sob demanda"};
 const ACOES = {
-  pauta:"Pauta criada", pausou:"Pausada: depende do cliente", planejamento:"Em planejamento: roteiro e briefing", pautado:"Enviada para a criação", producao:"Enviada para produção", arquivos:"Arquivos anexados", entrega:"Enviada para revisão", nova_versao:"Nova versão enviada para revisão",
+  pauta:"Pauta criada", pausou:"Pausada: depende do cliente", planejamento:"Em planejamento: roteiro e briefing", revplan:"Enviada para a Head de Planejamento validar", pautado:"Enviada para a criação", ajuste_int:"Ajuste pedido na revisão", aprovou_trafego:"Criativo aprovado na revisão", producao:"Enviada para produção", arquivos:"Arquivos anexados", entrega:"Enviada para revisão", nova_versao:"Nova versão enviada para revisão",
   devolveu:"Devolvida para a produção", enviou_cliente:"Enviada ao cliente", aprovou:"Aprovada pelo cliente", aprovou_interno:"Aprovada internamente (pauta sem cliente)", no_ar:"Campanha no ar", encerrou:"Campanha encerrada", entregou:"Entregue", captado:"Material captado: foi para a edição", validou:"Validada pelo Head", apresentou:"Apresentado ao cliente", aprovou_tudo:"Aprovada em \"aprovar todo o planejamento\"",
   ajuste:"Cliente pediu ajuste", registrou:"Aprovação registrada pela equipe", publicou:"Publicada", concluiu:"Tarefa concluída", iniciou:"Tarefa iniciada", reabriu:"Tarefa reaberta", ajuste_ok:"Ajuste concluído, de volta à revisão", data:"Data alterada", moveu:"Etapa alterada no quadro", notificou:"Notificação enviada"
 };
@@ -828,8 +837,8 @@ function monthLabel(d){ const s = d.toLocaleDateString("pt-BR",{month:"long", ye
 const nowIso = () => new Date().toISOString();
 
 /* ================= estado + sincronização ================= */
-const COLS = ["unidades","pessoas","clientes","pecas","captacoes","materiais","acessos","feedbacks","pacotes","notifs","relatorios","arquivo","comercial","midiaContas","midiaCobs"];
-const EMPTY = () => ({cfg:{}, unidades:[], pessoas:[], clientes:[], pecas:[], captacoes:[], materiais:[], acessos:[], feedbacks:[], pacotes:[], notifs:[], relatorios:[], arquivo:[], comercial:[], midiaContas:[], midiaCobs:[]});
+const COLS = ["unidades","pessoas","clientes","pecas","captacoes","materiais","acessos","feedbacks","pacotes","notifs","relatorios","arquivo","comercial","midiaContas","midiaCobs","alinhamentos"];
+const EMPTY = () => ({cfg:{}, unidades:[], pessoas:[], clientes:[], pecas:[], captacoes:[], materiais:[], acessos:[], feedbacks:[], pacotes:[], notifs:[], relatorios:[], arquivo:[], comercial:[], midiaContas:[], midiaCobs:[], alinhamentos:[]});
 let S = EMPTY();
 let db = null, assets = null, mode = "loading";
 const cache = {}; COLS.concat(["cfg"]).forEach(c => cache[c] = {});
@@ -1106,7 +1115,7 @@ function notifyIncoming(){
 
 /* ================= migração de versões anteriores ================= */
 const fr = (on, freq) => ({on, dias:[], freq: freq || "semanal"});
-const blankEscopo = () => ({meta:{instagram:false, facebook:false, feed:fr(true), stories:fr(false)}, tiktok:{on:false, video:fr(true)}, youtube:{on:false, video:fr(false), shorts:fr(false)}, linkedin:{on:false, post:fr(false), artigo:fr(false), newsletter:fr(false, "quinzenal")}, blog:{on:false, post:fr(true)}, captacao:{on:false, freq:"mensal", obs:""}, trafego:{on:false, obs:""}});
+const blankEscopo = () => ({meta:{instagram:false, facebook:false, feed:fr(true), stories:fr(false)}, tiktok:{on:false, video:fr(true)}, youtube:{on:false, video:fr(false), shorts:fr(false)}, linkedin:{on:false, post:fr(false), artigo:fr(false), newsletter:fr(false, "quinzenal")}, blog:{on:false, post:fr(true)}, captacao:{on:false, freq:"mensal", obs:""}, reuniao:{on:false, freq:"mensal", obs:"", resp:""}, trafego:{on:false, obs:""}});
 function fillEscopo(e){
   const b = blankEscopo(), out = Object.assign({}, b, e || {});
   Object.keys(b).forEach(k => { out[k] = Object.assign({}, b[k], (e || {})[k] || {}); });
@@ -1196,11 +1205,14 @@ function owner(p){
   const r = p.resp || {}, f = fluxoOf(p);
   if (isTask(p)) return ["pauta","planejamento","pautado","producao"].includes(p.status) ? (r.prod || r.plan) : null;
   if (f === "relatorio") return {pauta: r.prod || r.plan, planejamento: r.plan, pautado: r.prod || r.plan, producao: r.plan, revisao: diretorOf(p), aprovado: (atendimentoDe(cli(p.clienteId))[0] || r.plan)}[p.status] || null;
+  if (f === "trafego" && p.status === "revisao") return (p.criadoPor && person(p.criadoPor) ? p.criadoPor : null) || r.plan || trafOf(p);
+  if (f === "trafego" && p.status === "ajuste") return r.prod || r.plan;
   if (f === "trafego" && p.status === "aprovado") return trafOf(p);
   if (f === "trafego" && p.status === "publicado") return p.encerrada ? null : trafOf(p);
   if (f === "pontual" && p.status === "aprovado") return atendimentoDe(cli(p.clienteId))[0] || r.plan;
   switch (p.status) {
     case "pauta": return r.plan;
+    case "revplan": return headPlanDe(p) || r.plan;
     case "revisao": return headPlanDe(p) || r.plan;
     case "planejamento": return r.plan || p.criadoPor;
     case "pautado": case "producao": return r.prod;
@@ -1275,6 +1287,7 @@ function scopeSummary(c){
   if (e.linkedin.on) [["post","Post"],["artigo","Artigo"],["newsletter","Newsletter"]].forEach(([k, l]) => { if (e.linkedin[k].on) lines.push(["LinkedIn", l + " · " + dtxt(e.linkedin[k])]); });
   if (e.blog.on) lines.push(["Blog", "Posts · " + dtxt(e.blog.post)]);
   if (e.trafego.on) lines.push(["Tráfego pago", "Gestão de tráfego" + (e.trafego.obs ? " · " + e.trafego.obs : "")]);
+  if (e.reuniao && e.reuniao.on) lines.push(["Reunião", (REUFREQ[e.reuniao.freq] || "Incluída") + (e.reuniao.resp ? " · " + mName(e.reuniao.resp).split(" ")[0] : "") + (e.reuniao.obs ? " · " + e.reuniao.obs : "")]);
   if (e.captacao.on) lines.push(["Captação", (CAPFREQ[e.captacao.freq] || "Incluída") + (e.captacao.obs ? " · " + e.captacao.obs : "")]);
   return lines;
 }
@@ -1473,7 +1486,7 @@ const FLUXOS = {
   arte:{nome:"Conteúdo com arte", etapas:"Pauta → Produção → Revisão → Cliente → Aprovado → Publicado"},
   video:{nome:"Vídeo", etapas:"Roteiro → Captação → Edição → Revisão → Cliente → Aprovado → Publicado"},
   texto:{nome:"Conteúdo de texto", etapas:"Pauta → Redação → Revisão → Cliente → Aprovado → Publicado"},
-  trafego:{nome:"Tráfego pago", etapas:"Briefing → Criativo → Revisão → Cliente → Aprovado → No ar → Encerrada"},
+  trafego:{nome:"Tráfego pago", etapas:"Pauta → Criação → Em produção → Em revisão (quem criou) → Ajuste → Aprovado → No ar"},
   pontual:{nome:"Demanda pontual do cliente", etapas:"Solicitação → Produção → Revisão → Cliente → Aprovado → Entregue"},
   interna:{nome:"Demanda interna (sem cliente)", etapas:"Pauta → Produção → Revisão → Aprovado → Entregue"},
   tarefa:{nome:"Pauta (to-do)", etapas:"A fazer → Fazendo → Concluída"},
@@ -1495,7 +1508,7 @@ function stLabel(p){
   if (f === "video" && s === "pauta") return "Roteiro";
   if (f === "video" && s === "producao") return p.subetapa === "edicao" ? "Edição" : "Captação";
   if (f === "texto" && s === "pauta") return "Redação";
-  if (f === "trafego") { if (s === "pauta") return "Briefing"; if (s === "producao") return "Criativo"; if (s === "aprovado") return "Aprovado · configurar"; if (s === "publicado") return p.encerrada ? "Encerrada" : "No ar"; }
+  if (f === "trafego") { if (s === "revisao") return "Em revisão"; if (s === "aprovado") return "Aprovado · configurar"; if (s === "publicado") return p.encerrada ? "Encerrada" : "No ar"; }
   if (f === "pontual" && s === "pauta") return "Solicitação";
   if ((f === "pontual" || f === "interna") && s === "publicado") return "Entregue";
   return (STATUS[s] || STATUS.pauta).label;
@@ -1646,6 +1659,8 @@ function relatoriosHTML(inner){
 
 /* ================= helpers visuais ================= */
 const canal = p => CANAIS[p.tipo] || CANAIS.feed;
+const FMT_K = {"Post estático":"Estático", "Carrossel":"Carrossel", "Reels":"Reels", "Stories":"Stories", "Vídeo":"Vídeo", "Capa":"Capa", "Banner site":"Banner", "Banner newsletter":"Newsletter"};
+function fmtK(p){ const f = ((p.briefing || {}).formatos || []).filter(Boolean); if (!f.length || isTask(p)) return canal(p).k; const l = f.map(x => FMT_K[x] || x); return l.length > 2 ? l.slice(0, 2).join(" + ") + " +" + (l.length - 2) : l.join(" + "); }
 const titleOf = p => (p.briefing || {}).headline || (p.briefing || {}).ideia || `${canal(p).label} sem pauta`;
 const pill = st => { const s = STATUS[st] || STATUS.pauta; return `<span class="pill t-${s.tone}">${esc(s.label)}</span>`; };
 const canHub = c => !!(c && c.id) && !isClient() && allClients().some(x => x.id === c.id);
@@ -1680,7 +1695,7 @@ function janela(p){
   if (p.status === "aprovado") return "";
   if (isTask(p)) { const n = diffDays(pd(p.data), TODAY); return n < 0 ? `<span class="flag">Atrasada</span>` : n === 0 ? `<span class="flag soon">Vence hoje</span>` : ""; }
   const c = cli(p.clienteId), dl = deadlineOf(c, periodKey(c, pd(p.data)));
-  const prazo = ["pauta","planejamento","pautado","producao"].includes(p.status) ? addDays(dl, -2) : p.status === "revisao" ? dl : pd(p.data);
+  const prazo = ["pauta","planejamento","revplan","pautado","producao"].includes(p.status) ? addDays(dl, -2) : p.status === "revisao" ? dl : pd(p.data);
   const n = diffDays(prazo, TODAY);
   if (n < 0) return `<span class="flag">Atrasada</span>`;
   if (n === 0) return `<span class="flag soon">Vence hoje</span>`;
@@ -1737,9 +1752,10 @@ function stageNotify(p, st){
         : st === "ajuste" ? `Ajuste com você: ${t}`
         : st === "aprovado" ? (f === "trafego" ? `Criativo aprovado: configure a campanha ${t}` : f === "pontual" ? `Aprovada, pronta para entregar: ${t}` : `Aprovada, pronta para publicar: ${t}`)
         : st === "pauta" ? `Pauta com você: ${t}`
+        : st === "revplan" ? `Validar se entra para produção: ${t}`
         : `${stLabel(p)}: ${t}`;
     }
-    if (st === "revisao" && f !== "relatorio" && precisaHead(p) && !p.validadoHead && !(person(o) && (person(o).papeis || []).includes("head"))) { const hs = ativos().filter(m => m.unidade === unitOf(p) && (m.papeis || []).includes("head")).map(m => m.id); ids = ids.concat(hs); msg = `Para revisar e validar: ${t}`; }
+    if (st === "revisao" && f !== "relatorio" && f !== "trafego" && precisaHead(p) && !p.validadoHead && !(person(o) && (person(o).papeis || []).includes("head"))) { const hs = ativos().filter(m => m.unidade === unitOf(p) && (m.papeis || []).includes("head")).map(m => m.id); ids = ids.concat(hs); msg = `Para revisar e validar: ${t}`; }
   }
   if (ids.length) notify(ids, msg, p);
 }
@@ -1964,6 +1980,9 @@ function adjTipos(name, cur, p){
   const def = ops[0][0];
   return `<div class="seg">${ops.map(([v,l]) => `<label><input type="radio" name="${name}" value="${v}" ${(cur || def) === v ? "checked" : ""}> ${l}</label>`).join("")}</div>`;
 }
+const AJ_ONDE = {arte:"Na arte", legenda:"Na legenda", ambos:"Arte e legenda", texto:"No texto", card:"No card"};
+const ajOnde = h => h && h.tipo ? (AJ_ONDE[h.tipo] || h.tipo) : "";
+const lastAjuste = p => [...(p.hist || [])].reverse().find(h => ["ajuste","ajuste_int"].includes(h.acao));
 const ajusteComOf = (p, tp) => (!needsArt(p) || ["legenda","texto"].includes(tp)) ? "planejamento" : "criacao";
 
 /* ---------- nova pauta ---------- */
@@ -1982,7 +2001,7 @@ function notify(ids, texto, p, cid){
 function setStatus(p, st, ent, extra){
   const changed = p.status !== st;
   Object.assign(p, extra || {}); p.status = st; if (ent) p.hist.push(ent);
-  if (["pauta","planejamento","pautado","producao","ajuste"].includes(st)) delete p.validadoHead;
+  if (["pauta","planejamento","revplan","pautado","producao","ajuste"].includes(st)) delete p.validadoHead;
   if (st === "producao" && fluxoOf(p) === "video" && !p.subetapa) p.subetapa = "captacao";
   if (st === "cliente") { const c = cli(p.clienteId), id = pacoteId(c.id, periodKey(c, pd(p.data))); if (!S.pacotes.find(x => x.id === id)) S.pacotes.push({id, clienteId:c.id, enviadoEm: nowIso()}); }
   if (changed) stageNotify(p, st);
@@ -2371,7 +2390,7 @@ function resumoDiaHTML(){
 function inicioHTML(){
   const m = ME(), T = myTime(), all = S.pecas.filter(canSee), base = T === "C" ? all.filter(involved) : all;
   const queue = sortP(all.filter(myTurn)), first = m.nome.split(" ")[0], vc = visibleClients(), tk = ymd(TODAY);
-  const andamento = base.filter(p => !["pauta","planejamento","pautado","publicado"].includes(p.status)), late = base.filter(isLate), comCli = base.filter(p => p.status === "cliente"), ajuste = base.filter(p => p.status === "ajuste"), hoje = base.filter(p => p.data === tk && p.status !== "publicado" && !isTask(p));
+  const andamento = base.filter(p => !["pauta","planejamento","revplan","pautado","publicado"].includes(p.status)), late = base.filter(isLate), comCli = base.filter(p => p.status === "cliente"), ajuste = base.filter(p => p.status === "ajuste"), hoje = base.filter(p => p.data === tk && p.status !== "publicado" && !isTask(p));
   const k = (n, l, cls, a) => `<button type="button" class="kpi ${cls}" ${a}><b>${n}</b><span>${l}</span></button>`;
   const caps = S.captacoes.filter(x => (x.resp === ui.me || (T !== "C" && headOfUnit(cli(x.clienteId).unidade))) && !["Realizada","Cancelada"].includes(x.status) && diffDays(pd(x.data), TODAY) >= 0 && diffDays(pd(x.data), TODAY) <= 7).sort((a, b) => (a.data + a.inicio).localeCompare(b.data + b.inicio));
   const un = isDir() && ui.unidade === "todas" && S.unidades.length > 1 ? "todas as unidades" : S.unidades.length === 1 ? S.unidades[0].nome : unidade(isDir() && ui.unidade !== "todas" ? ui.unidade : m.unidade).nome;
@@ -2392,7 +2411,7 @@ function equipePautaHTML(){
   const pool = T === "C" ? [ME()] : ativos().filter(p => units.includes(p.unidade)).sort((a, b) => a.nome.localeCompare(b.nome));
   const sel = ui.epPeople && ui.epPeople.length ? ui.epPeople.filter(id => pool.some(p => p.id === id)) : pool.map(p => p.id);
   const rows = pool.filter(p => sel.includes(p.id));
-  const chip = p => { const c = cli(p.clienteId), d = doneFor(p), l = lateFor(p); return `<button type="button" class="epc${d ? " done" : ""}${l ? " late" : ""}" data-open="${esc(p.id)}" title="${esc(c.nome + " · " + canal(p).label + " · " + stLabel(p) + (p.dataProducao ? "" : " · data de produção pelo prazo do cliente"))}"><span class="dot" style="background:${esc(c.cor)}"></span><span class="k">${canal(p).k}</span><span class="h">${esc(titleOf(p))}</span></button>`; };
+  const chip = p => { const c = cli(p.clienteId), d = doneFor(p), l = lateFor(p); return `<button type="button" class="epc${d ? " done" : ""}${l ? " late" : ""}" data-open="${esc(p.id)}" title="${esc(c.nome + " · " + canal(p).label + " · " + stLabel(p) + (p.dataProducao ? "" : " · data de produção pelo prazo do cliente"))}"><span class="dot" style="background:${esc(c.cor)}"></span><span class="k">${fmtK(p)}</span><span class="h">${esc(titleOf(p))}</span></button>`; };
   const weekLbl = `${fmtD(days[0],{day:"2-digit", month:"short"})} a ${fmtD(days[6],{day:"2-digit", month:"short"})}`;
   const filt = T === "C" ? "" : `<details class="pick"><summary class="btn sm">Pessoas · ${rows.length === pool.length ? "todas" : rows.length}</summary><div class="pickl"><div class="row" style="gap:10px;padding-bottom:6px;margin-bottom:2px;border-bottom:1px solid var(--line)"><button type="button" class="linkbtn" data-act="epMe">Só eu</button><button type="button" class="linkbtn" data-act="epAll">Todos</button></div>${pool.map(p => `<label><input type="checkbox" data-epp value="${esc(p.id)}" ${sel.includes(p.id) ? "checked" : ""}> ${esc(p.nome)}</label>`).join("")}</div></details>`;
   const body = rows.map(m => {
@@ -2532,13 +2551,13 @@ function filtersHTML(vc, opts){
   const grupos = [...new Set(S.pecas.filter(canSee).map(p => canal(p).grupo))];
   if (ui.tf !== "todos" && !grupos.includes(ui.tf)) ui.tf = "todos";
   const sem = S.pecas.some(p => semCli(p) && canSee(p));
-  const ppl = T === "C" ? [] : ativos().filter(m => unitScope().includes(m.unidade)).sort((a, b) => a.nome.localeCompare(b.nome));
+  const ppl = T === "C" && !has("trafego") ? [] : ativos().filter(m => unitScope().includes(m.unidade)).sort((a, b) => a.nome.localeCompare(b.nome));
   if (ui.pf && !ppl.some(m => m.id === ui.pf)) ui.pf = "";
   return `<div class="filters">${o.busca ? `<label class="selw"><span>Buscar</span><input class="inp sm" type="search" id="fBusca" placeholder="ID (#A1B2C3) ou título" value="${esc(ui.busca || "")}" autocomplete="off" style="min-width:190px"></label>` : ""}<label class="selw"><span>Cliente</span>${comboHTML("fCli", ui.cf || "todos", [{v:"todos", l:isHead() ? "Todos os clientes" : "Meus clientes"}, ...vc.slice().sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")).map(c => ({v:c.id, l:c.nome, dot:c.cor})), ...(sem || ui.cf === "_sem" ? [{v:"_sem", l:"Sem cliente"}] : [])], "Buscar cliente…", true)}</label>
     ${o.fmt === false ? "" : `<label class="selw"><span>Formato</span><select class="inp sm" id="fFmt"><option value="todos">Todos os formatos</option>${Object.keys(GRUPOS).filter(g => grupos.includes(g) || g === "avulsa").map(g => `<option value="${g}" ${ui.tf === g ? "selected" : ""}>${esc(GRUPOS[g])}</option>`).join("")}</select></label>`}
     ${ppl.length && o.pes !== false ? `<label class="selw"><span>Pessoa</span><select class="inp sm" id="fPes"><option value="">Todas as pessoas</option>${ppl.map(m => `<option value="${esc(m.id)}" ${ui.pf === m.id ? "selected" : ""}>${esc(m.nome)}</option>`).join("")}</select></label>` : ""}${(() => { const es = etiquetas(); if (ui.ef && !es.some(e => e.id === ui.ef)) ui.ef = ""; return es.length && o.fmt !== false ? `<label class="selw"><span>Etiqueta</span><select class="inp sm" id="fEtq"><option value="">Todas as etiquetas</option>${es.map(e => `<option value="${esc(e.id)}" ${ui.ef === e.id ? "selected" : ""}>${esc(e.nome)}</option>`).join("")}</select></label>` : ""; })()}${o.extra || ""}</div>`;
 }
-const pfMatch = p => !ui.pf || (p.resp || {}).plan === ui.pf || (p.resp || {}).prod === ui.pf;
+const pfMatch = p => !ui.pf || (p.resp || {}).plan === ui.pf || (p.resp || {}).prod === ui.pf || (p.resp || {}).traf === ui.pf || owner(p) === ui.pf;
 const tfMatch = p => (ui.tf === "todos" || canal(p).grupo === ui.tf) && (!ui.ef || (p.etiquetas || []).includes(ui.ef));
 function chipsClients(vc){
   return [`<button type="button" class="chip" data-cf="todos" aria-pressed="${ui.cf === "todos"}">${isHead() ? "Todos os clientes" : "Meus clientes"}</button>`]
@@ -2574,7 +2593,7 @@ function calendarioHTML(){
 }
 function evHTML(p){
   const c = cli(p.clienteId), s = STATUS[p.status], drag = canPlan(p) && p.status !== "publicado";
-  return `<button type="button" class="ev t-${s.tone}" data-open="${esc(p.id)}" ${drag ? 'draggable="true"' : ""} title="${esc(c.nome + " · " + canal(p).label + " · " + s.label)}"><span class="dot" style="background:${esc(c.cor)}"></span><span class="k">${canal(p).k}</span><span class="h">${esc((p.briefing || {}).headline || s.label)}</span></button>`;
+  return `<button type="button" class="ev t-${s.tone}" data-open="${esc(p.id)}" ${drag ? 'draggable="true"' : ""} title="${esc(c.nome + " · " + canal(p).label + " · " + s.label)}"><span class="dot" style="background:${esc(c.cor)}"></span><span class="k">${fmtK(p)}</span><span class="h">${esc((p.briefing || {}).headline || s.label)}</span></button>`;
 }
 
 /* ================= peças (kanban arrastável) ================= */
@@ -2602,7 +2621,7 @@ function kcHTML(p){
 function kcBtn(p){
   const c = cli(p.clienteId), o = owner(p);
   const sm = ui.selMode, can = canPlan(p), on = ui.sel.has(p.id);
-  return `<button type="button" class="kc${myTurn(p) ? " mine" : ""}${isTask(p) ? " task" : ""}${sm ? " selmode" : ""}${on ? " picked" : ""}" ${sm ? (can ? `data-selp="${esc(p.id)}" aria-pressed="${on}"` : `disabled title="Só o planejamento desta pauta pode arquivar ou excluir"`) : `data-open="${esc(p.id)}" draggable="true"`}>${sm ? `<span class="ck${on ? " on" : ""}" aria-hidden="true">${on ? "✓" : ""}</span>` : ""}${isTask(p) ? `<span class="th tk">✓</span>` : isText(p) && !(p.midias || []).length ? `<span class="th tx">Aa</span>` : `<span class="th">${thumb(p)}</span>`}<span style="min-width:0">${etqChips(p)}${codTag(p)}<span class="t">${p.privado ? `<span class="lock" title="Pauta privada" aria-label="Privada">🔒</span> ` : ""}${esc(titleOf(p))}</span><span class="m">${p.simples ? `<span>Cartão</span>` : cliTag(c)}</span><span class="m"><span>${canal(p).k}</span><span class="tnum">${esc(fmtShort(p.data))}</span>${isTask(p) && p.status === "publicado" ? `<span>Concluída</span>` : p.status === "pausado" ? `<span class="stx" title="${esc(p.pausaMotivo || "Aguardando o cliente")}">⏸ cliente</span>` : janela(p) || paradaTag(p)}${stLabel(p) !== (STATUS[p.status] || {}).label && !isTask(p) ? `<span class="stx">${esc(stLabel(p))}</span>` : ""}${o && o !== "cliente" ? av(o, 18) : ""}</span></span></button>`;
+  return `<button type="button" class="kc${myTurn(p) ? " mine" : ""}${isTask(p) ? " task" : ""}${sm ? " selmode" : ""}${on ? " picked" : ""}" ${sm ? (can ? `data-selp="${esc(p.id)}" aria-pressed="${on}"` : `disabled title="Só o planejamento desta pauta pode arquivar ou excluir"`) : `data-open="${esc(p.id)}" draggable="true"`}>${sm ? `<span class="ck${on ? " on" : ""}" aria-hidden="true">${on ? "✓" : ""}</span>` : ""}${isTask(p) ? `<span class="th tk">✓</span>` : isText(p) && !(p.midias || []).length ? `<span class="th tx">Aa</span>` : `<span class="th">${thumb(p)}</span>`}<span style="min-width:0">${etqChips(p)}${p.status === "ajuste" && ajOnde(lastAjuste(p)) ? `<span class="ajtag">Ajuste: ${esc(ajOnde(lastAjuste(p)).toLowerCase())}</span>` : ""}${codTag(p)}<span class="t">${p.privado ? `<span class="lock" title="Pauta privada" aria-label="Privada">🔒</span> ` : ""}${esc(titleOf(p))}</span><span class="m">${p.simples ? `<span>Cartão</span>` : cliTag(c)}</span><span class="m"><span>${fmtK(p)}</span><span class="tnum">${esc(fmtShort(p.data))}</span>${isTask(p) && p.status === "publicado" ? `<span>Concluída</span>` : p.status === "pausado" ? `<span class="stx" title="${esc(p.pausaMotivo || "Aguardando o cliente")}">⏸ cliente</span>` : janela(p) || paradaTag(p)}${stLabel(p) !== (STATUS[p.status] || {}).label && !isTask(p) ? `<span class="stx">${esc(stLabel(p))}</span>` : ""}${o && o !== "cliente" ? av(o, 18) : ""}</span></span></button>`;
 }
 function readyToSend(p){
   const b = p.briefing || {}, c = cli(p.clienteId);
@@ -2614,12 +2633,13 @@ function readyToSend(p){
 /* Movimentação livre: quem tem acesso à pauta move para qualquer etapa (quadro ou etapas da pauta).
    Únicas travas: ir para "Com o cliente" pede validação do Head e conteúdo pronto; pauta sem cliente, relatório e to-do não vão ao cliente. */
 const canMove = p => !isClient() && privOk(p) && (canEditP(p) || canPlan(p) || canProduce(p) || owner(p) === ui.me || canPublish(p));
-const etapasDe = p => ORDER.filter(k => !((semCli(p) || isRel(p) || isTask(p)) && ["cliente","ajuste"].includes(k)));
+const temRevPlan = p => !isTask(p) && !isRel(p) && !["trafego","texto"].includes(fluxoOf(p));
+const etapasDe = p => ORDER.filter(k => !((semCli(p) || isRel(p) || isTask(p)) && ["cliente","ajuste"].includes(k)) && !(k === "revplan" && !temRevPlan(p)) && !(k === "cliente" && fluxoOf(p) === "trafego"));
 function moveTo(p, st){
   if (p.status === st || !STATUS[st]) return;
   const from = p.status, lbl = k => stLabel(Object.assign({}, p, {status:k}));
   if (!canMove(p)) return toast("Você não tem acesso a esta pauta.");
-  if (!etapasDe(p).includes(st)) return toast(isRel(p) ? "O relatório não passa pela aprovação do cliente: é apresentado." : isTask(p) ? "Pautas to-do não vão para o cliente." : "Pauta sem cliente não vai para aprovação do cliente.");
+  if (!etapasDe(p).includes(st)) return toast(st === "cliente" && fluxoOf(p) === "trafego" ? "Tráfego não passa pelo cliente: da revisão vai para Aprovado." : st === "revplan" ? "Esta pauta não passa pela revisão do planejamento." : isRel(p) ? "O relatório não passa pela aprovação do cliente: é apresentado." : isTask(p) ? "Pautas to-do não vão para o cliente." : "Pauta sem cliente não vai para aprovação do cliente.");
   if (st === "cliente") {
     if (precisaHead(p) && !p.validadoHead && !isHead()) return toast("A pauta precisa da validação de um Head antes de ir ao cliente.");
     const e = readyToSend(p); if (e) return toast(e);
@@ -2628,7 +2648,8 @@ function moveTo(p, st){
   else if (st === "ajuste" && ["cliente","aprovado"].includes(from) && canPlan(p)) { ui.openId = p.id; ui.idx = 0; ui.tmp = {reg:"aj"}; fillOverlay(); return toast("Registre o que o cliente pediu."); }
   else if (isTask(p)) setStatus(p, st, entry(st === "publicado" ? "concluiu" : st === "producao" ? "iniciou" : from === "publicado" ? "reabriu" : "moveu", {texto:`${lbl(from)} → ${lbl(st)}`}));
   else if (st === "pausado") setStatus(p, "pausado", entry("pausou", {texto:`${lbl(from)} → Pausado`}), {pausadoDe: from, pausadoEm: nowIso()});
-  else if (st === "planejamento") setStatus(p, "planejamento", entry("planejamento", {texto:`${lbl(from)} → Planejamento`}));
+  else if (st === "planejamento") setStatus(p, "planejamento", entry(ORDER.indexOf(from) > ORDER.indexOf("planejamento") ? "devolveu" : "planejamento", {texto:`${lbl(from)} → Planejamento`}));
+  else if (st === "revplan") setStatus(p, "revplan", entry("revplan", {texto:`${lbl(from)} → Revisão planejamento${headPlanDe(p) ? " · " + mName(headPlanDe(p)) : ""}`}));
   else if (st === "pautado") { const quem = timeCriacao(p); if (quem && quem !== (p.resp || {}).prod) { p.resp = Object.assign({}, p.resp, {prod: quem}); } setStatus(p, "pautado", entry("pautado", {texto:`${lbl(from)} → Criação${quem ? " · " + mName(quem) : ""}`})); }
   else if (st === "producao") { const back = ORDER.indexOf(from) > ORDER.indexOf("producao"); setStatus(p, "producao", entry(back ? "devolveu" : "producao", {texto:`${lbl(from)} → ${lbl("producao")}`}), {retorno: back}); }
   else if (st === "revisao" && ["producao","ajuste"].includes(from) && needsArt(p) && (p.midias || []).length) sendToReview(p);
@@ -2651,7 +2672,7 @@ function aprovacoesHTML(){
   const rows = [];
   vc.filter(c => ui.cf === "todos" || ui.cf === c.id).forEach(c => {
     const keys = new Set();
-    S.pecas.filter(p => p.clienteId === c.id && !["pauta","planejamento","pautado"].includes(p.status) && pd(p.data) >= addDays(TODAY, -35)).forEach(p => keys.add(periodKey(c, pd(p.data))));
+    S.pecas.filter(p => p.clienteId === c.id && !["pauta","planejamento","revplan","pautado"].includes(p.status) && pd(p.data) >= addDays(TODAY, -35)).forEach(p => keys.add(periodKey(c, pd(p.data))));
     [...keys].sort().forEach(k => { const [a, b] = periodRange(c, k), ps = S.pecas.filter(p => p.clienteId === c.id && pd(p.data) >= a && pd(p.data) <= b); if (ps.some(p => p.status !== "publicado")) rows.push({c, k, ps, meta:S.pacotes.find(x => x.id === pacoteId(c.id, k)) || {}}); });
   });
   if (!rows.length) return head + `<div class="empty"><h2>Nenhum pacote em andamento</h2><p>Um pacote aparece aqui assim que a primeira peça do período sai da pauta.</p></div>`;
@@ -2931,6 +2952,120 @@ function midSalvarCob(){
   save(); ui.modal = null; ui.tmp = {}; toast("Cobrança salva."); render();
 }
 
+/* ================= alinhamentos com o cliente (reuniões: pauta, anotações, decisões e encaminhamentos) ================= */
+const AL_TIPOS = [["mensal","Alinhamento mensal"],["resultados","Apresentação de resultados"],["planejamento","Planejamento do mês"],["estrategico","Alinhamento estratégico"],["onboarding","Onboarding"],["extra","Reunião extraordinária"]];
+const AL_ST = {agendado:["Agendado","t-info"], andamento:["Em andamento","t-warn"], realizado:["Realizado","t-ok"], cancelado:["Cancelado","t-done"], remarcar:["Remarcar","t-bad"]};
+const AL_TERM = [["otimo","😀 Muito satisfeito"],["ok","🙂 Satisfeito"],["neutro","😐 Neutro"],["atencao","😟 Preocupado"],["risco","🚨 Risco de churn"]];
+const REUFREQ = {semanal:"Semanal", quinzenal:"Quinzenal", mensal:"Mensal", bimestral:"Bimestral", trimestral:"Trimestral", demanda:"Sob demanda"};
+const alTipo = k => (AL_TIPOS.find(x => x[0] === k) || ["", "Alinhamento"])[1];
+const alDoCli = cid => (S.alinhamentos || []).filter(a => a.clienteId === cid && !a.excluido).sort((a, b) => (b.data + (b.hora || "")).localeCompare(a.data + (a.hora || "")));
+function alBacklog(cid){ const out = []; alDoCli(cid).forEach(a => (a.encs || []).forEach((e, i) => { if (!e.feito) out.push({a, e, i}); })); return out.sort((x, y) => (x.e.prazo || "9999").localeCompare(y.e.prazo || "9999")); }
+function alProxData(c){ const r = fillEscopo(c.escopo).reuniao || {}, last = alDoCli(c.id).find(a => a.status !== "cancelado"); const base = last ? pd(last.data) : TODAY; const add = {semanal:7, quinzenal:14, mensal:30, bimestral:60, trimestral:90}[r.freq] || 30; let d = last ? addDays(base, add) : addDays(TODAY, 3); if (d < TODAY) d = addDays(TODAY, 1); while ([0, 6].includes(d.getDay())) d = addDays(d, 1); return ymd(d); }
+/* pauta sugerida: o que está em aberto com o cliente vira item para tratar na reunião */
+function alSugestoes(c){
+  const out = [], ps = S.pecas.filter(p => p.clienteId === c.id && !p.excluido);
+  const com = ps.filter(p => p.status === "cliente").length, aj = ps.filter(p => p.status === "ajuste").length, pau = ps.filter(p => p.status === "pausado").length;
+  if (com) out.push(`Aprovações pendentes: ${com} ${com === 1 ? "pauta aguarda" : "pautas aguardam"} o cliente`);
+  if (aj) out.push(`Ajustes em andamento: ${aj}`);
+  if (pau) out.push(`Pautas pausadas dependendo do cliente: ${pau}`);
+  const bl = alBacklog(c.id); if (bl.length) out.push(`Encaminhamentos em aberto da reunião anterior: ${bl.length}`);
+  out.push("Resultados do período (orgânico e tráfego)", "Planejamento e datas importantes do próximo período", "Feedback do cliente sobre o trabalho");
+  return out;
+}
+function alinhamentosTabHTML(c){
+  const r = fillEscopo(c.escopo).reuniao || {}, l = alDoCli(c.id), td = ymd(TODAY), prox = l.filter(a => a.data >= td && ["agendado","andamento","remarcar"].includes(a.status)).reverse(), pass = l.filter(a => !prox.includes(a)), bl = alBacklog(c.id);
+  const li = a => { const st = AL_ST[a.status] || AL_ST.agendado, ab = (a.encs || []).filter(e => !e.feito).length; return `<button type="button" class="li" data-al="abrir" data-id="${esc(a.id)}" style="grid-template-columns:64px minmax(0,1fr) auto"><span class="tnum" style="font-weight:800;font-size:12.5px">${esc(fmtShort(a.data))}${a.hora ? `<br><span class="muted" style="font-weight:600">${esc(a.hora)}</span>` : ""}</span><span style="min-width:0"><span class="t">${esc(a.titulo || alTipo(a.tipo))}</span><span class="m">${esc(alTipo(a.tipo))}${a.resp ? " · " + esc(mName(a.resp)) : ""}${(a.encs || []).length ? ` · ${ab ? ab + " em aberto" : "encaminhamentos concluídos"}` : ""}</span></span><span class="pill ${st[1]}">${st[0]}</span></button>`; };
+  const cfg = r.on ? `Reunião com cliente: <b>${esc((REUFREQ[r.freq] || "").toLowerCase())}</b>${r.resp ? ` · responsável <b>${esc(mName(r.resp))}</b>` : ""}${r.obs ? " · " + esc(r.obs) : ""}` : "Reunião com cliente não definida no escopo (Editar cadastro e escopo).";
+  return `<div class="spread"><p class="muted" style="font-size:12.5px;max-width:70ch">${cfg}</p><button type="button" class="btn primary sm" data-al="novo" data-cid="${esc(c.id)}">+ Agendar alinhamento</button></div>
+    ${bl.length ? `<section class="card"><div class="spread"><h2>Backlog do cliente <span class="hint">· encaminhamentos em aberto de todas as reuniões</span></h2><span class="pill t-warn">${bl.length}</span></div><div class="list">${bl.map(({a, e, i}) => `<div class="li al-bl" style="grid-template-columns:24px minmax(0,1fr) auto"><input type="checkbox" data-al="encOk" data-id="${esc(a.id)}" data-i="${i}" aria-label="Concluir"><span style="min-width:0"><span class="t">${esc(e.texto)}</span><span class="m">${esc(e.resp === "cliente" ? "Cliente" : e.resp ? mName(e.resp) : "Sem responsável")}${e.prazo ? ` · até ${esc(fmtShort(e.prazo))}` : ""} · de ${esc(fmtShort(a.data))}${e.prazo && e.prazo < td ? ` · <span class="bad">atrasado</span>` : ""}</span></span>${e.pecaId ? `<button type="button" class="linkbtn" data-open="${esc(e.pecaId)}">Ver task</button>` : ""}</div>`).join("")}</div></section>` : ""}
+    <section class="card"><h2>Próximos</h2>${prox.length ? `<div class="list">${prox.map(li).join("")}</div>` : `<p class="muted" style="font-size:12.5px">Nenhum alinhamento agendado.${r.on ? ` Sugestão pela periodicidade: ${esc(fmtShort(alProxData(c)))}.` : ""}</p>`}</section>
+    <section class="card"><h2>Histórico</h2>${pass.length ? `<div class="list">${pass.map(li).join("")}</div>` : `<p class="muted" style="font-size:12.5px">As reuniões realizadas ficam aqui, com anotações, decisões e encaminhamentos.</p>`}</section>`;
+}
+function alFormHTML(){
+  const d = ui.tmp.al, c = cli(d.clienteId), ppl = ativos().filter(m => m.unidade === c.unidade || !c.unidade).sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")), on = d.status === "andamento" || d.status === "realizado";
+  const opt = (v, cur) => v.map(([k, l]) => `<option value="${esc(k)}" ${cur === k ? "selected" : ""}>${esc(l)}</option>`).join("");
+  const lista = (k, ph, rows) => `<div class="al-items">${(d[k] || []).map((x, i) => `<div class="al-it"><input class="inp sm" data-alarr="${k}" data-i="${i}" value="${esc(x)}" placeholder="${esc(ph)}"><button type="button" class="x sm" data-al="rm" data-k="${k}" data-i="${i}" aria-label="Remover">×</button></div>`).join("")}<button type="button" class="linkbtn" data-al="add" data-k="${k}">+ Adicionar</button></div>`;
+  return `<div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="alT"><div class="m-head"><h2 id="alT">${d._exists ? esc(d.titulo || alTipo(d.tipo)) : "Agendar alinhamento"} <span class="muted" style="font-size:13px;font-weight:600">· ${esc(c.nome)}</span></h2><button type="button" class="x" data-act="close" aria-label="Fechar">×</button></div>
+  <div class="m-body">
+    <div class="al-steps" role="group">${[["prep","1 · Preparação"],["reuniao","2 · Durante a reunião"],["fech","3 · Encaminhamentos"]].map(([k, l]) => `<button type="button" data-al="aba" data-k="${k}" aria-pressed="${(ui.tmp.alAba || (on ? "reuniao" : "prep")) === k}">${l}</button>`).join("")}</div>
+    ${(ui.tmp.alAba || (on ? "reuniao" : "prep")) === "prep" ? `
+    <div class="form">
+      <div class="field"><label for="al-tp">Tipo</label><select class="inp" id="al-tp" data-alf="tipo">${opt(AL_TIPOS, d.tipo)}</select></div>
+      <div class="field"><label for="al-ti">Título <span class="hint">· opcional</span></label><input class="inp" id="al-ti" data-alf="titulo" value="${esc(d.titulo || "")}" placeholder="${esc(alTipo(d.tipo))} · ${esc(fmtD(pd(d.data), {month:"long"}))}"></div>
+      <div class="field"><label for="al-d">Data</label><input class="inp" type="date" id="al-d" data-alf="data" value="${esc(d.data)}"></div>
+      <div class="field"><label for="al-h">Horário</label><input class="inp" type="time" id="al-h" data-alf="hora" value="${esc(d.hora || "")}"></div>
+      <div class="field"><label for="al-du">Duração</label><select class="inp" id="al-du" data-alf="duracao">${opt([["30","30 min"],["45","45 min"],["60","1 hora"],["90","1h30"],["120","2 horas"]], String(d.duracao || "60"))}</select></div>
+      <div class="field"><label for="al-l">Local ou link</label><input class="inp" id="al-l" data-alf="local" value="${esc(d.local || "")}" placeholder="Google Meet, presencial na Alra…"></div>
+      <div class="field"><label for="al-r">Responsável</label><select class="inp" id="al-r" data-alf="resp"><option value="">Definir…</option>${ppl.map(m => `<option value="${esc(m.id)}" ${d.resp === m.id ? "selected" : ""}>${esc(m.nome)}</option>`).join("")}</select></div>
+      <div class="field"><label for="al-s">Situação</label><select class="inp" id="al-s" data-alf="status">${opt(Object.entries(AL_ST).map(([k, v]) => [k, v[0]]), d.status)}</select></div>
+      <div class="field full"><span class="lb">Participantes da Alra</span><div class="seg">${ppl.map(m => `<label><input type="checkbox" data-alpart value="${esc(m.id)}" ${(d.part || []).includes(m.id) ? "checked" : ""}> ${esc(m.nome.split(" ")[0])}</label>`).join("")}</div></div>
+      <div class="field full"><label for="al-pc">Participantes do cliente</label><input class="inp" id="al-pc" data-alf="partCli" value="${esc(d.partCli || "")}" placeholder="Nomes e cargos de quem participa pelo cliente"></div>
+    </div>
+    <div class="field full"><span class="lb">Pauta da reunião <span class="hint">· o que precisa ser tratado</span></span>${lista("pauta", "Item da pauta")}${!d._exists || !(d.pauta || []).length ? `<button type="button" class="btn sm" data-al="sugerir" style="align-self:flex-start;margin-top:6px">Sugerir pauta com o que está em aberto</button>` : ""}</div>
+    <div class="field full"><label for="al-prep">Material de apoio e preparação</label><textarea id="al-prep" data-alf="prep" rows="2" placeholder="Links do relatório, apresentação, números que precisam ser levados…">${esc(d.prep || "")}</textarea></div>`
+    : (ui.tmp.alAba || (on ? "reuniao" : "prep")) === "reuniao" ? `
+    ${(d.pauta || []).length ? `<div class="box"><b style="font-size:13px">Pauta</b><div class="al-chk">${(d.pauta || []).map((x, i) => `<label><input type="checkbox" data-alpok="${i}" ${(d.pautaOk || []).includes(i) ? "checked" : ""}> ${esc(x)}</label>`).join("")}</div></div>` : ""}
+    <div class="field full"><label for="al-an">Anotações da reunião</label><textarea id="al-an" data-alf="notas" rows="9" placeholder="Registre aqui o que foi conversado, em tópicos…">${esc(d.notas || "")}</textarea></div>
+    <div class="field full"><span class="lb">Decisões tomadas</span>${lista("decisoes", "Ex.: aumentar a verba do Meta para R$ 3 mil em dezembro")}</div>
+    <div class="form"><div class="field"><label for="al-tm">Termômetro do cliente</label><select class="inp" id="al-tm" data-alf="termometro"><option value="">Como o cliente saiu da reunião?</option>${opt(AL_TERM, d.termometro)}</select></div>
+      <div class="field"><label for="al-tmo">Por quê? <span class="hint">· opcional</span></label><input class="inp" id="al-tmo" data-alf="termObs" value="${esc(d.termObs || "")}" placeholder="Elogiou os vídeos; cobrou mais leads…"></div></div>`
+    : `
+    <p class="muted" style="font-size:12.5px;margin:0">Cada encaminhamento tem dono e prazo e entra no backlog do cliente até ser concluído. Os da Alra podem virar task no Kanban.</p>
+    <div class="al-encs">${(d.encs || []).map((e, i) => `<div class="al-enc${e.feito ? " done" : ""}"><input type="checkbox" data-alenc="feito" data-i="${i}" ${e.feito ? "checked" : ""} aria-label="Concluído"><input class="inp sm" data-alenc="texto" data-i="${i}" value="${esc(e.texto || "")}" placeholder="O que precisa ser feito"><select class="inp sm" data-alenc="resp" data-i="${i}"><option value="">Responsável…</option><option value="cliente" ${e.resp === "cliente" ? "selected" : ""}>Cliente</option>${ppl.map(m => `<option value="${esc(m.id)}" ${e.resp === m.id ? "selected" : ""}>${esc(m.nome)}</option>`).join("")}</select><input class="inp sm" type="date" data-alenc="prazo" data-i="${i}" value="${esc(e.prazo || "")}">${e.pecaId ? `<span class="pill t-ok" title="Task criada no Kanban">Task</span>` : e.resp && e.resp !== "cliente" && (e.texto || "").trim() ? `<button type="button" class="btn sm" data-al="task" data-i="${i}" title="Cria uma task no Kanban para o responsável">Virar task</button>` : `<span></span>`}<button type="button" class="x sm" data-al="rmEnc" data-i="${i}" aria-label="Remover">×</button></div>`).join("")}<button type="button" class="linkbtn" data-al="addEnc">+ Adicionar encaminhamento</button></div>
+    <div class="form"><div class="field"><label for="al-px">Próximo alinhamento</label><input class="inp" type="date" id="al-px" data-alf="proxData" value="${esc(d.proxData || "")}"></div><div class="field" style="align-self:end"><button type="button" class="btn sm" data-al="resumo">Copiar resumo para o cliente</button></div></div>`}
+    ${ui.tmp.err ? `<div class="err">${esc(ui.tmp.err)}</div>` : ""}
+    <div class="actions">${d.status === "agendado" && d._exists ? `<button type="button" class="btn primary" data-al="iniciar">Iniciar reunião</button>` : ""}${d.status === "andamento" ? `<button type="button" class="btn ok" data-al="encerrar">Encerrar reunião</button>` : ""}<button type="button" class="btn ${d.status === "agendado" && d._exists || d.status === "andamento" ? "" : "primary"}" data-al="salvar">Salvar</button><button type="button" class="btn ghost" data-act="close">Fechar</button>${d._exists ? (ui.tmp.alDel ? `<button type="button" class="linkbtn" style="color:var(--danger)" data-al="excluir">Confirmar exclusão</button>` : `<button type="button" class="linkbtn" style="color:var(--danger);margin-left:auto" data-al="excluir">Excluir</button>`) : ""}</div>
+  </div></div>`;
+}
+function alLer(){ const d = ui.tmp.al; if (!d) return; document.querySelectorAll("#overlay [data-alf]").forEach(el => { d[el.dataset.alf] = el.value; }); document.querySelectorAll("#overlay [data-alarr]").forEach(el => { (d[el.dataset.alarr] = d[el.dataset.alarr] || [])[+el.dataset.i] = el.value; }); document.querySelectorAll("#overlay [data-alenc]").forEach(el => { const e = (d.encs || [])[+el.dataset.i]; if (!e) return; if (el.dataset.alenc === "feito") e.feito = el.checked; else e[el.dataset.alenc] = el.value; }); }
+function alSalvar(fechar, lido){
+  const d = ui.tmp.al; if (!lido) alLer(); if (!d.data) { ui.tmp.err = "Defina a data."; fillOverlay(); return false; }
+  ["pauta","decisoes"].forEach(k => d[k] = (d[k] || []).map(x => String(x || "").trim()).filter(Boolean)); d.encs = (d.encs || []).filter(e => String(e.texto || "").trim());
+  const body = JSON.parse(JSON.stringify(d)); delete body._exists; body.atualizadoEm = nowIso(); body.atualizadoPor = ui.me;
+  let a = S.alinhamentos.find(x => x.id === d.id), novo = !a;
+  const encAntes = a ? (a.encs || []).map(e => e.resp + "|" + e.texto) : [];
+  if (novo) { body.id = "al-" + uid(); body.criadoEm = nowIso(); body.criadoPor = ui.me; S.alinhamentos.push(body); a = body; d.id = body.id; d._exists = true; }
+  else Object.assign(a, body);
+  const c = cli(a.clienteId), quando = `${fmtShort(a.data)}${a.hora ? " às " + a.hora : ""}`;
+  if (novo) alNotify([a.resp, ...(a.part || [])], `Alinhamento agendado com ${c.nome}: ${quando}`, a);
+  (a.encs || []).filter(e => e.resp && e.resp !== "cliente" && !encAntes.includes(e.resp + "|" + e.texto) && !e.feito).forEach(e => alNotify([e.resp], `Encaminhamento do alinhamento com ${c.nome}: ${e.texto}${e.prazo ? " · até " + fmtShort(e.prazo) : ""}`, a));
+  save(); if (fechar) { ui.modal = null; ui.tmp = {}; render(); } else { ui.tmp.err = ""; fillOverlay(); render(); }
+  return true;
+}
+function alNotify(ids, texto, a){ const de = ui.me; [...new Set(ids)].filter(id => id && id !== ui.me && person(id)).forEach(para => S.notifs.push({id:uid(), para, de, texto, pecaId:null, alinId:a.id, clienteId:a.clienteId, em:nowIso(), lida:false})); }
+function alResumo(a){
+  const c = cli(a.clienteId), enc = (a.encs || []);
+  return `Resumo do ${alTipo(a.tipo).toLowerCase()} · ${c.nome} · ${fmtD(pd(a.data), {day:"2-digit", month:"2-digit", year:"numeric"})}\n\n${(a.decisoes || []).length ? "Decisões:\n" + a.decisoes.map(x => "• " + x).join("\n") + "\n\n" : ""}${enc.length ? "Próximos passos:\n" + enc.map(e => `• ${e.texto} (${e.resp === "cliente" ? c.nome : e.resp ? mName(e.resp).split(" ")[0] + " · Alra" : "a definir"}${e.prazo ? ", até " + fmtShort(e.prazo) : ""})`).join("\n") + "\n\n" : ""}${a.proxData ? `Próximo alinhamento: ${fmtD(pd(a.proxData), {weekday:"long", day:"2-digit", month:"2-digit"})}.` : ""}`.trim();
+}
+function alAbrir(a){ ui.tmp = {al:Object.assign(JSON.parse(JSON.stringify(a)), {_exists:true})}; ui.modal = "alin"; fillOverlay(); }
+document.addEventListener("click", ev => {
+  const t = ev.target.closest && ev.target.closest("[data-al]"); if (!t || isClient()) return;
+  const k = t.dataset.al, d = ui.tmp.al;
+  if (k === "novo") { const c = cli(t.dataset.cid), r = fillEscopo(c.escopo).reuniao || {}; ui.tmp = {al:{clienteId:c.id, tipo:"mensal", data:alProxData(c), hora:"10:00", duracao:"60", status:"agendado", resp:r.resp || ui.me, part:[...new Set([r.resp || ui.me])].filter(Boolean), pauta:[], decisoes:[], encs:[]}, alAba:"prep"}; ui.modal = "alin"; fillOverlay(); return; }
+  if (k === "abrir") { const a = S.alinhamentos.find(x => x.id === t.dataset.id); if (a) alAbrir(a); return; }
+  if (k === "encOk") { const a = S.alinhamentos.find(x => x.id === t.dataset.id), e = a && (a.encs || [])[+t.dataset.i]; if (e) { e.feito = true; e.feitoEm = nowIso(); e.feitoPor = ui.me; save(); toast("Encaminhamento concluído."); render(); } return; }
+  if (!d) return;
+  if (k === "aba") { alLer(); ui.tmp.alAba = t.dataset.k; fillOverlay(); return; }
+  if (k === "add") { alLer(); (d[t.dataset.k] = d[t.dataset.k] || []).push(""); fillOverlay(); const l = [...document.querySelectorAll(`#overlay [data-alarr="${t.dataset.k}"]`)].pop(); if (l) l.focus(); return; }
+  if (k === "rm") { alLer(); d[t.dataset.k].splice(+t.dataset.i, 1); fillOverlay(); return; }
+  if (k === "sugerir") { alLer(); d.pauta = [...(d.pauta || []).filter(Boolean), ...alSugestoes(cli(d.clienteId))]; fillOverlay(); return; }
+  if (k === "addEnc") { alLer(); (d.encs = d.encs || []).push({texto:"", resp:"", prazo:ymd(addDays(TODAY, 7)), feito:false}); fillOverlay(); const l = [...document.querySelectorAll('#overlay [data-alenc="texto"]')].pop(); if (l) l.focus(); return; }
+  if (k === "rmEnc") { alLer(); d.encs.splice(+t.dataset.i, 1); fillOverlay(); return; }
+  if (k === "task") { alLer(); const e = d.encs[+t.dataset.i], c = cli(d.clienteId); if (!e || !e.resp || e.resp === "cliente") return; const id = uid(); S.pecas.push({id, clienteId:c.id, unidade:c.unidade, data:e.prazo || ymd(addDays(TODAY, 7)), tipo:"tarefa", redes:[], status:"pauta", resp:{plan:ui.me, prod:e.resp}, briefing:{headline:e.texto, ideia:`Encaminhamento do alinhamento de ${fmtShort(d.data)} com ${c.nome}.`, formatos:[]}, criadoPor:ui.me, criadoEm:nowIso(), hist:[entry("pauta", {texto:"Criada a partir de um alinhamento com o cliente"})]}); e.pecaId = id; notify([e.resp], `Task com você: ${e.texto}`, S.pecas[S.pecas.length - 1]); alSalvar(false, true); toast("Task criada no Kanban."); return; }
+  if (k === "iniciar") { alLer(); d.status = "andamento"; d.iniciadoEm = nowIso(); ui.tmp.alAba = "reuniao"; alSalvar(false, true); return; }
+  if (k === "encerrar") { alLer(); d.status = "realizado"; d.encerradoEm = nowIso(); ui.tmp.alAba = "fech"; if (!d.proxData) { const c = cli(d.clienteId); d.proxData = alProxData(Object.assign({}, c)); } alSalvar(false, true); toast("Reunião encerrada. Confira os encaminhamentos e copie o resumo para o cliente."); return; }
+  if (k === "salvar") { if (alSalvar(true)) toast("Alinhamento salvo."); return; }
+  if (k === "resumo") { alLer(); copyText(alResumo(d), "Resumo copiado. Cole no WhatsApp ou e-mail do cliente."); return; }
+  if (k === "excluir") { if (!ui.tmp.alDel) { ui.tmp.alDel = true; fillOverlay(); return; } const a = S.alinhamentos.find(x => x.id === d.id); if (a) { a.excluido = true; a.excluidoEm = nowIso(); a.excluidoPor = ui.me; } save(); ui.modal = null; ui.tmp = {}; toast("Alinhamento excluído."); render(); return; }
+});
+document.addEventListener("change", ev => {
+  const t = ev.target, d = ui.tmp && ui.tmp.al; if (!d) return;
+  if (t.dataset.alpart !== undefined) { const v = t.value; d.part = t.checked ? [...new Set([...(d.part || []), v])] : (d.part || []).filter(x => x !== v); return; }
+  if (t.dataset.alpok !== undefined) { const i = +t.dataset.alpok; d.pautaOk = t.checked ? [...new Set([...(d.pautaOk || []), i])] : (d.pautaOk || []).filter(x => x !== i); return; }
+  if (t.dataset.alenc === "resp") { alLer(); fillOverlay(); return; }
+  if (t.dataset.alf === "tipo") { d.tipo = t.value; return; }
+});
+
 /* ================= clientes ================= */
 function clientesHTML(){
   const vc = allClients().slice().sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")), q = normTxt(ui.cq), mine = new Set(visibleClients().map(c => c.id));
@@ -2969,7 +3104,7 @@ function dashHTML(c){
 function hubHTML(){
   const c = S.clientes.find(x => x.id === ui.hubId);
   if (!c) { ui.view = "clientes"; return clientesHTML(); }
-  const tabs = [["geral","Visão geral"],["info","Informações do cliente"],["orient","Orientações"],["materiais","Materiais"],["pecas","Pautas"],["captacoes","Captações"],...(meuCliente(c) ? [["acessos","Acessos"]] : []),["feedbacks","Feedbacks"]];
+  const tabs = [["geral","Visão geral"],["info","Informações do cliente"],["orient","Orientações"],["materiais","Materiais"],["pecas","Pautas"],["captacoes","Captações"],["alinhamentos","Alinhamentos"],...(meuCliente(c) ? [["acessos","Acessos"]] : []),["feedbacks","Feedbacks"]];
   if (!tabs.some(t => t[0] === ui.hubTab)) ui.hubTab = "geral";
   const edit = canEditClient(c);
   let body = "";
@@ -2980,6 +3115,7 @@ function hubHTML(){
   else if (ui.hubTab === "pecas") { const ps = S.pecas.filter(p => p.clienteId === c.id && canSeeHub(p)); body = `<div class="spread"><p class="muted" style="font-size:12.5px">${isHead() ? "Todas as pautas deste cliente." : "Só as pautas deste cliente em que você atua."} Arraste os cartões para mudar a etapa.</p><span class="row">${ps.length ? bulkBar() : ""}${edit ? `<button type="button" class="btn sm primary" data-act="newPeca" data-cid="${esc(c.id)}">+ Nova pauta</button>` : ""}</span></div>` + (ps.length ? boardHTML(ps) : `<div class="empty"><p>Nenhuma pauta sua neste cliente.</p></div>`); }
   else if (ui.hubTab === "captacoes") { const e = fillEscopo(c.escopo), l = S.captacoes.filter(x => x.clienteId === c.id).sort((a, b) => b.data.localeCompare(a.data)); body = `<div class="spread"><p class="muted" style="font-size:12.5px">${e.captacao.on ? "Captação incluída no escopo: " + (CAPFREQ[e.captacao.freq] || "").toLowerCase() + (e.captacao.obs ? " · " + esc(e.captacao.obs) : "") : "Captação não incluída no escopo."}</p><button type="button" class="btn sm" data-act="newCap" data-cid="${esc(c.id)}">+ Agendar captação</button></div>${l.length ? `<div class="list">${l.map(capLi).join("")}</div>` : `<div class="empty"><p>Nenhuma captação para este cliente.</p></div>`}`; }
   else if (ui.hubTab === "acessos") body = acessosHTML(c);
+  else if (ui.hubTab === "alinhamentos") body = alinhamentosTabHTML(c);
   else { const l = S.feedbacks.filter(f => f.clienteId === c.id).slice().reverse(); body = l.length ? `<div class="list">${l.map(f => `<div class="card" style="gap:6px"><div class="spread"><span class="pill ${f.decisao === "total" ? "t-ok" : "t-warn"}">${f.decisao === "total" ? "Aprovou todo o planejamento" : f.decisao === "parcial" ? "Aprovou parte" : "Não aprovou"}</span><span class="muted" style="font-size:12px">${esc(f.periodo)} · ${esc(fmtStamp(f.em))}</span></div>${f.texto ? `<div style="white-space:pre-wrap">${esc(f.texto)}</div>` : ""}</div>`).join("")}</div>` : `<div class="empty"><p>O comentário que o cliente deixa ao aprovar o planejamento aparece aqui.</p></div>`; }
   return `<div><button type="button" class="linkbtn" data-view="clientes">‹ Clientes</button></div>
     <div class="spread"><div><div class="eyebrow">${esc([c.segmento, c.categoria].filter(Boolean).join(" · ") || "Cliente")}</div><h1 style="display:flex;align-items:center;gap:10px"><span class="dot" style="background:${esc(c.cor)};width:13px;height:13px"></span>${esc(c.nome)}</h1></div><div class="row">${c.drive ? `<a class="btn" href="${esc(c.drive)}" target="_blank" rel="noopener">${svgi("drive")} Pasta no Drive</a>` : ""}${edit ? `<button type="button" class="btn" data-act="editClient">Editar cadastro e escopo</button>` : ""}</div></div>
@@ -3029,14 +3165,14 @@ function drawerHTML(p){
   if (ui.idx >= ms.length) ui.idx = 0;
   const canEd = canEditP(p), ed = !!u.edit && canEd;
   const edT = ed, edB = ed, dis = edB ? "" : "disabled";
-  const edFiles = (headOfUnit(unitOf(p)) && ["pauta","planejamento","pautado","producao","revisao","ajuste"].includes(p.status)) || (canProduce(p) && ["producao","ajuste","pauta","planejamento","pautado","revisao"].includes(p.status) && !(p.status === "ajuste" && p.ajusteCom === "planejamento"));
+  const edFiles = (headOfUnit(unitOf(p)) && ["pauta","planejamento","revplan","pautado","producao","revisao","ajuste"].includes(p.status)) || (canProduce(p) && ["producao","ajuste","pauta","planejamento","pautado","revisao"].includes(p.status) && !(p.status === "ajuste" && p.ajusteCom === "planejamento"));
   const unitPpl = ativos().filter(m => m.unidade === c.unidade);
   const opt = (list, sel) => `<option value="">Definir…</option>` + list.map(m => `<option value="${esc(m.id)}" ${sel === m.id ? "selected" : ""}>${esc(m.nome)}</option>`).join("");
   const nl = navList(p), ni = nl.indexOf(p.id), prevId = nl[ni - 1], nextId = nl[ni + 1];
   const top = `<div class="d-top"><button type="button" class="x" data-act="close" aria-label="Fechar">×</button><button type="button" class="btn sm pnav" ${prevId ? `data-pnav="${esc(prevId)}"` : "disabled"} title="Pauta anterior em ${esc(stLabel(p))} (←)" aria-label="Pauta anterior">‹ <span class="pnl">Anterior</span></button><div class="ttl"><b>${esc(titleOf(p))}</b><span>${codTag(p)} <button type="button" class="linkbtn" style="font-size:11px;font-weight:600" data-act="copyLink" title="Copiar o link direto desta pauta">copiar link</button> · ${p.simples ? "Cartão simples" : cliLink(c)}${p.solicitante ? ` · para ${esc(p.solicitante)}` : ""} · ${esc(fmtD(p.data))}${p.simples ? "" : " · " + esc(isTask(p) ? "Pauta" : t.label)}</span></div>${pillP(p)}${canEd ? `<button type="button" class="btn sm${ed ? " primary" : ""}" data-act="pgEdit">${ed ? "Concluir edição" : "Editar"}</button>` : ""}<span class="pnpos tnum" title="Posição nesta etapa">${nl.length > 1 ? `${ni + 1} de ${nl.length}` : ""}</span><button type="button" class="btn sm pnav" ${nextId ? `data-pnav="${esc(nextId)}"` : "disabled"} title="Próxima pauta em ${esc(stLabel(p))} (→)" aria-label="Próxima pauta"><span class="pnl">Próxima</span> ›</button></div>`;
   const comentsSec = `<div class="sec"><h3>Comentários</h3><div class="list">${(p.coments || []).map((m, i) => `<div class="cm">${av(m.por, 26)}<div style="flex:1;min-width:0"><div class="s spread"><span>${esc(mName(m.por))} · ${esc(fmtStamp(m.em))}</span>${canDelCom(m) ? (u.cmtDel === i ? `<span class="row" style="gap:6px"><button type="button" class="linkbtn" style="color:var(--danger);font-size:12px" data-act="comDelGo" data-i="${i}">Excluir comentário</button><button type="button" class="linkbtn" style="font-size:12px" data-act="comDelNo">Cancelar</button></span>` : `<button type="button" class="linkbtn comx" data-act="comDel" data-i="${i}" title="Excluir comentário" aria-label="Excluir comentário">Excluir</button>`) : ""}</div><div class="b">${comTxtHTML(m)}</div></div></div>`).join("") || `<span class="muted" style="font-size:12.5px">Nenhum comentário. O cliente não vê esta conversa.</span>`}</div>
         <div class="row" style="margin-top:8px;flex-wrap:nowrap;position:relative"><input class="inp" id="cmtxt" placeholder="Escreva para a equipe… use @ para marcar alguém" value="${esc(u.cm || "")}" aria-label="Comentário interno" autocomplete="off"><button type="button" class="btn sm" data-act="comment">Enviar</button><div class="ment-l" id="mentL" role="listbox" hidden></div></div></div>`;
-  const histSec = `<div class="sec"><h3>Histórico</h3><ul class="hist">${[...(p.hist || [])].reverse().map((h, i) => `<li class="${i === 0 ? "hl" : ""}"><div><div class="a">${esc(ACOES[h.acao] || h.acao)}${h.versao ? ` (v${h.versao})` : ""}</div><div class="s">${esc(h.por === "cliente" && h.nome ? "Cliente · " + h.nome : mName(h.por))} · ${esc(fmtStamp(h.em))}</div>${h.texto ? `<div class="q">${esc(h.texto)}</div>` : ""}</div></li>`).join("")}</ul></div>`;
+  const histSec = `<div class="sec"><h3>Histórico</h3><ul class="hist">${[...(p.hist || [])].reverse().map((h, i) => `<li class="${i === 0 ? "hl" : ""}"><div><div class="a">${esc(ACOES[h.acao] || h.acao)}${h.versao ? ` (v${h.versao})` : ""}</div><div class="s">${esc(h.por === "cliente" && h.nome ? "Cliente · " + h.nome : mName(h.por))} · ${esc(fmtStamp(h.em))}</div>${h.texto ? `<div class="q">${ajOnde(h) && ["ajuste","ajuste_int"].includes(h.acao) ? `<b class="ajq">${esc(ajOnde(h))}</b> ` : ""}${esc(h.texto)}</div>` : ""}</div></li>`).join("")}</ul></div>`;
   const delRow = `${canPlan(p) ? (u.del ? `<div class="row"><span style="font-size:12.5px">Excluir esta pauta? Ela vai para o arquivo e pode ser restaurada.</span><button type="button" class="btn sm danger" data-act="archiveOne">Excluir</button><button type="button" class="btn sm ghost" data-act="toggleDel">Cancelar</button></div>` : `<div class="row"><button type="button" class="linkbtn" style="color:var(--danger)" data-act="toggleDel">Excluir pauta</button></div>`) : ""}`;
   const chat = comentsSec + histSec + delRow;
   const anexosSec = anexosHTML(p.anexos || [], canEditP(p), "", u.anxProg);
@@ -3082,7 +3218,7 @@ function drawerHTML(p){
   } else left = `<div class="viewer">${ms.length ? `<div class="stagebox"><div class="frame" style="aspect-ratio:${t.ratio}">${mediaHTML(p, ui.idx, "play")}</div>${ms.length > 1 ? `<button type="button" class="navb p" data-act="prev" aria-label="Anterior">‹</button><button type="button" class="navb n" data-act="next" aria-label="Próxima">›</button>` : ""}</div>${strip}`
     : `<div class="frame blank" style="aspect-ratio:${t.ratio};max-width:380px">${p.drive ? "Arquivos no Drive" : p.status === "pauta" ? "A arte entra aqui quando a produção anexar." : "Nenhum arquivo anexado ainda."}</div>`}
     <div class="spec">${esc(t.label)} · ${esc((p.redes || []).join(" + ") || t.net)}${p.versao ? ` · versão ${p.versao}` : ""}</div>${p.drive ? `<a class="btn sm" href="${esc(p.drive)}" target="_blank" rel="noopener">Abrir no Drive</a>` : ""}</div>`;
-  const lastAdj = [...(p.hist || [])].reverse().find(h => ["ajuste","devolveu"].includes(h.acao));
+  const lastAdj = [...(p.hist || [])].reverse().find(h => ["ajuste","ajuste_int","devolveu"].includes(h.acao));
   const showAdj = lastAdj && (p.status === "ajuste" || (p.status === "producao" && p.retorno));
   const capLen = [...String(b.legenda || "")].length;
   const redesField = ["feed","stories"].includes(p.tipo) ? `<div class="seg">${["Instagram","Facebook"].map(r => `<label><input type="checkbox" data-redes value="${r}" ${(p.redes || []).includes(r) ? "checked" : ""} ${edT ? "" : "disabled"}> ${r}</label>`).join("")}</div>`
@@ -3093,7 +3229,7 @@ function drawerHTML(p){
       <div class="field"><label for="f-sub">Subtítulo</label><input class="inp" id="f-sub" data-b="sub" value="${esc(b.sub)}" ${dis}></div>
       <div class="field"><label for="f-corpo">Texto completo</label>${rteHTML("f-corpo", "data-rt", "corpo", fmtOf(b, "corpo"), !!dis, `Escreva aqui o ${t.label.toLowerCase()}…`, "280px")}<span class="hint tnum" id="wcount">${String(b.corpo || "").trim().split(/\s+/).filter(Boolean).length} palavras</span></div></div>`
     : `<div class="form"><div class="field full"><label for="f-ideia">Ideia <span class="hint">· por que este material existe</span></label>${rteHTML("f-ideia", "data-rt", "ideia", fmtOf(b, "ideia"), !!dis, "", "3.2em")}</div>
-        <div class="field"><label for="f-obj">Objetivo</label><select class="inp" id="f-obj" data-b="objetivo" ${dis}><option value="">Definir…</option>${OBJETIVOS.map(o => `<option ${b.objetivo === o ? "selected" : ""}>${o}</option>`).join("")}</select></div>
+        <div class="field"><label for="f-obj">Objetivo <span class="hint">· aparece para o cliente</span></label><input class="inp" id="f-obj" data-b="objetivo" list="objList" value="${esc(b.objetivo || "")}" placeholder="Ex.: gerar agendamentos" ${dis}><datalist id="objList">${OBJETIVOS.map(o => `<option value="${o}">`).join("")}</datalist></div>
         <div class="field"><label for="f-pub">Público</label><input class="inp" id="f-pub" data-b="publico" value="${esc(b.publico)}" ${dis}></div>
         ${carrOn(b) ? cardsHTML(b.cards, !!dis, "") : `<div class="field full"><label for="f-hl">Headline</label>${rteHTML("f-hl", "data-rt", "headline", fmtOf(b, "headline"), !!dis, "", "2.4em")}</div>
         <div class="field full"><label for="f-sub">Sub-headline${(b.formatos || []).includes("Carrossel") ? ` <span class="hint">· uma linha por lâmina no carrossel</span>` : ""}</label>${rteHTML("f-sub", "data-rt", "sub", fmtOf(b, "sub"), !!dis, "", "3.2em")}</div>`}
@@ -3110,7 +3246,7 @@ function drawerHTML(p){
   const stepper = stepperHTML(p);
   return `<aside class="drawer pg ${ed ? "edit" : "view"}" role="dialog" aria-modal="true" aria-label="${esc(titleOf(p))}">${top}
     <div class="d-body pgb"><div class="pgw"><div class="pgmain">
-      ${showAdj ? `<div class="sec"><h3>${lastAdj.acao === "ajuste" ? `Ajuste pedido pelo cliente${lastAdj.tipo ? " · " + ({arte:"na arte", legenda:"na legenda", ambos:"na arte e na legenda", texto:"no texto"}[lastAdj.tipo] || "") : ""}` : "Ajuste pedido pelo planejamento"}</h3><div class="warnbox">${esc(lastAdj.texto || "Sem detalhes.")}</div></div>` : ""}
+      ${showAdj ? `<div class="sec"><h3>${lastAdj.acao === "ajuste" ? "Ajuste pedido pelo cliente" + (lastAdj.nome ? " · " + esc(lastAdj.nome) : "") : lastAdj.acao === "ajuste_int" ? "Ajuste pedido na revisão" : "Ajuste pedido pelo planejamento"}</h3>${ajOnde(lastAdj) ? `<div class="ajonde"><span>Onde ajustar</span><b>${esc(ajOnde(lastAdj))}</b></div>` : ""}<div class="warnbox">${esc(lastAdj.texto || "Sem detalhes.")}</div></div>` : ""}
       <section class="psec"><h3>Conteúdo</h3>${conteudo}${cardBrief}</section>
       ${legenda}${midias}${refs}${anexosSec}
       <section class="psec">${comentsSec}</section>
@@ -3161,9 +3297,9 @@ function actionsHTML(p, c, edFiles){
     return `<div class="sec" style="display:flex;flex-direction:column;gap:10px"><h3>Próximo passo</h3>${out.join("")}</div>`;
   }
   const art = needsArt(p), fx = fluxoOf(p);
-  if (p.status === "pauta" && canPlan(p) && fx === "video") out.push(`<div class="actions"><button type="button" class="btn primary" data-mvst="planejamento">Iniciar planejamento</button><button type="button" class="btn" data-mvst="pautado">Roteiro pronto: enviar para a criação</button><button type="button" class="btn" data-act="toProd" data-sub="captacao">Enviar para captação</button><button type="button" class="btn" data-act="toProd" data-sub="edicao">Já tem material: direto para edição</button></div><div class="muted" style="font-size:12px">Roteiro pronto: o audiovisual capta e depois edita. Ligue a pauta a uma captação em Captações.</div>`);
-  else if (p.status === "pauta" && canPlan(p) && art) out.push(`<div class="actions"><button type="button" class="btn primary" data-mvst="planejamento">Iniciar planejamento</button><button type="button" class="btn" data-mvst="pautado">Briefing pronto: enviar para a criação</button></div><div class="muted" style="font-size:12px">Planejamento: quem pautou monta roteiro e briefing. Criação: o design (estático) ou o audiovisual (vídeo) assume a pauta.</div>`);
-  if (p.status === "planejamento" && (canPlan(p) || p.criadoPor === ui.me) && (art || fx === "video")) out.push(`<div class="actions"><button type="button" class="btn primary" data-mvst="pautado">Briefing pronto: enviar para a criação</button></div><div class="muted" style="font-size:12px">Vai para ${ehAudiovisual(p) ? "o Audiovisual" : "o Design"}${timeCriacao(p) ? " · " + esc(mName(timeCriacao(p))) : ""}. A criação move para Em produção quando começar.</div>`);
+  if (p.status === "pauta" && canPlan(p) && fx === "video") out.push(`<div class="actions"><button type="button" class="btn primary" data-mvst="planejamento">Iniciar planejamento</button><button type="button" class="btn" data-mvst="${temRevPlan(p) ? "revplan" : "pautado"}">Roteiro pronto: ${temRevPlan(p) ? "enviar para validação" : "enviar para a criação"}</button><button type="button" class="btn" data-act="toProd" data-sub="captacao">Enviar para captação</button><button type="button" class="btn" data-act="toProd" data-sub="edicao">Já tem material: direto para edição</button></div><div class="muted" style="font-size:12px">Roteiro pronto: o audiovisual capta e depois edita. Ligue a pauta a uma captação em Captações.</div>`);
+  else if (p.status === "pauta" && canPlan(p) && art) out.push(`<div class="actions"><button type="button" class="btn primary" data-mvst="planejamento">Iniciar planejamento</button><button type="button" class="btn" data-mvst="${temRevPlan(p) ? "revplan" : "pautado"}">Briefing pronto: ${temRevPlan(p) ? "enviar para validação" : "enviar para a criação"}</button></div><div class="muted" style="font-size:12px">Planejamento: quem pautou monta roteiro e briefing. Criação: o design (estático) ou o audiovisual (vídeo) assume a pauta.</div>`);
+  if (p.status === "planejamento" && (canPlan(p) || p.criadoPor === ui.me) && (art || fx === "video")) out.push(`<div class="actions"><button type="button" class="btn primary" data-mvst="${temRevPlan(p) ? "revplan" : "pautado"}">Briefing pronto: ${temRevPlan(p) ? "enviar para validação" : "enviar para a criação"}</button></div><div class="muted" style="font-size:12px">Vai para ${ehAudiovisual(p) ? "o Audiovisual" : "o Design"}${timeCriacao(p) ? " · " + esc(mName(timeCriacao(p))) : ""}. A criação move para Em produção quando começar.</div>`);
   if (p.status === "planejamento" && (canPlan(p) || p.criadoPor === ui.me) && !art && fx !== "video") out.push(`<div class="actions"><button type="button" class="btn primary" data-act="textReady">Texto pronto: enviar para revisão</button></div><div class="muted" style="font-size:12px">Pauta só de texto: não passa pela criação.</div>`);
   if (p.status === "pautado" && (canProduce(p) || canPlan(p)) && fx !== "video") out.push(`<div class="actions"><button type="button" class="btn primary" data-mvst="producao">Iniciar produção</button></div><div class="muted" style="font-size:12px">Ao iniciar, começa a contar o tempo de criação desta peça.</div>`);
   if (p.status === "pautado" && (canProduce(p) || canPlan(p)) && fx === "video") out.push(`<div class="actions"><button type="button" class="btn primary" data-act="toProd" data-sub="captacao">Iniciar captação</button><button type="button" class="btn" data-act="toProd" data-sub="edicao">Já tem material: edição</button></div>`);
@@ -3177,8 +3313,19 @@ function actionsHTML(p, c, edFiles){
       <div class="actions"><button type="button" class="btn primary" data-act="toReview">${p.status === "ajuste" ? "Ajuste feito: enviar para revisão" : "Enviar para revisão"}</button></div><div class="muted" style="font-size:12px">A janela fica aberta: confira os arquivos e envie quando estiver pronto.</div></div>`);
   }
   if (p.status === "ajuste" && (p.ajusteCom === "planejamento" || !art) && canPlan(p)) out.push(`<div class="actions"><button type="button" class="btn primary" data-act="ajusteOk">Ajuste concluído: enviar para revisão</button></div><div class="muted" style="font-size:12px">Depois da revisão, a pauta volta para o cliente.</div>`);
-  if (p.status === "revisao" && precisaHead(p) && !isHead()) out.push(p.validadoHead ? `<div class="okbox">Validada pelo Head.</div>` : `<div class="box"><b style="font-size:13px">Aguardando validação do Head</b><span class="muted" style="font-size:12.5px">Toda pauta de cliente passa pela validação de um Head antes de ir para aprovação. Quando um Head envia ao cliente, a validação é registrada junto.</span>${isHead() ? `<div class="actions"><button type="button" class="btn primary" data-act="validarHead">Validar</button></div>` : ""}</div>`);
-  if (p.status === "revisao" && canPlan(p)) {
+  if (p.status === "revplan") {
+    const hp = headPlanDe(p), pode = hp === ui.me || isDir() || headOfUnit(unitOf(p));
+    if (pode) { out.push(`<div class="box"><b style="font-size:13px">Validação da Head de Planejamento</b><span class="muted" style="font-size:12.5px">Confira ideia, objetivo, headline e formatos. Aprovando, vai para ${ehAudiovisual(p) ? "o Audiovisual" : "o Design"}${timeCriacao(p) ? " · " + esc(mName(timeCriacao(p))) : ""}.</span><div class="actions"><button type="button" class="btn primary" data-mvst="pautado">Aprovar: enviar para a criação</button><button type="button" class="btn" data-act="rpBackT">Devolver para o planejamento</button><button type="button" class="btn ghost" data-act="rpNo">Não entra agora: pausar</button></div></div>`);
+      if (u.rpBack) out.push(`<div class="box"><label for="rptxt" style="font-weight:700;font-size:12.5px">O que o planejamento precisa ajustar?</label><textarea id="rptxt" rows="3">${esc(u.rpText || "")}</textarea><div class="actions"><button type="button" class="btn primary" data-act="rpBackGo">Devolver para ${esc(mName((p.resp || {}).plan))}</button></div></div>`); }
+    else out.push(`<div class="note">Aguardando a validação de ${esc(mName(hp))} (Head de Planejamento) para entrar em produção.</div>`);
+  }
+  if (p.status === "revisao" && fx === "trafego") {
+    const pode = owner(p) === ui.me || canPlan(p) || has("trafego") || isHead();
+    if (pode) { out.push(`<div class="box"><b style="font-size:13px">Revisão do criativo</b><span class="muted" style="font-size:12.5px">Tráfego não passa pelo cliente: aprovando, vai para ${esc(mName(trafOf(p)))} configurar a campanha.</span><div class="actions"><button type="button" class="btn primary" data-act="trafAprova">Aprovar criativo</button><button type="button" class="btn" data-act="toggleBack">Pedir ajuste à criação</button></div></div>`);
+      if (u.back) out.push(`<div class="box"><label for="backtxt" style="font-weight:700;font-size:12.5px">O que precisa ajustar?</label><textarea id="backtxt" rows="3">${esc(u.backText || "")}</textarea><div class="actions"><button type="button" class="btn primary" data-act="trafAjuste">Enviar ajuste para ${esc(mName((p.resp || {}).prod))}</button></div></div>`); }
+  }
+  if (p.status === "revisao" && precisaHead(p) && !isHead() && fx !== "trafego") out.push(p.validadoHead ? `<div class="okbox">Validada pelo Head.</div>` : `<div class="box"><b style="font-size:13px">Aguardando validação do Head</b><span class="muted" style="font-size:12.5px">Toda pauta de cliente passa pela validação de um Head antes de ir para aprovação. Quando um Head envia ao cliente, a validação é registrada junto.</span>${isHead() ? `<div class="actions"><button type="button" class="btn primary" data-act="validarHead">Validar</button></div>` : ""}</div>`);
+  if (p.status === "revisao" && canPlan(p) && fx !== "trafego") {
     out.push(`<div class="actions">${semCli(p) ? `<button type="button" class="btn primary" data-act="approveInternal">Aprovar (sem cliente)</button>` : `<button type="button" class="btn primary" data-act="toClient" ${aguardaHead(p) ? 'disabled title="Aguardando validação do Head"' : ""}>Enviar ao cliente</button>`}${art ? `<button type="button" class="btn" data-act="toggleBack">Devolver para produção</button>` : ""}</div>`);
     if (u.back) out.push(`<div class="box"><label for="backtxt" style="font-weight:700;font-size:12.5px">O que precisa ajustar?</label><textarea id="backtxt" rows="3">${esc(u.backText || "")}</textarea><div class="actions"><button type="button" class="btn primary" data-act="sendBack">Devolver para ${esc(mName((p.resp || {}).prod))}</button></div></div>`);
   }
@@ -3239,7 +3386,7 @@ function approvalPanel(p){
     act = nameField() + `<div class="actions"><button type="button" class="btn ok" data-act="cliApprove">Aprovar</button><button type="button" class="btn" data-act="toggleAdj">Pedir ajuste</button></div>`;
     if (u.adj) act += `<div class="box"><div style="font-weight:700;font-size:12.5px">Onde está o ajuste?</div>${adjTipos("adjtipo", u.adjTipo, p)}<textarea id="adjtxt" rows="3" placeholder="Conte o que precisa mudar…" aria-label="Pedido de ajuste">${esc(u.adjText || "")}</textarea><div class="actions"><button type="button" class="btn primary" data-act="cliAdjust">Enviar pedido de ajuste</button></div></div>`;
   } else act = `<div class="note">${{cliente:"Aguardando aprovação do cliente.", ajuste:"Recebemos o pedido. A equipe está ajustando e a peça volta para aprovação.", aprovado:"Aprovada. Será publicada na data prevista.", publicado:"Já publicada."}[p.status]}</div>`;
-  return `<div class="apv"><div class="spread"><span class="eyebrow">${esc(fmtD(p.data,{weekday:"long", day:"2-digit", month:"long"}))} · ${esc(canal(p).label)}</span><span class="netb">${esc((p.redes || []).join(" + ") || canal(p).net)}</span></div>${p.status === "ajuste" && lastAdj ? `<div class="warnbox">${esc(lastAdj.texto)}</div>` : ""}${act}</div>`;
+  return `<div class="apv"><div class="spread"><span class="eyebrow">${esc(fmtD(p.data,{weekday:"long", day:"2-digit", month:"long"}))} · ${esc(canal(p).label)}</span><span class="netb">${esc((p.redes || []).join(" + ") || canal(p).net)}</span></div>${(p.briefing || {}).objetivo ? `<div class="objtag">Objetivo do conteúdo · <b>${esc(p.briefing.objetivo)}</b></div>` : ""}${p.status === "ajuste" && lastAdj ? `<div class="warnbox">${esc(lastAdj.texto)}</div>` : ""}${act}</div>`;
 }
 function postModalHTML(p){
   const t = canal(p), b = p.briefing || {}, ms = p.midias || [], n = ms.length;
@@ -3274,9 +3421,9 @@ function approveAllHTML(){
 /* ================= modais ================= */
 function canaisDoCliente(c){ const s = scopeItems(c).map(x => x.tipo); return s.length ? [...new Set(s)] : Object.keys(CANAIS).filter(k => !["anuncio","tarefa"].includes(k)); }
 /* Quem não planeja (Time C, exceto clientes) cria só tasks (tipo Pauta / to-do) pelo Kanban. */
-const soTask = () => !isClient() && !(canPlanAny() || isHead());
+const soTask = () => false; /* todo o time interno cria qualquer tipo de pauta */
 function newPecaHTML(){
-  const vc = soTask() ? visibleClients() : visibleClients().filter(canEditClient), u = ui.tmp;
+  const vc = visibleClients(), u = ui.tmp;
   if (soTask()) u.cat = "interna";
   if (!u.f) u.f = {}; const f = u.f; if (u.data && !f.data) f.data = u.data; if (u.tit && f.tit === undefined) f.tit = u.tit;
   const val = (k, d) => f[k] !== undefined ? f[k] : (d === undefined ? "" : d);
@@ -3310,7 +3457,7 @@ function newPecaHTML(){
       <div class="field"><label for="np-sub">Subtítulo ${opc}</label>${inp("sub")}</div>
       <div class="field"><label for="np-corpo">Texto completo ${opc}</label>${rtn("corpo", `Escreva aqui o ${CANAIS[tipoNow].label.toLowerCase()}…`, "240px")}</div></div>`;
   else conteudo = `<div class="field full"><label for="np-ideia">Ideia <span class="hint">· por que este material existe</span></label>${rtn("ideia", "", "3.2em")}</div>
-      <div class="field"><label for="np-obj">Objetivo</label><select class="inp" id="np-obj"><option value="">Definir…</option>${OBJETIVOS.map(o => `<option ${val("obj") === o ? "selected" : ""}>${o}</option>`).join("")}</select></div>
+      <div class="field"><label for="np-obj">Objetivo <span class="hint">· opcional, aparece para o cliente</span></label><input class="inp" id="np-obj" list="objList" value="${esc(val("obj") || "")}" placeholder="Ex.: gerar agendamentos"><datalist id="objList">${OBJETIVOS.map(o => `<option value="${o}">`).join("")}</datalist></div>
       <div class="field"><label for="np-pub">Público</label>${inp("pub")}</div>
       ${(u.fmts || []).includes("Carrossel") ? cardsHTML(u.cards || (u.cards = [{hl:"", sub:""}, {hl:"", sub:""}]), false, "np") : `<div class="field full"><label for="np-hl">Headline</label>${rtn("hl", "", "2.4em")}</div>
       <div class="field full"><label for="np-sub">Sub-headline</label>${rtn("sub", "", "3.2em")}</div>`}`;
@@ -3381,6 +3528,7 @@ function escopoFormHTML(d){
       ${e.linkedin.on ? `<div class="npanel"><b>LinkedIn</b>${freqRow("linkedin.post", "Post", e.linkedin.post, true)}${freqRow("linkedin.artigo", "Artigo", e.linkedin.artigo, true)}${freqRow("linkedin.newsletter", "Newsletter", e.linkedin.newsletter, true)}</div>` : ""}
       ${e.blog.on ? `<div class="npanel"><b>Blog</b>${freqRow("blog.post", "Posts", e.blog.post, false)}</div>` : ""}
       <div class="npanel"><label style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;cursor:pointer"><input type="checkbox" data-sc="captacao.on" ${e.captacao.on ? "checked" : ""} style="accent-color:var(--accent)"> Captação incluída no escopo</label>${e.captacao.on ? `<div class="form"><div class="field"><label for="cf-capf">Frequência</label><select class="inp" id="cf-capf" data-sc="captacao.freq">${Object.entries(CAPFREQ).map(([k, l]) => `<option value="${k}" ${e.captacao.freq === k ? "selected" : ""}>${l}</option>`).join("")}</select></div><div class="field"><label for="cf-capo">Observação</label><input class="inp" type="text" id="cf-capo" data-sc="captacao.obs" value="${esc(e.captacao.obs || "")}" placeholder="Ex.: 1 diária por mês, 4 horas"></div></div>` : ""}</div>
+      <div class="npanel"><label style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;cursor:pointer"><input type="checkbox" data-sc="reuniao.on" ${e.reuniao.on ? "checked" : ""} style="accent-color:var(--accent)"> Reunião com cliente</label>${e.reuniao.on ? `<div class="form"><div class="field"><label for="cf-reuf">Periodicidade</label><select class="inp" id="cf-reuf" data-sc="reuniao.freq">${Object.entries(REUFREQ).map(([k, l]) => `<option value="${k}" ${e.reuniao.freq === k ? "selected" : ""}>${l}</option>`).join("")}</select></div><div class="field"><label for="cf-reur">Responsável</label><select class="inp" id="cf-reur" data-sc="reuniao.resp"><option value="">Definir…</option>${ativos().filter(m => !d.unidade || m.unidade === d.unidade).sort((x, y) => x.nome.localeCompare(y.nome)).map(m => `<option value="${esc(m.id)}" ${e.reuniao.resp === m.id ? "selected" : ""}>${esc(m.nome)}</option>`).join("")}</select></div><div class="field full"><label for="cf-reuo">Observação</label><input class="inp" type="text" id="cf-reuo" data-sc="reuniao.obs" value="${esc(e.reuniao.obs || "")}" placeholder="Ex.: online, primeira terça do mês, apresentar resultados"></div></div>` : ""}</div>
       ${e.trafego.on ? `<div class="npanel"><b>Tráfego pago</b><div class="form"><div class="field full"><label for="cf-trafo">Plataformas e observações</label><input class="inp" type="text" id="cf-trafo" data-sc="trafego.obs" value="${esc(e.trafego.obs || "")}" placeholder="Ex.: Meta Ads e Google Ads, verba mensal definida com o cliente"></div></div></div>` : ""}
 `;
 }
@@ -3547,7 +3695,7 @@ function confirmHTML(){
 }
 function fillOverlay(){
   const ov = $("#overlay"), m = ui.modal;
-  const M = {midConta:midContaFormHTML, midCob:midCobFormHTML, newPeca:newPecaHTML, gen:genHTML, client:clientFormHTML, person:personFormHTML, profile:profileHTML, unit:unitFormHTML, cap:capFormHTML, mat:matFormHTML, acc:accFormHTML, vaultSetup:() => vaultFormHTML("setup"), vaultUnlock:() => vaultFormHTML("unlock"), accHist:accHistHTML, notifs:notifsHTML, approveAll:approveAllHTML, inviteLink:inviteLinkHTML, confirm:confirmHTML, day:() => dayAllHTML(ui.tmp.day, ui.tmp.kind), msg:msgHTML, comConta:comFormHTML, comVisita:comVisitaHTML};
+  const M = {alin:alFormHTML, midConta:midContaFormHTML, midCob:midCobFormHTML, newPeca:newPecaHTML, gen:genHTML, client:clientFormHTML, person:personFormHTML, profile:profileHTML, unit:unitFormHTML, cap:capFormHTML, mat:matFormHTML, acc:accFormHTML, vaultSetup:() => vaultFormHTML("setup"), vaultUnlock:() => vaultFormHTML("unlock"), accHist:accHistHTML, notifs:notifsHTML, approveAll:approveAllHTML, inviteLink:inviteLinkHTML, confirm:confirmHTML, day:() => dayAllHTML(ui.tmp.day, ui.tmp.kind), msg:msgHTML, comConta:comFormHTML, comVisita:comVisitaHTML};
   let html = "";
   if (m && M[m]) html = M[m]();
   else if (ui.openId) {
@@ -3736,7 +3884,7 @@ document.addEventListener("click", async ev => {
   if (d.unit) { ui.unidade = d.unit; ui.view = "inicio"; render(); return; }
   if (d.step !== undefined) { goStep(+d.step); return; }
   if (d.editp) { const p = person(d.editp); ui.tmp = {pd: Object.assign(JSON.parse(JSON.stringify(p)), {_exists:true})}; ui.modal = "person"; fillOverlay(); return; }
-  if (d.notif) { const n = S.notifs.find(x => x.id === d.notif); if (n) { n.lida = true; save(); ui.modal = null; ui.tmp = {}; if (n.relId) { ui.view = "dashboards"; ui.dbTab = "relatorios"; ui.relOpen = n.relId; ui.relf = "todos"; } if (n.pecaId && S.pecas.some(p => p.id === n.pecaId)) { ui.openId = n.pecaId; ui.idx = 0; } render(); } return; }
+  if (d.notif) { const n = S.notifs.find(x => x.id === d.notif); if (n) { n.lida = true; save(); ui.modal = null; ui.tmp = {}; if (n.relId) { ui.view = "dashboards"; ui.dbTab = "relatorios"; ui.relOpen = n.relId; ui.relf = "todos"; } if (n.pecaId && S.pecas.some(p => p.id === n.pecaId)) { ui.openId = n.pecaId; ui.idx = 0; } const al = n.alinId && (S.alinhamentos || []).find(a => a.id === n.alinId); if (al) { ui.view = "hub"; ui.hubId = al.clienteId; ui.hubTab = "alinhamentos"; render(); alAbrir(al); return; } render(); } return; }
   if (d.acc) {
     const x = S.acessos.find(a => a.id === d.id); if (!x) return;
     if (d.acc === "show") { ui.revealed[x.id] = await accPlain(x); setTimeout(() => { if (ui.revealed[x.id]) { delete ui.revealed[x.id]; if (ui.view === "hub" && !ui.modal) render(); } }, 30000); render(); }
@@ -3826,6 +3974,11 @@ document.addEventListener("click", async ev => {
     case "approveInternal": if (!semCli(p) || !canPlan(p)) break; setStatus(p, "aprovado", entry("aprovou_interno")); toast("Aprovada. Quando entregar, marque como concluída."); render(); break;
     case "toClient": if (aguardaHead(p)) { toast("A pauta precisa da validação de um Head antes de ir ao cliente."); break; } headValida(p); if (readyToSend(p)) { toast(readyToSend(p)); fillOverlay(); break; } if ([...String((p.briefing || {}).legenda || "")].length > 2200) { toast("A legenda passa de 2.200 caracteres, o limite do Instagram."); break; } setStatus(p, "cliente", entry("enviou_cliente"), {ajusteCom:null}); toast("Enviada ao cliente"); render(); break;
     case "toggleBack": u.back = !u.back; fillOverlay(); break;
+    case "rpBackT": u.rpBack = !u.rpBack; fillOverlay(); break;
+    case "rpBackGo": { const txt = (u.rpText || "").trim(); if (!txt) { toast("Conte o que o planejamento precisa ajustar."); break; } setStatus(p, "planejamento", entry("devolveu", {texto:txt})); ui.tmp = {}; toast("Devolvida para o planejamento"); render(); break; }
+    case "rpNo": setStatus(p, "pausado", entry("pausou", {texto:"Revisão planejamento: não entra agora"}), {pausadoDe:"revplan", pausadoEm:nowIso(), pausaMotivo:"Não aprovada na revisão do planejamento"}); ui.tmp = {}; toast("Pauta pausada"); render(); break;
+    case "trafAprova": setStatus(p, "aprovado", entry("aprovou_trafego")); ui.tmp = {}; toast("Criativo aprovado: vai para o tráfego configurar"); render(); break;
+    case "trafAjuste": { const txt = (u.backText || "").trim(); if (!txt) { toast("Descreva o ajuste para a criação."); break; } setStatus(p, "ajuste", entry("ajuste_int", {texto:txt, tipo:"arte"}), {ajusteCom:"criacao"}); ui.tmp = {}; toast("Ajuste enviado para a criação"); render(); break; }
     case "sendBack": { const txt = (u.backText || "").trim(); if (!txt) { toast("Descreva o ajuste para a produção."); break; } setStatus(p, "producao", entry("devolveu", {texto:txt}), {retorno:true}); ui.tmp = {}; toast("Devolvida para a produção"); render(); break; }
     case "regApprove": u.reg = "ap"; fillOverlay(); break;
     case "regAdjust": u.reg = "aj"; fillOverlay(); break;
@@ -3927,7 +4080,7 @@ document.addEventListener("input", ev => {
   if (t.id === "etqnome") { ui.tmp.etqNome = t.value; return; }
   if (t.id === "drvlink") { ui.tmp.drvLink = t.value; return; }
   if (t.id === "pnome") { ui.pnome = t.value; try { localStorage.setItem("alra-portal-nome", t.value.trim()); } catch(e) {} if (mode === "briefing" && Object.keys(obPend).length) { clearTimeout(obT); obT = setTimeout(() => obSave(false), 1200); } return; }
-  const map = {restxt:"resText", backtxt:"backText", regtxt:"regText", adjtxt:"adjText", aatxt:"aaText", dnote:"dnote", cmtxt:"cm", ntftxt:"ntfText"};
+  const map = {rptxt:"rpText", restxt:"resText", backtxt:"backText", regtxt:"regText", adjtxt:"adjText", aatxt:"aaText", dnote:"dnote", cmtxt:"cm", ntftxt:"ntfText"};
   if (map[t.id]) { ui.tmp[map[t.id]] = t.value; return; }
   if (ui.tmp.cd) { if (t.dataset.cf && t.tagName !== "SELECT") ui.tmp.cd[t.dataset.cf] = t.value; if (t.dataset.cfc) ui.tmp.cd.contato[t.dataset.cfc] = t.value; if (t.dataset.sc && t.type === "text") setPath(ui.tmp.cd.escopo, t.dataset.sc, t.value); }
   if (ui.tmp.pd && t.dataset.pf && t.tagName !== "SELECT") ui.tmp.pd[t.dataset.pf] = t.value;
