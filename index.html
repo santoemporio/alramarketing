@@ -1115,7 +1115,7 @@ function notifyIncoming(){
 
 /* ================= migração de versões anteriores ================= */
 const fr = (on, freq) => ({on, dias:[], freq: freq || "semanal"});
-const blankEscopo = () => ({meta:{instagram:false, facebook:false, feed:fr(true), stories:fr(false)}, tiktok:{on:false, video:fr(true)}, youtube:{on:false, video:fr(false), shorts:fr(false)}, linkedin:{on:false, post:fr(false), artigo:fr(false), newsletter:fr(false, "quinzenal")}, blog:{on:false, post:fr(true)}, captacao:{on:false, freq:"mensal", obs:""}, reuniao:{on:false, freq:"mensal", obs:"", resp:""}, trafego:{on:false, obs:""}});
+const blankEscopo = () => ({meta:{instagram:false, facebook:false, feed:fr(true), stories:fr(false)}, tiktok:{on:false, video:fr(true)}, youtube:{on:false, video:fr(false), shorts:fr(false)}, linkedin:{on:false, post:fr(false), artigo:fr(false), newsletter:fr(false, "quinzenal")}, blog:{on:false, post:fr(true)}, captacao:{on:false, freq:"mensal", obs:""}, reuniao:{on:false, freq:"mensal", obs:"", resp:""}, trafego:{on:false, obs:""}, estrategico:{on:false, obs:""}});
 function fillEscopo(e){
   const b = blankEscopo(), out = Object.assign({}, b, e || {});
   Object.keys(b).forEach(k => { out[k] = Object.assign({}, b[k], (e || {})[k] || {}); });
@@ -1287,6 +1287,7 @@ function scopeSummary(c){
   if (e.linkedin.on) [["post","Post"],["artigo","Artigo"],["newsletter","Newsletter"]].forEach(([k, l]) => { if (e.linkedin[k].on) lines.push(["LinkedIn", l + " · " + dtxt(e.linkedin[k])]); });
   if (e.blog.on) lines.push(["Blog", "Posts · " + dtxt(e.blog.post)]);
   if (e.trafego.on) lines.push(["Tráfego pago", "Gestão de tráfego" + (e.trafego.obs ? " · " + e.trafego.obs : "")]);
+  if (e.estrategico && e.estrategico.on) lines.push(["Planejamento estratégico", "Incluído no escopo" + (e.estrategico.obs ? " · " + e.estrategico.obs : "")]);
   if (e.reuniao && e.reuniao.on) lines.push(["Reunião", (REUFREQ[e.reuniao.freq] || "Incluída") + (e.reuniao.resp ? " · " + mName(e.reuniao.resp).split(" ")[0] : "") + (e.reuniao.obs ? " · " + e.reuniao.obs : "")]);
   if (e.captacao.on) lines.push(["Captação", (CAPFREQ[e.captacao.freq] || "Incluída") + (e.captacao.obs ? " · " + e.captacao.obs : "")]);
   return lines;
@@ -3516,12 +3517,13 @@ function freqRow(path, label, f, canToggle){
     <select class="inp" data-sc="${path}.freq" ${on ? "" : "disabled"} aria-label="Periodicidade de ${esc(label)}" style="padding:6px 8px;font-size:12.5px">${Object.entries(FREQ).map(([k, l]) => `<option value="${k}" ${f.freq === k ? "selected" : ""}>${l}</option>`).join("")}</select></div>`;
 }
 const temRede = e => !!(e.meta.instagram || e.meta.facebook || e.tiktok.on || e.youtube.on || e.linkedin.on || e.blog.on);
-const soTrafego = e => !!(e.trafego && e.trafego.on) && !temRede(e);
+const soTrafego = e => !!(e.trafego && e.trafego.on) && !temRede(e) && !(e.estrategico && e.estrategico.on);
+const soEstrategico = e => !!(e.estrategico && e.estrategico.on) && !temRede(e) && !(e.trafego && e.trafego.on);
 function escopoFormHTML(d){
   const e = d.escopo, net = (path, label, on) => `<label><input type="checkbox" data-sc="${path}" ${on ? "checked" : ""}> ${label}</label>`, meta = e.meta.instagram || e.meta.facebook;
   return `      <div class="eyebrow">3 · Redes e escopo</div>
       <p class="muted" style="font-size:12.5px;margin-top:-6px">Marque as redes. As opções de cada uma abrem logo abaixo.</p>
-      <div class="netpick">${net("meta.instagram", "Instagram", e.meta.instagram)}${net("meta.facebook", "Facebook", e.meta.facebook)}${net("tiktok.on", "TikTok", e.tiktok.on)}${net("youtube.on", "YouTube", e.youtube.on)}${net("linkedin.on", "LinkedIn", e.linkedin.on)}${net("blog.on", "Blog", e.blog.on)}<label class="nettraf"><input type="checkbox" data-sc="trafego.on" ${e.trafego.on ? "checked" : ""}> Tráfego pago</label></div>
+      <div class="netpick">${net("meta.instagram", "Instagram", e.meta.instagram)}${net("meta.facebook", "Facebook", e.meta.facebook)}${net("tiktok.on", "TikTok", e.tiktok.on)}${net("youtube.on", "YouTube", e.youtube.on)}${net("linkedin.on", "LinkedIn", e.linkedin.on)}${net("blog.on", "Blog", e.blog.on)}<label class="nettraf"><input type="checkbox" data-sc="trafego.on" ${e.trafego.on ? "checked" : ""}> Tráfego pago</label><label class="nettraf"><input type="checkbox" data-sc="estrategico.on" ${e.estrategico.on ? "checked" : ""}> Planejamento estratégico</label></div>
       ${meta ? `<div class="npanel"><b>Instagram e Facebook <span class="hint">· mesma peça, mesma aprovação</span></b>${freqRow("meta.feed", "Feed", e.meta.feed, false)}${freqRow("meta.stories", "Stories", e.meta.stories, true)}</div>` : ""}
       ${e.tiktok.on ? `<div class="npanel"><b>TikTok</b>${freqRow("tiktok.video", "Vídeos", e.tiktok.video, false)}</div>` : ""}
       ${e.youtube.on ? `<div class="npanel"><b>YouTube</b>${freqRow("youtube.video", "Vídeo na íntegra (público)", e.youtube.video, true)}${freqRow("youtube.shorts", "YouTube Shorts", e.youtube.shorts, true)}</div>` : ""}
@@ -3530,6 +3532,7 @@ function escopoFormHTML(d){
       <div class="npanel"><label style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;cursor:pointer"><input type="checkbox" data-sc="captacao.on" ${e.captacao.on ? "checked" : ""} style="accent-color:var(--accent)"> Captação incluída no escopo</label>${e.captacao.on ? `<div class="form"><div class="field"><label for="cf-capf">Frequência</label><select class="inp" id="cf-capf" data-sc="captacao.freq">${Object.entries(CAPFREQ).map(([k, l]) => `<option value="${k}" ${e.captacao.freq === k ? "selected" : ""}>${l}</option>`).join("")}</select></div><div class="field"><label for="cf-capo">Observação</label><input class="inp" type="text" id="cf-capo" data-sc="captacao.obs" value="${esc(e.captacao.obs || "")}" placeholder="Ex.: 1 diária por mês, 4 horas"></div></div>` : ""}</div>
       <div class="npanel"><label style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;cursor:pointer"><input type="checkbox" data-sc="reuniao.on" ${e.reuniao.on ? "checked" : ""} style="accent-color:var(--accent)"> Reunião com cliente</label>${e.reuniao.on ? `<div class="form"><div class="field"><label for="cf-reuf">Periodicidade</label><select class="inp" id="cf-reuf" data-sc="reuniao.freq">${Object.entries(REUFREQ).map(([k, l]) => `<option value="${k}" ${e.reuniao.freq === k ? "selected" : ""}>${l}</option>`).join("")}</select></div><div class="field"><label for="cf-reur">Responsável</label><select class="inp" id="cf-reur" data-sc="reuniao.resp"><option value="">Definir…</option>${ativos().filter(m => !d.unidade || m.unidade === d.unidade).sort((x, y) => x.nome.localeCompare(y.nome)).map(m => `<option value="${esc(m.id)}" ${e.reuniao.resp === m.id ? "selected" : ""}>${esc(m.nome)}</option>`).join("")}</select></div><div class="field full"><label for="cf-reuo">Observação</label><input class="inp" type="text" id="cf-reuo" data-sc="reuniao.obs" value="${esc(e.reuniao.obs || "")}" placeholder="Ex.: online, primeira terça do mês, apresentar resultados"></div></div>` : ""}</div>
       ${e.trafego.on ? `<div class="npanel"><b>Tráfego pago</b><div class="form"><div class="field full"><label for="cf-trafo">Plataformas e observações</label><input class="inp" type="text" id="cf-trafo" data-sc="trafego.obs" value="${esc(e.trafego.obs || "")}" placeholder="Ex.: Meta Ads e Google Ads, verba mensal definida com o cliente"></div></div></div>` : ""}
+      ${e.estrategico.on ? `<div class="npanel"><b>Planejamento estratégico</b><div class="form"><div class="field full"><label for="cf-estro">Entregas e observações</label><input class="inp" type="text" id="cf-estro" data-sc="estrategico.obs" value="${esc(e.estrategico.obs || "")}" placeholder="Ex.: plano trimestral, posicionamento, metas e calendário de campanhas"></div></div></div>` : ""}
 `;
 }
 function projetoFormHTML(d){
@@ -4241,7 +4244,7 @@ document.addEventListener("submit", async ev => {
     const e = cd.escopo, proj = cd.tipo === "projeto";
     ["nome","inicio","fim","entregaveis"].forEach(k => { const el = document.querySelector(`[data-cfpj="${k}"]`); if (el) cd.projeto = Object.assign({}, cd.projeto, {[k]: el.value}); });
     if (proj) { const pj = cd.projeto || {}; if (!(pj.nome || "").trim()) return fail("Dê um nome ao projeto."); if (!pj.fim) return fail("Defina a data de entrega final do projeto."); if (pj.inicio && pj.fim < pj.inicio) return fail("A entrega final não pode ser antes do início."); if (!cd.squad.producao.length) return fail("Defina ao menos uma pessoa de produção na equipe do cliente."); }
-    else if (!temRede(e) && !e.trafego.on) return fail("Marque ao menos uma rede ou o tráfego pago no escopo.");
+    else if (!temRede(e) && !e.trafego.on && !e.estrategico.on) return fail("Marque ao menos uma rede, o tráfego pago ou o planejamento estratégico no escopo.");
     const items = [];
     if (!proj) {
     if (e.meta.instagram || e.meta.facebook) { items.push(["Feed", e.meta.feed]); if (e.meta.stories.on) items.push(["Stories", e.meta.stories]); }
@@ -4252,6 +4255,7 @@ document.addEventListener("submit", async ev => {
     }
     const semDia = proj ? null : items.find(([, f]) => !(f.dias || []).length); if (semDia) return fail(`Marque os dias de ${semDia[0]}.`);
     if (proj) {}
+    else if (soEstrategico(e)) { if (!cd.squad.planejamento.length) return fail("Defina ao menos uma pessoa de planejamento na equipe do cliente."); }
     else if (soTrafego(e)) { if (!(cd.squad.trafego || []).length || !cd.squad.producao.length) return fail("Defina o gestor de tráfego e ao menos uma pessoa da criação."); }
     else { if (!cd.squad.planejamento.length || !cd.squad.producao.length) return fail("Defina ao menos uma pessoa de planejamento e uma de produção na equipe do cliente."); if (e.trafego.on && !(cd.squad.trafego || []).length) return fail("Defina o gestor de tráfego do cliente."); }
     const body = JSON.parse(JSON.stringify(cd)); delete body._exists; delete body.err;
