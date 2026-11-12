@@ -873,8 +873,10 @@ function enqueue(fn){
     toast(c === "42501" ? "Seu e-mail não tem permissão para salvar. Fale com a Diretoria." : "Não foi possível salvar agora. Verifique a conexão.");
   });
 }
-let rT = null;
-function renderSoon(){ clearTimeout(rT); rT = setTimeout(() => { const a = document.activeElement; const txt = a && (a.isContentEditable || a.tagName === "TEXTAREA" || (a.tagName === "INPUT" && !/^(checkbox|radio|button|submit|file|range|color|date|month|week|time)$/.test(a.type))); const typing = a && (txt || (/SELECT/.test(a.tagName) && $("#overlay").contains(a))); if (typing && a.value !== "" ) { rT = setTimeout(renderSoon, 1500); return; } if (typing && $("#overlay").contains(a)) { rT = setTimeout(renderSoon, 1500); return; } if (a && a.dataset && a.dataset.ob) { rT = setTimeout(renderSoon, 2000); return; } if (document.querySelector("details.pick[open], .combo-l:not([hidden]), .kmenu, .ment-l:not([hidden])")) { rT = setTimeout(renderSoon, 1500); return; } render(); }, 150); }
+let rT = null, remoteRender = false;
+/* formulários em edição: a sincronização em segundo plano nunca redesenha estes modais (o que foi digitado fica intacto) */
+const FORM_MODALS = ["alin","client","person","unit","cap","mat","acc","midConta","midCob","newPeca","gen","profile","vaultSetup","vaultUnlock"];
+function renderSoon(){ clearTimeout(rT); rT = setTimeout(() => { const a = document.activeElement; const txt = a && (a.isContentEditable || a.tagName === "TEXTAREA" || (a.tagName === "INPUT" && !/^(checkbox|radio|button|submit|file|range|color|date|month|week|time)$/.test(a.type))); const typing = a && (txt || (/SELECT/.test(a.tagName) && $("#overlay").contains(a))); if (typing && a.value !== "" ) { rT = setTimeout(renderSoon, 1500); return; } if (typing && $("#overlay").contains(a)) { rT = setTimeout(renderSoon, 1500); return; } if (a && a.dataset && a.dataset.ob) { rT = setTimeout(renderSoon, 2000); return; } if (document.querySelector("details.pick[open], .combo-l:not([hidden]), .kmenu, .ment-l:not([hidden])")) { rT = setTimeout(renderSoon, 1500); return; } remoteRender = true; try { render(); } finally { remoteRender = false; } }, 150); }
 /* ---------- Supabase ---------- */
 let deepP = (location.pathname === "/" && new URLSearchParams(location.search).get("p")) || null;
 let mustSetPwd = false, sb = null, authUser = null, SB_URL = "", isMember = false, isAdmin = false, portalToken = "";
@@ -3006,7 +3008,7 @@ function alFormHTML(){
     <div class="field full"><label for="al-prep">Material de apoio e preparação</label><textarea id="al-prep" data-alf="prep" rows="2" placeholder="Links do relatório, apresentação, números que precisam ser levados…">${esc(d.prep || "")}</textarea></div>`
     : (ui.tmp.alAba || (on ? "reuniao" : "prep")) === "reuniao" ? `
     ${(d.pauta || []).length ? `<div class="box"><b style="font-size:13px">Pauta</b><div class="al-chk">${(d.pauta || []).map((x, i) => `<label><input type="checkbox" data-alpok="${i}" ${(d.pautaOk || []).includes(i) ? "checked" : ""}> ${esc(x)}</label>`).join("")}</div></div>` : ""}
-    <div class="field full"><label for="al-an">Anotações da reunião</label><textarea id="al-an" data-alf="notas" rows="9" placeholder="Registre aqui o que foi conversado, em tópicos…">${esc(d.notas || "")}</textarea></div>
+    <div class="field full"><label for="al-an">Anotações da reunião</label><textarea id="al-an" data-alf="notas" rows="9" style="min-height:240px" placeholder="Registre aqui o que foi conversado, em tópicos…">${esc(d.notas || "")}</textarea></div>
     <div class="field full"><span class="lb">Decisões tomadas</span>${lista("decisoes", "Ex.: aumentar a verba do Meta para R$ 3 mil em dezembro")}</div>
     <div class="form"><div class="field"><label for="al-tm">Termômetro do cliente</label><select class="inp" id="al-tm" data-alf="termometro"><option value="">Como o cliente saiu da reunião?</option>${opt(AL_TERM, d.termometro)}</select></div>
       <div class="field"><label for="al-tmo">Por quê? <span class="hint">· opcional</span></label><input class="inp" id="al-tmo" data-alf="termObs" value="${esc(d.termObs || "")}" placeholder="Elogiou os vídeos; cobrou mais leads…"></div></div>`
@@ -3015,7 +3017,7 @@ function alFormHTML(){
     <div class="al-encs">${(d.encs || []).map((e, i) => `<div class="al-enc${e.feito ? " done" : ""}"><input type="checkbox" data-alenc="feito" data-i="${i}" ${e.feito ? "checked" : ""} aria-label="Concluído"><input class="inp sm" data-alenc="texto" data-i="${i}" value="${esc(e.texto || "")}" placeholder="O que precisa ser feito"><select class="inp sm" data-alenc="resp" data-i="${i}"><option value="">Responsável…</option><option value="cliente" ${e.resp === "cliente" ? "selected" : ""}>Cliente</option>${ppl.map(m => `<option value="${esc(m.id)}" ${e.resp === m.id ? "selected" : ""}>${esc(m.nome)}</option>`).join("")}</select><input class="inp sm" type="date" data-alenc="prazo" data-i="${i}" value="${esc(e.prazo || "")}">${e.pecaId ? `<span class="pill t-ok" title="Task criada no Kanban">Task</span>` : e.resp && e.resp !== "cliente" && (e.texto || "").trim() ? `<button type="button" class="btn sm" data-al="task" data-i="${i}" title="Cria uma task no Kanban para o responsável">Virar task</button>` : `<span></span>`}<button type="button" class="x sm" data-al="rmEnc" data-i="${i}" aria-label="Remover">×</button></div>`).join("")}<button type="button" class="linkbtn" data-al="addEnc">+ Adicionar encaminhamento</button></div>
     <div class="form"><div class="field"><label for="al-px">Próximo alinhamento</label><input class="inp" type="date" id="al-px" data-alf="proxData" value="${esc(d.proxData || "")}"></div><div class="field" style="align-self:end"><button type="button" class="btn sm" data-al="resumo">Copiar resumo para o cliente</button></div></div>`}
     ${ui.tmp.err ? `<div class="err">${esc(ui.tmp.err)}</div>` : ""}
-    <div class="actions">${d.status === "agendado" && d._exists ? `<button type="button" class="btn primary" data-al="iniciar">Iniciar reunião</button>` : ""}${d.status === "andamento" ? `<button type="button" class="btn ok" data-al="encerrar">Encerrar reunião</button>` : ""}<button type="button" class="btn ${d.status === "agendado" && d._exists || d.status === "andamento" ? "" : "primary"}" data-al="salvar">Salvar</button><button type="button" class="btn ghost" data-act="close">Fechar</button>${d._exists ? (ui.tmp.alDel ? `<button type="button" class="linkbtn" style="color:var(--danger)" data-al="excluir">Confirmar exclusão</button>` : `<button type="button" class="linkbtn" style="color:var(--danger);margin-left:auto" data-al="excluir">Excluir</button>`) : ""}</div>
+    <div class="actions">${d.status === "agendado" && d._exists ? `<button type="button" class="btn primary" data-al="iniciar">Iniciar reunião</button>` : ""}${d.status === "andamento" ? `<button type="button" class="btn ok" data-al="encerrar">Encerrar reunião</button>` : ""}<button type="button" class="btn ${d.status === "agendado" && d._exists || d.status === "andamento" ? "" : "primary"}" data-al="salvar">Salvar</button><button type="button" class="btn ghost" data-act="close">Fechar</button>${d._exists ? `<span class="muted" id="al-auto" style="font-size:12px;align-self:center">Salvamento automático ligado</span>` : `<span class="muted" style="font-size:12px;align-self:center">Rascunho guardado neste navegador até salvar</span>`}${d._exists ? (ui.tmp.alDel ? `<button type="button" class="linkbtn" style="color:var(--danger)" data-al="excluir">Confirmar exclusão</button>` : `<button type="button" class="linkbtn" style="color:var(--danger);margin-left:auto" data-al="excluir">Excluir</button>`) : ""}</div>
   </div></div>`;
 }
 function alLer(){ const d = ui.tmp.al; if (!d) return; document.querySelectorAll("#overlay [data-alf]").forEach(el => { d[el.dataset.alf] = el.value; }); document.querySelectorAll("#overlay [data-alarr]").forEach(el => { (d[el.dataset.alarr] = d[el.dataset.alarr] || [])[+el.dataset.i] = el.value; }); document.querySelectorAll("#overlay [data-alenc]").forEach(el => { const e = (d.encs || [])[+el.dataset.i]; if (!e) return; if (el.dataset.alenc === "feito") e.feito = el.checked; else e[el.dataset.alenc] = el.value; }); }
@@ -3024,12 +3026,14 @@ function alSalvar(fechar, lido){
   ["pauta","decisoes"].forEach(k => d[k] = (d[k] || []).map(x => String(x || "").trim()).filter(Boolean)); d.encs = (d.encs || []).filter(e => String(e.texto || "").trim());
   const body = JSON.parse(JSON.stringify(d)); delete body._exists; body.atualizadoEm = nowIso(); body.atualizadoPor = ui.me;
   let a = S.alinhamentos.find(x => x.id === d.id), novo = !a;
-  const encAntes = a ? (a.encs || []).map(e => e.resp + "|" + e.texto) : [];
+  const encAntes = a ? (a.encNotif || d.encNotif || (a.encs || []).map(e => e.resp + "|" + e.texto)) : [];
   if (novo) { body.id = "al-" + uid(); body.criadoEm = nowIso(); body.criadoPor = ui.me; S.alinhamentos.push(body); a = body; d.id = body.id; d._exists = true; }
   else Object.assign(a, body);
   const c = cli(a.clienteId), quando = `${fmtShort(a.data)}${a.hora ? " às " + a.hora : ""}`;
   if (novo) alNotify([a.resp, ...(a.part || [])], `Alinhamento agendado com ${c.nome}: ${quando}`, a);
   (a.encs || []).filter(e => e.resp && e.resp !== "cliente" && !encAntes.includes(e.resp + "|" + e.texto) && !e.feito).forEach(e => alNotify([e.resp], `Encaminhamento do alinhamento com ${c.nome}: ${e.texto}${e.prazo ? " · até " + fmtShort(e.prazo) : ""}`, a));
+  a.encNotif = d.encNotif = [...new Set([...encAntes, ...(a.encs || []).filter(e => e.resp && e.resp !== "cliente").map(e => e.resp + "|" + e.texto)])];
+  clearTimeout(alAutoT); alDraftDel(d); alDraftDel({clienteId:a.clienteId});
   save(); if (fechar) { ui.modal = null; ui.tmp = {}; render(); } else { ui.tmp.err = ""; fillOverlay(); render(); }
   return true;
 }
@@ -3038,11 +3042,43 @@ function alResumo(a){
   const c = cli(a.clienteId), enc = (a.encs || []);
   return `Resumo do ${alTipo(a.tipo).toLowerCase()} · ${c.nome} · ${fmtD(pd(a.data), {day:"2-digit", month:"2-digit", year:"numeric"})}\n\n${(a.decisoes || []).length ? "Decisões:\n" + a.decisoes.map(x => "• " + x).join("\n") + "\n\n" : ""}${enc.length ? "Próximos passos:\n" + enc.map(e => `• ${e.texto} (${e.resp === "cliente" ? c.nome : e.resp ? mName(e.resp).split(" ")[0] + " · Alra" : "a definir"}${e.prazo ? ", até " + fmtShort(e.prazo) : ""})`).join("\n") + "\n\n" : ""}${a.proxData ? `Próximo alinhamento: ${fmtD(pd(a.proxData), {weekday:"long", day:"2-digit", month:"2-digit"})}.` : ""}`.trim();
 }
-function alAbrir(a){ ui.tmp = {al:Object.assign(JSON.parse(JSON.stringify(a)), {_exists:true})}; ui.modal = "alin"; fillOverlay(); }
+function alAbrir(a){ ui.tmp = {al:Object.assign(JSON.parse(JSON.stringify(a)), {_exists:true})}; alDraftLoad(ui.tmp.al, a.atualizadoEm); ui.modal = "alin"; fillOverlay(); }
+/* ---- proteção do que é digitado no alinhamento ----
+   1) cada tecla vai direto para o rascunho em memória (nada se perde se a tela for redesenhada);
+   2) alinhamento já criado salva sozinho no banco 1,2s depois da última digitação;
+   3) cópia local no navegador a cada alteração, recuperada ao reabrir se for mais nova que a do banco. */
+let alAutoT = null;
+const alDraftKey = d => "alra-al-draft:" + (d.id || "novo-" + d.clienteId);
+function alDraftDel(d){ try { localStorage.removeItem(alDraftKey(d)); } catch(e) {} }
+function alDraftLoad(d, salvoEm){ try { const r = JSON.parse(localStorage.getItem(alDraftKey(d)) || "null"); if (!r || !r.d || (salvoEm && r.t <= salvoEm)) return false; Object.assign(d, r.d, {_exists:d._exists, id:d.id}); setTimeout(() => toast("Recuperamos o que você tinha digitado e ainda não estava salvo."), 300); return true; } catch(e) { return false; } }
+function alBind(el){
+  const d = ui.tmp && ui.tmp.al; if (!d || !el || !el.closest || !el.closest("#overlay")) return false;
+  if (el.dataset.alf !== undefined) d[el.dataset.alf] = el.value;
+  else if (el.dataset.alarr !== undefined) (d[el.dataset.alarr] = d[el.dataset.alarr] || [])[+el.dataset.i] = el.value;
+  else if (el.dataset.alenc !== undefined) { const e = (d.encs || [])[+el.dataset.i]; if (!e) return false; if (el.dataset.alenc === "feito") e.feito = el.checked; else e[el.dataset.alenc] = el.value; }
+  else return false;
+  return true;
+}
+function alMudou(){
+  const d = ui.tmp && ui.tmp.al; if (!d) return;
+  try { const c = JSON.parse(JSON.stringify(d)); delete c._exists; localStorage.setItem(alDraftKey(d), JSON.stringify({t:nowIso(), d:c})); } catch(e) {}
+  const st = document.getElementById("al-auto"); if (st && d._exists) st.textContent = "Salvando…";
+  clearTimeout(alAutoT); if (d._exists) alAutoT = setTimeout(() => alAuto(d), 1200);
+}
+function alAuto(d){
+  clearTimeout(alAutoT); alAutoT = null;
+  const a = d && d._exists && S.alinhamentos.find(x => x.id === d.id); if (!a || !d.data) return;
+  const body = JSON.parse(JSON.stringify(d)); delete body._exists; body.atualizadoEm = nowIso(); body.atualizadoPor = ui.me;
+  Object.assign(a, body); save();
+  const st = document.getElementById("al-auto"); if (st && ui.tmp && ui.tmp.al === d) st.textContent = "Salvo automaticamente às " + new Date().toLocaleTimeString("pt-BR", {hour:"2-digit", minute:"2-digit"});
+}
+document.addEventListener("input", ev => { if (alBind(ev.target)) alMudou(); }, true);
+document.addEventListener("visibilitychange", () => { if (document.hidden && alAutoT && ui.tmp && ui.tmp.al) alAuto(ui.tmp.al); });
+window.addEventListener("pagehide", () => { if (alAutoT && ui.tmp && ui.tmp.al) { alAuto(ui.tmp.al); flushNow(); } });
 document.addEventListener("click", ev => {
   const t = ev.target.closest && ev.target.closest("[data-al]"); if (!t || isClient()) return;
   const k = t.dataset.al, d = ui.tmp.al;
-  if (k === "novo") { const c = cli(t.dataset.cid), r = fillEscopo(c.escopo).reuniao || {}; ui.tmp = {al:{clienteId:c.id, tipo:"mensal", data:alProxData(c), hora:"10:00", duracao:"60", status:"agendado", resp:r.resp || ui.me, part:[...new Set([r.resp || ui.me])].filter(Boolean), pauta:[], decisoes:[], encs:[]}, alAba:"prep"}; ui.modal = "alin"; fillOverlay(); return; }
+  if (k === "novo") { const c = cli(t.dataset.cid), r = fillEscopo(c.escopo).reuniao || {}; ui.tmp = {al:{clienteId:c.id, tipo:"mensal", data:alProxData(c), hora:"10:00", duracao:"60", status:"agendado", resp:r.resp || ui.me, part:[...new Set([r.resp || ui.me])].filter(Boolean), pauta:[], decisoes:[], encs:[]}, alAba:"prep"}; alDraftLoad(ui.tmp.al); ui.modal = "alin"; fillOverlay(); return; }
   if (k === "abrir") { const a = S.alinhamentos.find(x => x.id === t.dataset.id); if (a) alAbrir(a); return; }
   if (k === "encOk") { const a = S.alinhamentos.find(x => x.id === t.dataset.id), e = a && (a.encs || [])[+t.dataset.i]; if (e) { e.feito = true; e.feitoEm = nowIso(); e.feitoPor = ui.me; save(); toast("Encaminhamento concluído."); render(); } return; }
   if (!d) return;
@@ -3061,8 +3097,8 @@ document.addEventListener("click", ev => {
 });
 document.addEventListener("change", ev => {
   const t = ev.target, d = ui.tmp && ui.tmp.al; if (!d) return;
-  if (t.dataset.alpart !== undefined) { const v = t.value; d.part = t.checked ? [...new Set([...(d.part || []), v])] : (d.part || []).filter(x => x !== v); return; }
-  if (t.dataset.alpok !== undefined) { const i = +t.dataset.alpok; d.pautaOk = t.checked ? [...new Set([...(d.pautaOk || []), i])] : (d.pautaOk || []).filter(x => x !== i); return; }
+  if (t.dataset.alpart !== undefined) { const v = t.value; d.part = t.checked ? [...new Set([...(d.part || []), v])] : (d.part || []).filter(x => x !== v); alMudou(); return; }
+  if (t.dataset.alpok !== undefined) { const i = +t.dataset.alpok; d.pautaOk = t.checked ? [...new Set([...(d.pautaOk || []), i])] : (d.pautaOk || []).filter(x => x !== i); alMudou(); return; }
   if (t.dataset.alenc === "resp") { alLer(); fillOverlay(); return; }
   if (t.dataset.alf === "tipo") { d.tipo = t.value; return; }
 });
@@ -3697,6 +3733,7 @@ function confirmHTML(){
   return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="cfT"><div class="m-head"><h2 id="cfT">${esc(c.titulo || "Confirmar")}</h2><button type="button" class="x" data-act="close" aria-label="Fechar">×</button></div><div class="m-body"><p>${esc(c.texto || "")}</p><div class="actions"><button type="button" class="btn danger" data-act="confirmGo">${esc(c.ok || "Confirmar")}</button><button type="button" class="btn ghost" data-act="close">Cancelar</button></div></div></div>`;
 }
 function fillOverlay(){
+  if (remoteRender && FORM_MODALS.includes(ui.modal) && $("#overlay").innerHTML) return;
   const ov = $("#overlay"), m = ui.modal;
   const M = {alin:alFormHTML, midConta:midContaFormHTML, midCob:midCobFormHTML, newPeca:newPecaHTML, gen:genHTML, client:clientFormHTML, person:personFormHTML, profile:profileHTML, unit:unitFormHTML, cap:capFormHTML, mat:matFormHTML, acc:accFormHTML, vaultSetup:() => vaultFormHTML("setup"), vaultUnlock:() => vaultFormHTML("unlock"), accHist:accHistHTML, notifs:notifsHTML, approveAll:approveAllHTML, inviteLink:inviteLinkHTML, confirm:confirmHTML, day:() => dayAllHTML(ui.tmp.day, ui.tmp.kind), msg:msgHTML, comConta:comFormHTML, comVisita:comVisitaHTML};
   let html = "";
@@ -3911,7 +3948,7 @@ document.addEventListener("click", async ev => {
     case "wFinish": { const un = {id:uid(), nome:w.unidade.trim(), cidade:w.cidade.trim()}; S.unidades.push(un); w.pessoas.forEach(x => S.pessoas.push({id:uid(), nome:x.nome.trim(), cargo:x.cargo.trim(), papeis:x.papeis || [], unidade:un.id})); S.cfg = {rede:(w.rede || "Alra").trim(), setupDone:true, criadoEm:nowIso()}; { const me = S.pessoas[S.pessoas.length - w.pessoas.length + (+d.i)]; if (authUser) me.email = String(authUser.email).toLowerCase(); ui.meAuto = me.id; setMe(me.id); } ui.view = "inicio"; ui.wiz = null; save(); render(); toast("Tudo pronto. Siga os primeiros passos."); break; }
     case "toggleSom": { const off = lsGet("alra-som") === "off"; try { localStorage.setItem("alra-som", off ? "" : "off"); } catch(e) {} if (off) chime(); fillOverlay(); break; }
     case "hideGuide": try { localStorage.setItem(LSKEY + "-guia", "1"); } catch(e) {} render(); break;
-    case "close": ui.modal ? (ui.modal = null) : (ui.openId = null); ui.tmp = {}; fillOverlay(); break;
+    case "close": if (ui.modal === "alin" && alAutoT && ui.tmp.al) alAuto(ui.tmp.al); ui.modal ? (ui.modal = null) : (ui.openId = null); ui.tmp = {}; fillOverlay(); break;
     case "notifs": ui.modal = "notifs"; ui.tmp = {}; fillOverlay(); break;
     case "readAll": S.notifs.filter(n => n.para === ui.me).forEach(n => n.lida = true); save(); render(); break;
     case "profile": ui.modal = "profile"; ui.tmp = {}; fillOverlay(); break;
@@ -4311,7 +4348,7 @@ document.addEventListener("submit", async ev => {
   }
 });
 document.addEventListener("keydown", ev => {
-  if (ev.key === "Escape") { if (ui.modal) ui.modal = null; else ui.openId = null; ui.tmp = {}; fillOverlay(); }
+  if (ev.key === "Escape") { if (ui.modal === "alin" && alAutoT && ui.tmp.al) alAuto(ui.tmp.al); if (ui.modal) ui.modal = null; else ui.openId = null; ui.tmp = {}; fillOverlay(); }
   if (ui.openId && !ui.modal && (ev.key === "ArrowRight" || ev.key === "ArrowLeft") && !/TEXTAREA|INPUT|SELECT/.test(document.activeElement.tagName)) { const p = S.pecas.find(x => x.id === ui.openId), n = (p && p.midias || []).length; if (n > 1) { ui.idx = (ui.idx + (ev.key === "ArrowRight" ? 1 : -1) + n) % n; fillOverlay(); } }
   if (ev.key === "Enter" && ["cmtxt","ntftxt"].includes(ev.target.id)) { ev.preventDefault(); const b = document.querySelector(ev.target.id === "cmtxt" ? '[data-act="comment"]' : '[data-act="sendNotif"]'); if (b) b.click(); }
 });
