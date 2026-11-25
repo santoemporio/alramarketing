@@ -1997,7 +1997,7 @@ function infoHTML(c, edit){
   return `<div class="scopebar"><span class="eyebrow">Escopo</span>${scope.map(([n, t]) => `<span class="sc"><b>${esc(n)}</b> ${esc(t)}</span>`).join("") || `<span class="muted">Sem escopo definido</span>`}</div>
     <div class="grid2"><div class="card"><h2>Cadastro e aprovação</h2><dl class="kv"><dt>Status</dt><dd>${esc(c.status || "Ativo")}</dd><dt>Categoria</dt><dd>${esc(c.categoria || "—")}</dd><dt>Segmento</dt><dd>${esc(c.segmento || "—")}</dd><dt>Unidade</dt><dd>${esc(unidade(c.unidade).nome)}</dd><dt>Quem aprova</dt><dd>${contatoHTML(c)}</dd><dt>Periodicidade</dt><dd>${c.aprovacao === "semanal" ? "Semanal" : "Mensal"}, enviar ${Number(c.antecedencia) || 7} dias antes</dd>${c.notas ? `<dt>Particularidades</dt><dd style="white-space:pre-wrap">${esc(c.notas)}</dd>` : ""}</dl><div class="row"><button type="button" class="btn sm" data-act="previewCli" data-cid="${esc(c.id)}">Ver prévia do cliente</button></div></div>
       <div class="card"><h2>Equipe</h2><dl class="kv"><dt>Planejamento</dt><dd>${ppl(sq.planejamento)}</dd><dt>Produção</dt><dd>${ppl(sq.producao)}</dd><dt>Social media</dt><dd>${ppl(sq.social)}</dd><dt>Atendimento</dt><dd>${ppl(atendimentoDe(c))}</dd><dt>Tráfego</dt><dd>${ppl(sq.trafego)}</dd></dl></div></div>
-    ${visivel("aprovacoes") ? portalLinkHTML(c) : ""}
+    ${portalLinkHTML(c)}
     <section class="card"><div class="spread"><div><div class="eyebrow">Para o time de criação</div><h2>Especificações da marca</h2></div>${edit && !editing ? `<button type="button" class="btn sm" data-act="editCri" data-cid="${esc(c.id)}">Editar</button>` : ""}</div>
       <p class="muted" style="font-size:12.5px">Logos, manual e elementos gráficos ficam na aba Materiais (categorias Logo, Manual da marca e Elemento gráfico). Aqui ficam as especificações.</p>${editing ? criEdit : criView}</section>
     `;
@@ -2463,9 +2463,6 @@ document.addEventListener("change", ev => {
 });
 window.addEventListener("beforeunload", ev => { if (ui.mp && ui.mp.dirty && ui.view === "processos") { ev.preventDefault(); ev.returnValue = ""; } });
 
-/* módulos que agora ficam no Pode Postar: ocultos do sistema (dados preservados, dá para voltar tirando daqui) */
-const OCULTOS = new Set(["calendario","aprovacoes","publicacao","captacoes"]);
-const visivel = k => !OCULTOS.has(k);
 function navItems(){
   const it = [["inicio","Início"],["equipePauta","Pauta da equipe"],["pecas","Kanban"],["calendario","Calendário"],["aprovacoes","Aprovações"]];
   if (timeAtLeast("B")) it.push(["publicacao","Publicações"]);
@@ -2474,7 +2471,7 @@ function navItems(){
   if (midiaOk()) it.push(["midia","Financeiro de mídia"]);
   if (timeAtLeast("B")) it.push(["dashboards","Dashboards"]);
   if (timeAtLeast("A")) it.push(["config","Configurações"]);
-  return it.filter(n => visivel(n[0]));
+  return it;
 }
 const OLDVIEW = {relatorios:["dashboards","dbTab","relatorios"], equipe:["config","cfgTab","usuarios"], rede:["config","cfgTab","unidades"]};
 function render(){
@@ -2789,11 +2786,11 @@ function inicioHTML(){
   const caps = S.captacoes.filter(x => (x.resp === ui.me || (T !== "C" && headOfUnit(cli(x.clienteId).unidade))) && !["Realizada","Cancelada"].includes(x.status) && diffDays(pd(x.data), TODAY) >= 0 && diffDays(pd(x.data), TODAY) <= 7).sort((a, b) => (a.data + a.inicio).localeCompare(b.data + b.inicio));
   const un = isDir() && ui.unidade === "todas" && S.unidades.length > 1 ? "todas as unidades" : S.unidades.length === 1 ? S.unidades[0].nome : unidade(isDir() && ui.unidade !== "todas" ? ui.unidade : m.unidade).nome;
   return midAlertaHTML() + `<div><div class="eyebrow">${esc(fmtD(TODAY,{weekday:"long", day:"2-digit", month:"long"}))} · ${esc(TIMES[T])}</div><h1>${T === "C" ? (queue.length ? `${esc(first)}, <em>${queue.length}</em> ${queue.length === 1 ? "peça está" : "peças estão"} com você` : `Olá, ${esc(first)}`) : `Visão geral · ${esc(un)}`}</h1>${T === "C" ? `<p class="muted" style="font-size:12.5px;margin-top:4px">Os números abaixo contam só as pautas em que você atua.</p>` : ""}</div>
-    <div class="kpis k5">${k(andamento.length, "em andamento", "", 'data-go="pecas" data-sf="todas"')}${k(late.length, "atrasadas", late.length ? "bad" : "", 'data-go="pecas" data-sf="todas"')}${k(comCli.length, "com o cliente", comCli.length ? "hot" : "", 'data-go="pecas" data-sf="cliente"')}${k(ajuste.length, "em ajuste", "", 'data-go="pecas" data-sf="ajuste"')}${k(hoje.length, "para publicar hoje", hoje.length ? "hot" : "", T === "C" || !visivel("publicacao") ? 'data-go="pecas" data-sf="aprovado"' : 'data-go="publicacao"')}</div>
+    <div class="kpis k5">${k(andamento.length, "em andamento", "", 'data-go="pecas" data-sf="todas"')}${k(late.length, "atrasadas", late.length ? "bad" : "", 'data-go="pecas" data-sf="todas"')}${k(comCli.length, "com o cliente", comCli.length ? "hot" : "", 'data-go="pecas" data-sf="cliente"')}${k(ajuste.length, "em ajuste", "", 'data-go="pecas" data-sf="ajuste"')}${k(hoje.length, "para publicar hoje", hoje.length ? "hot" : "", T === "C" ? 'data-go="pecas" data-sf="aprovado"' : 'data-go="publicacao"')}</div>
     <div class="grid2"><section class="card"><div class="spread"><h2>Distribuição por etapa</h2><span class="muted tnum" style="font-size:12px">${base.length} pautas</span></div>${stackHTML(base, true)}</section>
       <section class="card"><div class="spread"><h2>Sua fila</h2>${queue.length ? `<button type="button" class="linkbtn" data-go="pecas" data-sf="minha">Ver no Kanban</button>` : ""}</div>${queue.length ? `<div class="list">${queue.slice(0, 6).map(liHTML).join("")}</div>${queue.length > 6 ? `<span class="muted" style="font-size:12px">+${queue.length - 6} na sua fila</span>` : ""}` : `<p class="muted" style="font-size:12.5px">Quando uma peça chegar na sua etapa, ela aparece aqui.</p>`}</section></div>
     ${(T !== "C" || has("planejamento")) && vc.length ? radarHTML(vc) : ""}
-    ${visivel("captacoes") ? `<section class="card"><div class="spread"><h2>Captações dos próximos 7 dias</h2><button type="button" class="linkbtn" data-view="captacoes">Abrir captações</button></div>${caps.length ? `<div class="list">${caps.map(capLi).join("")}</div>` : `<p class="muted" style="font-size:12.5px">Nenhuma captação agendada nos próximos 7 dias.</p>`}</section>` : ""}
+    <section class="card"><div class="spread"><h2>Captações dos próximos 7 dias</h2><button type="button" class="linkbtn" data-view="captacoes">Abrir captações</button></div>${caps.length ? `<div class="list">${caps.map(capLi).join("")}</div>` : `<p class="muted" style="font-size:12.5px">Nenhuma captação agendada nos próximos 7 dias.</p>`}</section>
     ${T !== "C" ? resumoDiaHTML() : ""}
     ${T !== "C" ? stepsHTML() : ""}`;
 }
@@ -3576,7 +3573,7 @@ function dashHTML(c){
 function hubHTML(){
   const c = S.clientes.find(x => x.id === ui.hubId);
   if (!c) { ui.view = "clientes"; return clientesHTML(); }
-  const tabs = [["geral","Visão geral"],["info","Informações do cliente"],["orient","Orientações"],["materiais","Materiais"],["pecas","Pautas"],...(visivel("captacoes") ? [["captacoes","Captações"]] : []),["alinhamentos","Alinhamentos"],...(meuCliente(c) ? [["acessos","Acessos"]] : []),["feedbacks","Feedbacks"]];
+  const tabs = [["geral","Visão geral"],["info","Informações do cliente"],["orient","Orientações"],["materiais","Materiais"],["pecas","Pautas"],["captacoes","Captações"],["alinhamentos","Alinhamentos"],...(meuCliente(c) ? [["acessos","Acessos"]] : []),["feedbacks","Feedbacks"]];
   if (!tabs.some(t => t[0] === ui.hubTab)) ui.hubTab = "geral";
   const edit = canEditClient(c);
   let body = "";
