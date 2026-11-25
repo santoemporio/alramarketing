@@ -32,6 +32,10 @@
     {
       "path": "/api/cron-backup",
       "schedule": "47 0 * * 1"
+    },
+    {
+      "path": "/api/cron-limpeza",
+      "schedule": "17 6 * * *"
     }
   ]
 }
